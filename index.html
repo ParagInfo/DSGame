@@ -194,7 +194,7 @@
     .badge {
       padding: 4px 10px;
       border-radius: 6px;
-      font-size: 0.75rem;
+      font-size: 0.85rem;
       font-weight: 700;
       text-transform: uppercase;
       border: 1px solid #ffd700;
@@ -424,7 +424,7 @@
       <h1>Kaun Banega Dharm Shiromani</h1>
       <h2>कौन बनेगा धर्म शिरोमणि</h2>
       
-      <div class="status-msg" id="status-msg">Fetching questions from OneDrive...</div>
+      <div class="status-msg" id="status-msg">Fetching questions from file...</div>
 
       <!-- Timer Option -->
       <div class="form-group">
@@ -471,7 +471,7 @@
           <span class="title-hi">कौन बनेगा धर्म शिरोमणि</span>
         </div>
         <div class="meta-badges">
-          <span class="badge badge-level" id="lbl-level">Level 1</span>
+          <span class="badge badge-level" id="lbl-level">1</span>
         </div>
       </div>
 
@@ -510,7 +510,7 @@
   </div>
 
   <script>
-    // DIRECT ONEDRIVE DOWNLOAD LINK
+    // DIRECT EXCEL FILE LOCATION
     const QUESTION_BANK_URL = "./QuestionsBin.xlsx";
 
     const prizeLadder = [
@@ -544,7 +544,7 @@
       const startBtn = document.getElementById("start-btn");
 
       try {
-        statusEl.innerText = "Connecting to OneDrive...";
+        statusEl.innerText = "Connecting to question bank...";
         statusEl.style.color = "#38bdf8";
 
         const response = await fetch(QUESTION_BANK_URL);
@@ -561,7 +561,7 @@
         pairedQuestionsBank = parseAndPairData(rawRows);
 
         if (pairedQuestionsBank.length === 0) {
-          throw new Error("No valid questions parsed from OneDrive file.");
+          throw new Error("No valid questions parsed from Excel file.");
         }
 
         questionsByLevelMap.clear();
@@ -574,7 +574,7 @@
 
         sortedLevels = Array.from(questionsByLevelMap.keys()).sort((a, b) => a - b);
 
-        statusEl.innerText = `Loaded ${pairedQuestionsBank.length} questions from OneDrive!`;
+        statusEl.innerText = `Loaded ${pairedQuestionsBank.length} questions successfully!`;
         statusEl.style.color = "#22c55e";
         startBtn.disabled = false;
         startBtn.innerText = "Start Game";
@@ -722,7 +722,8 @@
         return;
       }
 
-      document.getElementById('lbl-level').innerText = `Level ${currentQuestionData.numericLevel}`;
+      // Display question number only in the badge
+      document.getElementById('lbl-level').innerText = `${currentIndex + 1}`;
       
       const currentPrize = prizeLadder[Math.min(currentIndex, prizeLadder.length - 1)];
       document.getElementById('lbl-prize').innerText = `Question ${currentIndex + 1} • Points: ${currentPrize}`;
