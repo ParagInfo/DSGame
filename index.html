@@ -635,18 +635,32 @@
 
         const arrayBuffer = await response.arrayBuffer();
         const data = new Uint8Array(arrayBuffer);
-        const workbook = XLSX.read(data, { type: 'array' });
+        
+        // Configured SheetJS to safely extract formatted strings and text values
+        const workbook = XLSX.read(data, { 
+          type: 'array',
+          cellText: true,
+          cellDates: true 
+        });
         
         // Parse Sheet 1 for Questions
         const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
         const rawRows = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
 
-        // Parse Sheet 2 (Cell A1) for Thanks/Acknowledgment Message if available
+        // Safely extract Cell A1 from Sheet 2 (Index 1) for Acknowledgment Text
         if (workbook.SheetNames.length > 1) {
-          const secondSheet = workbook.Sheets[workbook.SheetNames[1]];
-          const cellA1 = secondSheet['A1'];
-          if (cellA1 && cellA1.v) {
-            customThanksMessage = String(cellA1.v).trim();
+          const secondSheetName = workbook.SheetNames[1];
+          const secondSheet = workbook.Sheets[secondSheetName];
+          
+          if (secondSheet && secondSheet['A1']) {
+            // Checks formatted text (.w) first, then raw value (.v)
+            const extractedText = secondSheet['A1'].w !== undefined 
+              ? secondSheet['A1'].w 
+              : secondSheet['A1'].v;
+
+            if (extractedText !== undefined && extractedText !== null && String(extractedText).trim() !== "") {
+              customThanksMessage = String(extractedText).trim();
+            }
           }
         }
 
