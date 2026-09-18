@@ -145,6 +145,21 @@
       box-shadow: none;
     }
 
+    /* Thanks Button Styling */
+    .thanks-btn {
+      background: linear-gradient(180deg, #38bdf8 0%, #0284c7 100%);
+      color: #fff;
+      border: none;
+      padding: 10px;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 0.95rem;
+      cursor: pointer;
+      margin-top: 10px;
+      width: 100%;
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
+    }
+
     /* Main App Layout */
     #app-container {
       display: flex;
@@ -221,7 +236,6 @@
       cursor: pointer;
     }
 
-    /* Distinct styling for Quit button */
     .lifeline-btn.quit-btn {
       border-color: #ef4444;
       background: radial-gradient(circle, #7f1d1d 0%, #360707 100%);
@@ -389,7 +403,7 @@
       border-radius: 12px;
       text-align: center;
       width: 100%;
-      max-width: 320px;
+      max-width: 380px;
     }
 
     .poll-bars {
@@ -484,6 +498,18 @@
       </div>
 
       <button class="start-btn" id="start-btn" onclick="startGame()" disabled>Loading...</button>
+      <button class="thanks-btn" id="thanks-btn" onclick="openThanksModal()">Acknowledge / Thanks</button>
+    </div>
+  </div>
+
+  <!-- Thanks / Acknowledgments Modal -->
+  <div class="modal" id="thanks-modal">
+    <div class="modal-content">
+      <h3 style="color: #ffd700; margin-bottom: 12px;">Acknowledgments & Thanks</h3>
+      <div id="thanks-msg-body" style="color: #fef08a; font-size: 0.95rem; margin-bottom: 20px; text-align: center; white-space: pre-wrap; word-break: break-word;">
+        Loading message...
+      </div>
+      <button class="close-btn" onclick="closeThanksModal()">Close</button>
     </div>
   </div>
 
@@ -565,6 +591,9 @@
     // DIRECT EXCEL FILE LOCATION
     const QUESTION_BANK_URL = "./QuestionsBin.xlsx";
 
+    // FALLBACK THANKS / ACKNOWLEDGMENT MESSAGE
+    let customThanksMessage = "Thank you for playing Kaun Banega Dharm Shiromani!\nSpecial thanks to all contributors and scholars who helped build this question bank.";
+
     const prizeLadder = [
       "1,000", "2,000", "3,000", "5,000", "10,000",
       "20,000", "40,000", "80,000", "1,60,000", "3,20,000",
@@ -607,8 +636,19 @@
         const arrayBuffer = await response.arrayBuffer();
         const data = new Uint8Array(arrayBuffer);
         const workbook = XLSX.read(data, { type: 'array' });
+        
+        // Parse Sheet 1 for Questions
         const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
         const rawRows = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+
+        // Parse Sheet 2 (Cell A1) for Thanks/Acknowledgment Message if available
+        if (workbook.SheetNames.length > 1) {
+          const secondSheet = workbook.Sheets[workbook.SheetNames[1]];
+          const cellA1 = secondSheet['A1'];
+          if (cellA1 && cellA1.v) {
+            customThanksMessage = String(cellA1.v).trim();
+          }
+        }
 
         pairedQuestionsBank = parseAndPairData(rawRows);
 
@@ -626,7 +666,6 @@
 
         sortedLevels = Array.from(questionsByLevelMap.keys()).sort((a, b) => a - b);
 
-        <!-- statusEl.innerText = `Loaded ${pairedQuestionsBank.length} questions successfully!`; -->
         statusEl.innerText = `Loaded questions successfully!`;
         statusEl.style.color = "#22c55e";
         startBtn.disabled = false;
@@ -638,6 +677,15 @@
         startBtn.disabled = true;
         startBtn.innerText = "Error Loading File";
       }
+    }
+
+    function openThanksModal() {
+      document.getElementById('thanks-msg-body').innerText = customThanksMessage;
+      document.getElementById('thanks-modal').style.display = 'flex';
+    }
+
+    function closeThanksModal() {
+      document.getElementById('thanks-modal').style.display = 'none';
     }
 
     function shuffleArray(array) {
@@ -775,7 +823,6 @@
         return;
       }
 
-      // Display question number only in the badge
       document.getElementById('lbl-level').innerText = `${currentIndex + 1}`;
       
       const currentPrize = prizeLadder[Math.min(currentIndex, prizeLadder.length - 1)];
