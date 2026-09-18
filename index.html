@@ -626,7 +626,8 @@
 
         sortedLevels = Array.from(questionsByLevelMap.keys()).sort((a, b) => a - b);
 
-        statusEl.innerText = `Loaded ${pairedQuestionsBank.length} questions successfully!`;
+        <!-- statusEl.innerText = `Loaded ${pairedQuestionsBank.length} questions successfully!`; -->
+        statusEl.innerText = `Loaded questions successfully!`;
         statusEl.style.color = "#22c55e";
         startBtn.disabled = false;
         startBtn.innerText = "Start Game";
