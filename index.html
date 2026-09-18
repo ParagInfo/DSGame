@@ -712,7 +712,8 @@
     function parseAndPairData(rawRows) {
       let map = new Map();
 
-      for (let i = 0; i < rawRows.length; i++) {
+      // Start loop at index 1 to ignore the header row
+      for (let i = 1; i < rawRows.length; i++) {
         let row = rawRows[i];
         if (!row || row.length < 4) continue;
 
