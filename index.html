@@ -207,6 +207,7 @@
       justify-content: center;
       gap: 12px;
       margin: 8px 0;
+      flex-wrap: wrap;
     }
 
     .lifeline-btn {
@@ -218,6 +219,17 @@
       font-weight: bold;
       font-size: 0.8rem;
       cursor: pointer;
+    }
+
+    /* Distinct styling for Quit button */
+    .lifeline-btn.quit-btn {
+      border-color: #ef4444;
+      background: radial-gradient(circle, #7f1d1d 0%, #360707 100%);
+      color: #fca5a5;
+    }
+
+    .lifeline-btn.quit-btn:hover {
+      box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
     }
 
     .lifeline-btn.used {
@@ -414,6 +426,33 @@
       font-weight: bold;
       cursor: pointer;
     }
+
+    .modal-btn-group {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 15px;
+    }
+
+    .cancel-btn {
+      background: #4b5563;
+      color: #fff;
+      border: none;
+      padding: 8px 20px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .confirm-quit-btn {
+      background: #ef4444;
+      color: #fff;
+      border: none;
+      padding: 8px 20px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -462,6 +501,18 @@
     </div>
   </div>
 
+  <!-- Quit Confirmation Modal -->
+  <div class="modal" id="quit-modal">
+    <div class="modal-content">
+      <h3 style="color: #ffd700; margin-bottom: 10px;">Quit Game? / खेल छोड़ें?</h3>
+      <p style="color: #fef08a; font-size: 0.95rem; margin-bottom: 10px;" id="quit-modal-msg">Are you sure you want to quit?</p>
+      <div class="modal-btn-group">
+        <button class="confirm-quit-btn" onclick="confirmQuit()">Yes, Quit</button>
+        <button class="cancel-btn" onclick="closeQuitModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Main Game Layout -->
   <div id="app-container">
     <div id="game-ui">
@@ -479,6 +530,7 @@
         <button class="lifeline-btn" id="life-5050" onclick="use5050()">50:50</button>
         <button class="lifeline-btn" id="life-audience" onclick="useAudience()">Audience</button>
         <button class="lifeline-btn" id="life-flip" onclick="useFlip()">FLIP</button>
+        <button class="lifeline-btn quit-btn" id="life-quit" onclick="useQuit()">QUIT</button>
       </div>
 
       <div class="timer-container" id="timer-container">
@@ -897,7 +949,26 @@
       loadQuestion();
     }
 
-    function endGame(isVictory) {
+    function useQuit() {
+      if (!canSelect) return;
+      stopTimer();
+      
+      const safeVal = currentIndex > 0 ? prizeLadder[currentIndex - 1] : "0";
+      document.getElementById('quit-modal-msg').innerText = `Are you sure you want to quit? You will leave with ${safeVal} Points. / क्या आप खेल छोड़ना चाहते हैं? आप ${safeVal} पॉइंट्स लेकर जाएंगे।`;
+      document.getElementById('quit-modal').style.display = 'flex';
+    }
+
+    function closeQuitModal() {
+      document.getElementById('quit-modal').style.display = 'none';
+      startTimer();
+    }
+
+    function confirmQuit() {
+      document.getElementById('quit-modal').style.display = 'none';
+      endGame(false, true);
+    }
+
+    function endGame(isVictory, isQuit = false) {
       stopTimer();
       document.getElementById('game-ui').style.display = 'none';
       document.getElementById('end-ui').style.display = 'block';
@@ -907,6 +978,9 @@
       if (isVictory) {
         document.getElementById('end-status-title').innerText = "Shubhkamnayein! Master of Dharm";
         document.getElementById('final-prize-val').innerText = `${prizeLadder[prizeLadder.length - 1]} Points`;
+      } else if (isQuit) {
+        document.getElementById('end-status-title').innerText = "You Chose to Quit / आपने खेल छोड़ दिया";
+        document.getElementById('final-prize-val').innerText = `${finalVal} Points`;
       } else {
         document.getElementById('end-status-title').innerText = "Game Over";
         document.getElementById('final-prize-val').innerText = `${finalVal} Points`;
