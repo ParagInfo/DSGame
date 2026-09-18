@@ -590,13 +590,9 @@
   </div>
 
   <script>
-    // ENCRYPTED DATA FILE
     const ENCRYPTED_BANK_URL = "./questions.enc";
-    
-    // SECRET KEY (Must match the key used in encrypt.js)
     const SECRET_KEY = "DharmShiromani2026!SecureKey";
 
-    // FALLBACK THANKS MESSAGE
     let customThanksMessage = "Thank you for playing Kaun Banega Dharm Shiromani!\nSpecial thanks to all contributors and scholars who helped build this question bank.";
 
     const prizeLadder = [
@@ -642,7 +638,6 @@
 
         statusEl.innerText = "Decrypting payload...";
         
-        // Decrypt AES Payload
         const bytes = CryptoJS.AES.decrypt(encryptedStr, SECRET_KEY);
         const decryptedJSON = bytes.toString(CryptoJS.enc.Utf8);
 
@@ -712,14 +707,16 @@
     function parseAndPairData(rawRows) {
       let map = new Map();
 
-      // Start loop at index 1 to ignore the header row
       for (let i = 1; i < rawRows.length; i++) {
         let row = rawRows[i];
         if (!row || row.length < 4) continue;
 
         let qId = String(row[0]).trim();
-        let numLevel = parseInt(String(row[1]).replace(/\D/g, ''), 10);
-        if (isNaN(numLevel)) numLevel = 1;
+        
+        // MODIFIED: Parse fractional numbers (e.g. 1.5) instead of strictly integers
+        let rawLevelStr = String(row[1]).replace(/[^\d.]/g, '');
+        let numLevel = parseFloat(rawLevelStr);
+        if (isNaN(numLevel)) numLevel = 1.0;
 
         let questionText = String(row[2] || "").trim();
         let correctOpt = String(row[3] || "").trim();
@@ -785,6 +782,7 @@
     function getNextQuestion() {
       if (sortedLevels.length === 0) return null;
 
+      // MODIFIED: Supports fractional mapping across sorted float levels
       let levelIdx = Math.floor((currentIndex / prizeLadder.length) * sortedLevels.length);
       levelIdx = Math.min(levelIdx, sortedLevels.length - 1);
       let targetLevel = sortedLevels[levelIdx];
@@ -830,7 +828,8 @@
         return;
       }
 
-      document.getElementById('lbl-level').innerText = `${currentIndex + 1}`;
+      // Shows current fractional level if desired, or index step
+      document.getElementById('lbl-level').innerText = `${currentQuestionData.numericLevel}`;
       
       const currentPrize = prizeLadder[Math.min(currentIndex, prizeLadder.length - 1)];
       document.getElementById('lbl-prize').innerText = `Question ${currentIndex + 1} • Points: ${currentPrize}`;
