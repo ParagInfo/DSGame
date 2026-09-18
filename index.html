@@ -3,114 +3,404 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Quiz Game</title>
+  <title>Dharm Shiromani Quiz Game</title>
   
   <!-- CryptoJS Library for AES Decryption -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
   
   <style>
+    :root {
+      --primary-color: #8b0000;
+      --secondary-color: #f4c430;
+      --bg-color: #fdfbf7;
+      --card-bg: #ffffff;
+      --text-color: #2c2c2c;
+      --correct-color: #2e7d32;
+      --wrong-color: #c62828;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
     body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-      background-color: #f4f4f9;
-      color: #333;
-    }
-    #status {
-      font-weight: bold;
-      margin-bottom: 15px;
-      padding: 10px;
-      border-radius: 4px;
-      background-color: #e2e3e5;
-    }
-    .question-card {
-      background: #fff;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
       padding: 20px;
+    }
+
+    .container {
+      background: var(--card-bg);
+      width: 100%;
+      max-width: 650px;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+      padding: 30px;
+      border: 2px solid var(--secondary-color);
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 25px;
+      border-bottom: 2px solid #f0f0f0;
+      padding-bottom: 15px;
+    }
+
+    .header h1 {
+      color: var(--primary-color);
+      font-size: 1.8rem;
+      margin-bottom: 5px;
+    }
+
+    #status-msg {
+      font-weight: 600;
+      color: #666;
+      font-size: 0.95rem;
+      margin-top: 5px;
+    }
+
+    .stats-bar {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      font-weight: bold;
+      color: #555;
+      background: #f9f9f9;
+      padding: 10px 15px;
+      border-radius: 6px;
+    }
+
+    .question-box {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-bottom: 20px;
+      line-height: 1.4;
+    }
+
+    .options-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      margin-bottom: 25px;
+    }
+
+    .option-btn {
+      background: #fff;
+      border: 2px solid #e0e0e0;
       border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      padding: 14px 18px;
+      font-size: 1rem;
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      outline: none;
+    }
+
+    .option-btn:hover:not([disabled]) {
+      border-color: var(--primary-color);
+      background-color: #fff8f8;
+    }
+
+    .option-btn.correct {
+      background-color: #e8f5e9 !important;
+      border-color: var(--correct-color) !important;
+      color: var(--correct-color);
+      font-weight: bold;
+    }
+
+    .option-btn.wrong {
+      background-color: #ffebee !important;
+      border-color: var(--wrong-color) !important;
+      color: var(--wrong-color);
+      font-weight: bold;
+    }
+
+    .controls {
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .next-btn, .restart-btn {
+      background-color: var(--primary-color);
+      color: #fff;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .next-btn:hover, .restart-btn:hover {
+      background-color: #6a0000;
+    }
+
+    .result-box {
+      text-align: center;
+      padding: 20px 0;
+    }
+
+    .result-box h2 {
+      color: var(--primary-color);
       margin-bottom: 15px;
     }
+
+    .result-box p {
+      font-size: 1.1rem;
+      margin-bottom: 10px;
+    }
+
+    .thanks-msg {
+      margin-top: 20px;
+      font-style: italic;
+      color: #666;
+      border-top: 1px solid #eee;
+      padding-top: 15px;
+    }
+
     .hidden {
-      display: none;
+      display: none !important;
     }
   </style>
 </head>
 <body>
 
-  <h1>Quiz Game</h1>
-  <div id="status">Decrypting question bank...</div>
+  <div class="container">
+    <div class="header">
+      <h1>Dharm Shiromani Quiz</h1>
+      <div id="status-msg">Decrypting question bank...</div>
+    </div>
 
-  <div id="quiz-container" class="hidden">
-    <div id="question-area" class="question-card"></div>
-    <div id="thanks-message" style="margin-top:20px; font-style:italic;"></div>
+    <!-- Quiz Main Interface -->
+    <div id="quiz-ui" class="hidden">
+      <div class="stats-bar">
+        <span>Question <span id="current-num">1</span> of <span id="total-num">0</span></span>
+        <span>Score: <span id="score">0</span></span>
+      </div>
+
+      <div class="question-box" id="question-text">
+        <!-- Question content loaded dynamically -->
+      </div>
+
+      <div class="options-grid" id="options-container">
+        <!-- Option buttons loaded dynamically -->
+      </div>
+
+      <div class="controls">
+        <button id="next-btn" class="next-btn hidden" onclick="nextQuestion()">Next Question</button>
+      </div>
+    </div>
+
+    <!-- Completion Screen -->
+    <div id="result-ui" class="result-box hidden">
+      <h2>Quiz Completed!</h2>
+      <p>Your Final Score: <strong><span id="final-score">0</span> / <span id="max-score">0</span></strong></p>
+      <p id="accuracy-percent"></p>
+      <div id="thanks-text" class="thanks-msg"></div>
+      <br/>
+      <button class="restart-btn" onclick="restartQuiz()">Play Again</button>
+    </div>
   </div>
 
   <script>
     // Configuration
     const ENCRYPTED_BANK_URL = "./questions.enc";
-    const SECRET_KEY = "DharmShiromani2026!SecureKey"; // Must match encrypt.js key Exactly
+    const SECRET_KEY = "DharmShiromani2026!SecureKey"; // Must match key in encrypt.js
 
-    let quizData = {
-      questions: [],
-      thanksMessage: ""
-    };
+    let questionsList = [];
+    let thanksMessage = "";
+    let currentIndex = 0;
+    let score = 0;
+    let selectedAnswer = false;
 
-    async function loadAndDecryptQuestions() {
-      const statusEl = document.getElementById("status");
+    // Fetch and Decrypt Encrypted File
+    async function loadAndDecryptBank() {
+      const statusEl = document.getElementById("status-msg");
 
       try {
-        // 1. Fetch the encrypted .enc file
         const response = await fetch(ENCRYPTED_BANK_URL);
         if (!response.ok) {
-          throw new Error(`Failed to load encrypted file (Status ${response.status})`);
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
         
-        const encryptedText = await response.text();
+        const encryptedData = await response.text();
 
-        // 2. Decrypt using AES and Secret Key
-        const bytes = CryptoJS.AES.decrypt(encryptedText.trim(), SECRET_KEY);
+        // AES Decryption
+        const bytes = CryptoJS.AES.decrypt(encryptedData.trim(), SECRET_KEY);
         const decryptedJSON = bytes.toString(CryptoJS.enc.Utf8);
 
         if (!decryptedJSON) {
-          throw new Error("Decryption failed. Please check your Secret Key.");
+          throw new Error("Invalid Secret Key or corrupted file.");
         }
 
-        // 3. Parse JSON payload
-        quizData = JSON.parse(decryptedJSON);
+        const payload = JSON.parse(decryptedJSON);
 
-        statusEl.innerText = "Loaded questions successfully!";
-        statusEl.style.backgroundColor = "#d4edda";
-        statusEl.style.color = "#155724";
+        // Normalize raw data from Sheet 1
+        questionsList = parseRawQuestions(payload.questions || []);
+        thanksMessage = payload.thanksMessage || "";
 
-        // 4. Initialize Quiz
+        if (questionsList.length === 0) {
+          throw new Error("No valid questions found in bank.");
+        }
+
+        statusEl.classList.add("hidden");
+        document.getElementById("quiz-ui").classList.remove("hidden");
+        
         initQuiz();
 
       } catch (error) {
-        console.error(error);
-        statusEl.innerText = "Error: " + error.message;
-        statusEl.style.backgroundColor = "#f8d7da";
-        statusEl.style.color = "#721c24";
+        console.error("Initialization Error:", error);
+        statusEl.innerText = "Error loading questions: " + error.message;
+        statusEl.style.color = "var(--wrong-color)";
       }
+    }
+
+    // Convert raw sheet array into structured question objects
+    function parseRawQuestions(rawRows) {
+      let parsed = [];
+      
+      // If row 0 is header text (Question, Option 1, Option 2...), skip it
+      let startIdx = 0;
+      if (rawRows.length > 0 && String(rawRows[0][0]).toLowerCase().includes("question")) {
+        startIdx = 1;
+      }
+
+      for (let i = startIdx; i < rawRows.length; i++) {
+        const row = rawRows[i];
+        if (!row || !row[0]) continue; // Skip empty rows
+
+        const qText = String(row[0]).trim();
+        const opts = [];
+        
+        // Extract options from columns 1 to 4
+        for (let j = 1; j <= 4; j++) {
+          if (row[j] !== undefined && row[j] !== null && String(row[j]).trim() !== "") {
+            opts.push(String(row[j]).trim());
+          }
+        }
+
+        // Correct answer column (Index 5 or last column, expected as 1-based index or text string)
+        let correctVal = row[5] !== undefined ? row[5] : row[opts.length + 1];
+
+        parsed.push({
+          question: qText,
+          options: opts,
+          answer: correctVal
+        });
+      }
+
+      return parsed;
     }
 
     function initQuiz() {
-      document.getElementById("quiz-container").classList.remove("hidden");
-      
-      const questionArea = document.getElementById("question-area");
-      
-      if (quizData.questions && quizData.questions.length > 0) {
-        // Render questions / game logic here
-        questionArea.innerHTML = `<p><strong>Total rows/questions loaded:</strong> ${quizData.questions.length}</p>`;
+      currentIndex = 0;
+      score = 0;
+      document.getElementById("total-num").innerText = questionsList.length;
+      document.getElementById("result-ui").classList.add("hidden");
+      document.getElementById("quiz-ui").classList.remove("hidden");
+      showQuestion();
+    }
+
+    function showQuestion() {
+      selectedAnswer = false;
+      document.getElementById("next-btn").classList.add("hidden");
+      document.getElementById("current-num").innerText = currentIndex + 1;
+      document.getElementById("score").innerText = score;
+
+      const q = questionsList[currentIndex];
+      document.getElementById("question-text").innerText = q.question;
+
+      const optionsContainer = document.getElementById("options-container");
+      optionsContainer.innerHTML = "";
+
+      q.options.forEach((opt, idx) => {
+        const btn = document.createElement("button");
+        btn.className = "option-btn";
+        btn.innerText = opt;
+        btn.onclick = () => handleOptionClick(btn, idx, q);
+        optionsContainer.appendChild(btn);
+      });
+    }
+
+    function handleOptionClick(selectedBtn, optionIdx, questionObj) {
+      if (selectedAnswer) return;
+      selectedAnswer = true;
+
+      const allBtns = document.querySelectorAll(".option-btn");
+      allBtns.forEach(btn => btn.disabled = true);
+
+      // Determine correct index (Supports both 1-based numerical index and exact string match)
+      let isCorrect = false;
+      let correctOptionIdx = -1;
+
+      if (typeof questionObj.answer === "number") {
+        correctOptionIdx = questionObj.answer - 1; // 1-based to 0-based
+      } else if (!isNaN(parseInt(questionObj.answer))) {
+        correctOptionIdx = parseInt(questionObj.answer) - 1;
       } else {
-        questionArea.innerHTML = "<p>No questions found in bank.</p>";
+        // String match
+        correctOptionIdx = questionObj.options.findIndex(
+          o => o.toLowerCase() === String(questionObj.answer).toLowerCase()
+        );
       }
 
-      if (quizData.thanksMessage) {
-        document.getElementById("thanks-message").innerText = quizData.thanksMessage;
+      if (optionIdx === correctOptionIdx || selectedBtn.innerText.toLowerCase() === String(questionObj.answer).toLowerCase()) {
+        isCorrect = true;
+      }
+
+      if (isCorrect) {
+        selectedBtn.classList.add("correct");
+        score++;
+        document.getElementById("score").innerText = score;
+      } else {
+        selectedBtn.classList.add("wrong");
+        if (correctOptionIdx >= 0 && correctOptionIdx < allBtns.length) {
+          allBtns[correctOptionIdx].classList.add("correct");
+        }
+      }
+
+      document.getElementById("next-btn").classList.remove("hidden");
+    }
+
+    function nextQuestion() {
+      currentIndex++;
+      if (currentIndex < questionsList.length) {
+        showQuestion();
+      } else {
+        showResults();
       }
     }
 
-    // Start loading on page ready
-    window.addEventListener("DOMContentLoaded", loadAndDecryptQuestions);
+    function showResults() {
+      document.getElementById("quiz-ui").classList.add("hidden");
+      const resultUi = document.getElementById("result-ui");
+      resultUi.classList.remove("hidden");
+
+      document.getElementById("final-score").innerText = score;
+      document.getElementById("max-score").innerText = questionsList.length;
+
+      const pct = Math.round((score / questionsList.length) * 100);
+      document.getElementById("accuracy-percent").innerText = `Accuracy: ${pct}%`;
+
+      if (thanksMessage) {
+        document.getElementById("thanks-text").innerText = thanksMessage;
+      }
+    }
+
+    function restartQuiz() {
+      initQuiz();
+    }
+
+    // Initialize when DOM loaded
+    window.addEventListener("DOMContentLoaded", loadAndDecryptBank);
   </script>
 </body>
 </html>
