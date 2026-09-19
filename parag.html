@@ -662,7 +662,17 @@
 
   <script>
     const ENCRYPTED_BANK_URL = "./questions.enc";
-    const SECRET_KEY = "DharmShiromani2026!SecureKey";
+
+    
+    function getSecretKey() {
+      const part1Base64 = "RGhhcm1TaGlyb21hbmkyMDI2IQ=="; 
+      const part2Ascii = [83, 101, 99, 117, 114, 101, 75, 101, 121]; 
+      
+      const p1 = atob(part1Base64);
+      const p2 = String.fromCharCode(...part2Ascii);
+      
+      return p1 + p2;
+    }
 
     let customThanksMessage = "Thank you for playing Kaun Banega Dharm Shiromani!\nSpecial thanks to all contributors and scholars who helped build this question bank.";
 
@@ -713,7 +723,8 @@
 
         statusEl.innerText = "Decrypting payload...";
         
-        const bytes = CryptoJS.AES.decrypt(encryptedStr, SECRET_KEY);
+        const secretKey = getSecretKey();
+        const bytes = CryptoJS.AES.decrypt(encryptedStr, secretKey);
         const decryptedJSON = bytes.toString(CryptoJS.enc.Utf8);
 
         if (!decryptedJSON) {
