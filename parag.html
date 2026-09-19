@@ -329,31 +329,28 @@
       position: absolute;
       top: 10px;
       right: 12px;
-      background: rgba(255, 215, 0, 0.05);
-      border: 1px solid rgba(255, 215, 0, 0.3);
+      background: rgba(255, 215, 0, 0.2);
+      border: 1px solid #ffd700;
       border-radius: 50%;
       width: 38px;
       height: 38px;
       font-size: 1.2rem;
-      display: none; /* Controlled dynamically */
+      display: none;
       align-items: center;
       justify-content: center;
-      cursor: default;
-      opacity: 0.4;
-      pointer-events: none; /* Disabled until question/answer is played */
+      cursor: pointer;
+      opacity: 0.3;
+      pointer-events: none;
       transition: opacity 0.3s, transform 0.2s, box-shadow 0.2s;
     }
 
-    .bulb-btn.clickable {
+    .bulb-btn.active-bulb {
       opacity: 1;
       pointer-events: auto;
-      cursor: pointer;
-      border-color: #ffd700;
-      background: rgba(255, 215, 0, 0.2);
       animation: bulbPulse 1.5s infinite alternate;
     }
 
-    .bulb-btn.clickable:hover {
+    .bulb-btn.active-bulb:hover {
       transform: scale(1.1);
       box-shadow: 0 0 12px rgba(255, 215, 0, 0.6);
     }
@@ -571,7 +568,7 @@
         <div id="modal-explanation-en" style="color: #e2e8f0; font-size: 0.95rem; margin-bottom: 8px; line-height: 1.4;"></div>
         <div id="modal-explanation-hi" style="color: #fef08a; font-size: 0.9rem; line-height: 1.4;"></div>
       </div>
-      <button class="close-btn" onclick="closeExplanationModal()">Close</button>
+      <button class="close-btn" onclick="closeExplanationModal()">Continue / आगे बढ़ें</button>
     </div>
   </div>
 
@@ -693,6 +690,10 @@
     let timeRemaining = 0;
     let timerInterval = null;
 
+    // Timeout tracker for advancing to next step
+    let nextStepTimeout = null;
+    let pendingNextStepCallback = null;
+
     window.addEventListener('DOMContentLoaded', loadAndDecryptQuestions);
 
     async function loadAndDecryptQuestions() {
@@ -767,8 +768,11 @@
     function openExplanationModal() {
       if (!currentQuestionData) return;
 
-      // Pause timer when bulb explanation is opened
-      stopTimer();
+      // Pause/Cancel the background auto-advance timer if it's currently running
+      if (nextStepTimeout) {
+        clearTimeout(nextStepTimeout);
+        nextStepTimeout = null;
+      }
 
       const expEn = (currentQuestionData.en && currentQuestionData.en.explanation) ? currentQuestionData.en.explanation : "";
       const expHi = (currentQuestionData.hi && currentQuestionData.hi.explanation) ? currentQuestionData.hi.explanation : "";
@@ -782,9 +786,11 @@
     function closeExplanationModal() {
       document.getElementById('explanation-modal').style.display = 'none';
 
-      // Resume timer when modal is closed, if selection is still allowed
-      if (canSelect) {
-        resumeTimer();
+      // If there is a pending action (e.g. going to next question or end game), execute it now
+      if (pendingNextStepCallback) {
+        const callback = pendingNextStepCallback;
+        pendingNextStepCallback = null;
+        callback();
       }
     }
 
@@ -916,7 +922,7 @@
       return selected;
     }
 
-    function setupBulbState() {
+    function setupBulbState(makeActive = false) {
       const bulbBtn = document.getElementById('bulb-btn');
       
       const expEn = (currentQuestionData && currentQuestionData.en && currentQuestionData.en.explanation) ? currentQuestionData.en.explanation.trim() : "";
@@ -926,23 +932,22 @@
 
       if (hasExplanation) {
         bulbBtn.style.display = 'flex';
-        bulbBtn.classList.remove('clickable'); // Non-clickable initially
+        if (makeActive) {
+          bulbBtn.classList.add('active-bulb');
+        } else {
+          bulbBtn.classList.remove('active-bulb');
+        }
       } else {
-        bulbBtn.style.display = 'none'; // Hide if no explanation exists
-        bulbBtn.classList.remove('clickable');
-      }
-    }
-
-    function makeBulbClickable() {
-      const bulbBtn = document.getElementById('bulb-btn');
-      if (bulbBtn.style.display !== 'none') {
-        bulbBtn.classList.add('clickable');
+        bulbBtn.style.display = 'none';
+        bulbBtn.classList.remove('active-bulb');
       }
     }
 
     function loadQuestion() {
       canSelect = true;
       stopTimer();
+      if (nextStepTimeout) { clearTimeout(nextStepTimeout); nextStepTimeout = null; }
+      pendingNextStepCallback = null;
 
       currentQuestionData = getNextQuestion();
 
@@ -951,7 +956,8 @@
         return;
       }
 
-      setupBulbState();
+      // Hide/disable bulb initially while answering
+      setupBulbState(false);
 
       document.getElementById('lbl-level').innerText = `${currentQuestionData.numericLevel}`;
       
@@ -999,21 +1005,30 @@
       selectedBtn.classList.add('selected');
 
       setTimeout(() => {
-        // Enable bulb clickability as soon as answer state is revealed
-        makeBulbClickable();
+        // Enable bulb immediately after selection / reveal
+        setupBulbState(true);
 
         if (selectedOption.isCorrect) {
           selectedBtn.classList.remove('selected');
           selectedBtn.classList.add('correct');
 
-          setTimeout(() => {
+          pendingNextStepCallback = () => {
             currentIndex++;
             if (currentIndex < prizeLadder.length) {
               loadQuestion();
             } else {
               endGame(true);
             }
-          }, 2500);
+          };
+
+          // Delay moving to next question (allows time to click bulb)
+          nextStepTimeout = setTimeout(() => {
+            if (pendingNextStepCallback) {
+              const cb = pendingNextStepCallback;
+              pendingNextStepCallback = null;
+              cb();
+            }
+          }, 3500);
 
         } else {
           selectedBtn.classList.remove('selected');
@@ -1025,9 +1040,18 @@
             }
           });
 
-          setTimeout(() => {
+          pendingNextStepCallback = () => {
             endGame(false);
-          }, 3000);
+          };
+
+          // Delay moving to game over
+          nextStepTimeout = setTimeout(() => {
+            if (pendingNextStepCallback) {
+              const cb = pendingNextStepCallback;
+              pendingNextStepCallback = null;
+              cb();
+            }
+          }, 4000);
         }
       }, 1200);
     }
@@ -1038,12 +1062,6 @@
 
       timeRemaining = timeLimitPerQuestion;
       updateTimerUI();
-
-      resumeTimer();
-    }
-
-    function resumeTimer() {
-      if (!isTimedMode || timerInterval || timeRemaining <= 0) return;
 
       timerInterval = setInterval(() => {
         timeRemaining--;
@@ -1077,9 +1095,29 @@
 
     function handleTimeout() {
       canSelect = false;
-      makeBulbClickable();
-      alert("Time is up! / समय समाप्त!");
-      endGame(false);
+      
+      // Reveal correct answer on timeout
+      currentOptions.forEach((opt, idx) => {
+        if (opt.isCorrect) {
+          document.getElementById(`opt-btn-${idx}`).classList.add('correct');
+        }
+      });
+
+      // Enable bulb so user can check explanation
+      setupBulbState(true);
+
+      pendingNextStepCallback = () => {
+        alert("Time is up! / समय समाप्त!");
+        endGame(false);
+      };
+
+      nextStepTimeout = setTimeout(() => {
+        if (pendingNextStepCallback) {
+          const cb = pendingNextStepCallback;
+          pendingNextStepCallback = null;
+          cb();
+        }
+      }, 4000);
     }
 
     function use5050() {
@@ -1157,7 +1195,16 @@
 
     function closeQuitModal() {
       document.getElementById('quit-modal').style.display = 'none';
-      resumeTimer();
+      if (canSelect && isTimedMode && !timerInterval) {
+        timerInterval = setInterval(() => {
+          timeRemaining--;
+          updateTimerUI();
+          if (timeRemaining <= 0) {
+            stopTimer();
+            handleTimeout();
+          }
+        }, 1000);
+      }
     }
 
     function confirmQuit() {
@@ -1194,6 +1241,9 @@
 
     function resetToSetup() {
       stopTimer();
+      if (nextStepTimeout) { clearTimeout(nextStepTimeout); nextStepTimeout = null; }
+      pendingNextStepCallback = null;
+
       lifeline5050Used = false;
       lifelineAudienceUsed = false;
       lifelineFlipUsed = false;
