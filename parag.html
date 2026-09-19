@@ -172,6 +172,7 @@
       height: 98vh;
       margin: 0 auto;
       padding: 8px;
+      position: relative;
     }
 
     .header-bar {
@@ -378,13 +379,21 @@
       margin-right: 6px;
     }
 
+    /* Modal Overlay Style for Game Over Popup */
     .end-screen {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
       text-align: center;
       background: rgba(15, 2, 32, 0.95);
       border: 2px solid #d4af37;
       border-radius: 20px;
       padding: 30px 20px;
-      margin: auto 0;
+      width: 90%;
+      max-width: 450px;
+      box-shadow: 0 0 30px rgba(0, 0, 0, 0.8), 0 0 15px rgba(212, 175, 55, 0.4);
+      z-index: 500;
     }
 
     .modal {
@@ -713,7 +722,6 @@
 
         let qId = String(row[0]).trim();
         
-        // MODIFIED: Parse fractional numbers (e.g. 1.5) instead of strictly integers
         let rawLevelStr = String(row[1]).replace(/[^\d.]/g, '');
         let numLevel = parseFloat(rawLevelStr);
         if (isNaN(numLevel)) numLevel = 1.0;
@@ -782,7 +790,6 @@
     function getNextQuestion() {
       if (sortedLevels.length === 0) return null;
 
-      // MODIFIED: Supports fractional mapping across sorted float levels
       let levelIdx = Math.floor((currentIndex / prizeLadder.length) * sortedLevels.length);
       levelIdx = Math.min(levelIdx, sortedLevels.length - 1);
       let targetLevel = sortedLevels[levelIdx];
@@ -828,7 +835,6 @@
         return;
       }
 
-      // Shows current fractional level if desired, or index step
       document.getElementById('lbl-level').innerText = `${currentQuestionData.numericLevel}`;
       
       const currentPrize = prizeLadder[Math.min(currentIndex, prizeLadder.length - 1)];
@@ -1024,7 +1030,17 @@
 
     function endGame(isVictory, isQuit = false) {
       stopTimer();
-      document.getElementById('game-ui').style.display = 'none';
+      canSelect = false;
+      
+      // Disable options and lifelines so user cannot interact behind overlay
+      const optionButtons = document.querySelectorAll('.option-btn');
+      optionButtons.forEach(btn => btn.style.pointerEvents = 'none');
+      
+      const lifelineButtons = document.querySelectorAll('.lifeline-btn');
+      lifelineButtons.forEach(btn => btn.style.pointerEvents = 'none');
+
+      // Keep #game-ui visible, render #end-ui on top as an overlay
+      document.getElementById('game-ui').style.display = 'block';
       document.getElementById('end-ui').style.display = 'block';
 
       const finalVal = currentIndex > 0 ? prizeLadder[Math.min(currentIndex - 1, prizeLadder.length - 1)] : "0";
@@ -1050,6 +1066,13 @@
       document.getElementById('life-5050').classList.remove('used');
       document.getElementById('life-audience').classList.remove('used');
       document.getElementById('life-flip').classList.remove('used');
+
+      // Re-enable interactive elements for the next session
+      const optionButtons = document.querySelectorAll('.option-btn');
+      optionButtons.forEach(btn => btn.style.pointerEvents = 'auto');
+      
+      const lifelineButtons = document.querySelectorAll('.lifeline-btn');
+      lifelineButtons.forEach(btn => btn.style.pointerEvents = 'auto');
 
       document.getElementById('game-ui').style.display = 'block';
       document.getElementById('end-ui').style.display = 'none';
