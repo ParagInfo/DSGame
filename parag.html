@@ -417,29 +417,38 @@
       max-width: 380px;
     }
 
+    /* Enhanced Audience Poll Container & Bars */
     .poll-bars {
       display: flex;
       justify-content: space-around;
       align-items: flex-end;
-      height: 130px;
+      height: 140px;
       margin: 15px 0;
       border-bottom: 2px solid #38bdf8;
       padding-bottom: 5px;
+      background: rgba(11, 1, 24, 0.6);
+      border-radius: 8px 8px 0 0;
+      padding-top: 10px;
     }
 
     .poll-col {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 4px;
+      justify-content: flex-end;
+      height: 100%;
       width: 20%;
     }
 
     .poll-bar {
       width: 100%;
-      background: #ffd700;
+      max-width: 35px;
+      background: linear-gradient(180deg, #ffd700 0%, #b8860b 100%);
+      border: 1px solid #ffe87c;
       border-radius: 4px 4px 0 0;
-      transition: height 0.5s ease;
+      height: 0%;
+      transition: height 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+      box-shadow: 0 0 8px rgba(255, 215, 0, 0.4);
     }
 
     .close-btn {
@@ -529,10 +538,10 @@
     <div class="modal-content">
       <h3 style="color: #ffd700; margin-bottom: 10px;">Audience Poll Result</h3>
       <div class="poll-bars">
-        <div class="poll-col"><span id="pval-0" style="font-size: 0.8rem; color:#fef08a;">0%</span><div class="poll-bar" id="pbar-0" style="height: 0%;"></div><span style="color:#38bdf8; font-weight:bold;">A</span></div>
-        <div class="poll-col"><span id="pval-1" style="font-size: 0.8rem; color:#fef08a;">0%</span><div class="poll-bar" id="pbar-1" style="height: 0%;"></div><span style="color:#38bdf8; font-weight:bold;">B</span></div>
-        <div class="poll-col"><span id="pval-2" style="font-size: 0.8rem; color:#fef08a;">0%</span><div class="poll-bar" id="pbar-2" style="height: 0%;"></div><span style="color:#38bdf8; font-weight:bold;">C</span></div>
-        <div class="poll-col"><span id="pval-3" style="font-size: 0.8rem; color:#fef08a;">0%</span><div class="poll-bar" id="pbar-3" style="height: 0%;"></div><span style="color:#38bdf8; font-weight:bold;">D</span></div>
+        <div class="poll-col"><span id="pval-0" style="font-size: 0.8rem; color:#fef08a; margin-bottom: 4px;">0%</span><div class="poll-bar" id="pbar-0"></div><span style="color:#38bdf8; font-weight:bold; margin-top: 4px;">A</span></div>
+        <div class="poll-col"><span id="pval-1" style="font-size: 0.8rem; color:#fef08a; margin-bottom: 4px;">0%</span><div class="poll-bar" id="pbar-1"></div><span style="color:#38bdf8; font-weight:bold; margin-top: 4px;">B</span></div>
+        <div class="poll-col"><span id="pval-2" style="font-size: 0.8rem; color:#fef08a; margin-bottom: 4px;">0%</span><div class="poll-bar" id="pbar-2"></div><span style="color:#38bdf8; font-weight:bold; margin-top: 4px;">C</span></div>
+        <div class="poll-col"><span id="pval-3" style="font-size: 0.8rem; color:#fef08a; margin-bottom: 4px;">0%</span><div class="poll-bar" id="pbar-3"></div><span style="color:#38bdf8; font-weight:bold; margin-top: 4px;">D</span></div>
       </div>
       <button class="close-btn" onclick="closePoll()">Continue</button>
     </div>
@@ -989,12 +998,24 @@
       percentages[wrongIndices[1]] = p2;
       percentages[wrongIndices[2]] = p3;
 
+      // Reset bars height to 0 first
       for (let i = 0; i < 4; i++) {
         document.getElementById(`pval-${i}`).innerText = percentages[i] + "%";
-        document.getElementById(`pbar-${i}`).style.height = percentages[i] + "%";
+        document.getElementById(`pbar-${i}`).style.height = "0%";
       }
 
-      document.getElementById("poll-modal").style.display = "flex";
+      // Display Modal
+      const pollModal = document.getElementById("poll-modal");
+      pollModal.style.display = "flex";
+
+      // Trigger animated height growth after DOM updates display to flex
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          for (let i = 0; i < 4; i++) {
+            document.getElementById(`pbar-${i}`).style.height = percentages[i] + "%";
+          }
+        });
+      });
     }
 
     function closePoll() {
