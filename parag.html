@@ -767,6 +767,9 @@
     function openExplanationModal() {
       if (!currentQuestionData) return;
 
+      // Pause timer when bulb explanation is opened
+      stopTimer();
+
       const expEn = (currentQuestionData.en && currentQuestionData.en.explanation) ? currentQuestionData.en.explanation : "";
       const expHi = (currentQuestionData.hi && currentQuestionData.hi.explanation) ? currentQuestionData.hi.explanation : "";
 
@@ -778,6 +781,11 @@
 
     function closeExplanationModal() {
       document.getElementById('explanation-modal').style.display = 'none';
+
+      // Resume timer when modal is closed, if selection is still allowed
+      if (canSelect) {
+        resumeTimer();
+      }
     }
 
     function shuffleArray(array) {
@@ -1031,6 +1039,12 @@
       timeRemaining = timeLimitPerQuestion;
       updateTimerUI();
 
+      resumeTimer();
+    }
+
+    function resumeTimer() {
+      if (!isTimedMode || timerInterval || timeRemaining <= 0) return;
+
       timerInterval = setInterval(() => {
         timeRemaining--;
         updateTimerUI();
@@ -1143,7 +1157,7 @@
 
     function closeQuitModal() {
       document.getElementById('quit-modal').style.display = 'none';
-      startTimer();
+      resumeTimer();
     }
 
     function confirmQuit() {
