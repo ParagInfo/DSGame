@@ -148,6 +148,20 @@
       box-shadow: none;
     }
 
+    .instructions-btn {
+      background: linear-gradient(180deg, #22c55e 0%, #15803d 100%);
+      color: #fff;
+      border: none;
+      padding: 10px;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 0.95rem;
+      cursor: pointer;
+      margin-top: 10px;
+      width: 100%;
+      box-shadow: 0 0 10px rgba(34, 197, 94, 0.3);
+    }
+
     .thanks-btn {
       background: linear-gradient(180deg, #38bdf8 0%, #0284c7 100%);
       color: #fff;
@@ -484,11 +498,23 @@
       border-radius: 12px;
       text-align: center;
       width: 100%;
-      max-width: 380px;
+      max-width: 450px;
+      max-height: 85vh;
+      overflow-y: auto;
     }
 
     .modal-content h3 {
       font-size: 1rem;
+    }
+
+    /* Link formatting for modal dynamic HTML */
+    .modal-content a {
+      color: #38bdf8;
+      text-decoration: underline;
+    }
+
+    .modal-content a:visited {
+      color: #a855f7;
     }
 
     .poll-bars {
@@ -592,7 +618,19 @@
       </div>
 
       <button class="start-btn" id="start-btn" onclick="startGame()" disabled>Loading...</button>
+      <button class="instructions-btn" id="instructions-btn" onclick="openInstructionsModal()">Instructions / Rules</button>
       <button class="thanks-btn" id="thanks-btn" onclick="openThanksModal()">Acknowledge / Thanks</button>
+    </div>
+  </div>
+
+  <!-- Instructions Modal (Sheet2 Data) -->
+  <div class="modal" id="instructions-modal">
+    <div class="modal-content">
+      <h3 style="color: #ffd700; margin-bottom: 12px;" id="instructions-title">Instructions / नियम एवं निर्देश</h3>
+      <div id="instructions-body" style="color: #fef08a; font-size: 0.95rem; margin-bottom: 20px; text-align: left; line-height: 1.5; word-break: break-word;">
+        Loading instructions...
+      </div>
+      <button class="close-btn" onclick="closeInstructionsModal()">Close</button>
     </div>
   </div>
 
@@ -717,7 +755,6 @@
   <script>
     const ENCRYPTED_BANK_URL = "./questions.enc";
 
-    
     function getSecretKey() {
       const part1Base64 = "RGhhcm1TaGlyb21hbmkyMDI2IQ=="; 
       const part2Ascii = [83, 101, 99, 117, 114, 101, 75, 101, 121]; 
@@ -729,6 +766,8 @@
     }
 
     let customThanksMessage = "Thank you for playing Kaun Banega Dharm Shiromani!\nSpecial thanks to all contributors and scholars who helped build this question bank.";
+    let customInstructionsTitle = "Instructions / नियम एवं निर्देश";
+    let customInstructionsBody = "No specific instructions provided.";
 
     const prizeLadder = [
       "1,000", "2,000", "3,000", "5,000", "10,000",
@@ -791,7 +830,24 @@
           customThanksMessage = data.thanksMessage;
         }
 
-        pairedQuestionsBank = parseAndPairData(data.questions || []);
+        // Parse Sheet 2 Data (Instructions / A2 Title and A3 Content)
+        if (data.sheet2 && Array.isArray(data.sheet2)) {
+          if (data.sheet2[1] && data.sheet2[1][0]) {
+            customInstructionsTitle = String(data.sheet2[1][0]).trim(); // Row 2 (Cell A2)
+          }
+          if (data.sheet2[2] && data.sheet2[2][0]) {
+            customInstructionsBody = String(data.sheet2[2][0]).trim(); // Row 3 (Cell A3)
+          }
+        } else {
+          if (data.instructionsTitle && data.instructionsTitle.trim() !== "") {
+            customInstructionsTitle = data.instructionsTitle;
+          }
+          if (data.instructionsBody && data.instructionsBody.trim() !== "") {
+            customInstructionsBody = data.instructionsBody;
+          }
+        }
+
+        pairedQuestionsBank = parseAndPairData(data.questions || data.sheet1 || []);
 
         if (pairedQuestionsBank.length === 0) {
           throw new Error("No valid questions found in data.");
@@ -818,6 +874,16 @@
         startBtn.disabled = true;
         startBtn.innerText = "Error Loading Data";
       }
+    }
+
+    function openInstructionsModal() {
+      document.getElementById('instructions-title').innerText = customInstructionsTitle;
+      document.getElementById('instructions-body').innerHTML = customInstructionsBody;
+      document.getElementById('instructions-modal').style.display = 'flex';
+    }
+
+    function closeInstructionsModal() {
+      document.getElementById('instructions-modal').style.display = 'none';
     }
 
     function openThanksModal() {
