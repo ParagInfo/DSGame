@@ -212,7 +212,7 @@
     .badge {
       padding: 4px 10px;
       border-radius: 6px;
-      font-size: 0.85rem;
+      font-size: 0.50rem;
       font-weight: 700;
       text-transform: uppercase;
       border: 1px solid #ffd700;
@@ -327,14 +327,16 @@
     /* Bulb Icon Button */
     .bulb-btn {
       position: absolute;
-      top: 10px;
-      left: 12px;
+      top: auto;
+      bottom: 6px;
+      left: 6px;
+      right: auto;
       background: rgba(255, 215, 0, 0.2);
       border: 1px solid #ffd700;
       border-radius: 50%;
-      width: 38px;
-      height: 38px;
-      font-size: 1.2rem;
+      width: 26px;
+      height: 26px;
+      font-size: .85rem;
       display: none;
       align-items: center;
       justify-content: center;
@@ -414,6 +416,30 @@
       color: #ffd700;
       font-weight: bold;
       margin-right: 6px;
+    }
+
+    /* Media Popup Styling */
+    .media-container {
+      margin: 15px 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      max-height: 250px;
+      overflow: hidden;
+      border-radius: 8px;
+      background: #000;
+    }
+
+    .media-container img, .media-container video {
+      max-width: 100%;
+      max-height: 240px;
+      object-fit: contain;
+    }
+
+    .media-container audio {
+      width: 100%;
+      margin: 10px 0;
     }
 
     /* Modal Overlay Style */
@@ -558,6 +584,19 @@
     </div>
   </div>
 
+  <!-- Media Popup Modal -->
+  <div class="modal" id="media-modal">
+    <div class="modal-content">
+      <h3 style="color: #ffd700; margin-bottom: 12px;" id="media-title">
+        Media Question
+      </h3>
+      <div class="media-container" id="media-content">
+        <!-- Dynamic media content goes here -->
+      </div>
+      <button class="close-btn" onclick="closeMediaModal()">Acknowledge & Proceed to Question</button>
+    </div>
+  </div>
+
   <!-- Explanation Modal -->
   <div class="modal" id="explanation-modal">
     <div class="modal-content">
@@ -565,8 +604,8 @@
         💡 Explanation / स्पष्टीकरण
       </h3>
       <div style="text-align: left; background: #0b0118; border: 1px solid #38bdf8; border-radius: 8px; padding: 12px; margin-bottom: 15px;">
-        <div id="modal-explanation-en" style="color: #e2e8f0; font-size: 0.95rem; margin-bottom: 8px; line-height: 1.4;"></div>
-        <div id="modal-explanation-hi" style="color: #fef08a; font-size: 0.9rem; line-height: 1.4;"></div>
+        <div id="modal-explanation-en" style="color: #e2e8f0; font-size: 0.75rem; margin-bottom: 8px; line-height: 1.4;"></div>
+        <div id="modal-explanation-hi" style="color: #fef08a; font-size: 0.7rem; line-height: 1.4;"></div>
       </div>
       <button class="close-btn" onclick="closeExplanationModal()">Continue / आगे बढ़ें</button>
     </div>
@@ -662,7 +701,17 @@
 
   <script>
     const ENCRYPTED_BANK_URL = "./questions.enc";
-    const SECRET_KEY = "DharmShiromani2026!SecureKey";
+
+    
+    function getSecretKey() {
+      const part1Base64 = "RGhhcm1TaGlyb21hbmkyMDI2IQ=="; 
+      const part2Ascii = [83, 101, 99, 117, 114, 101, 75, 101, 121]; 
+      
+      const p1 = atob(part1Base64);
+      const p2 = String.fromCharCode(...part2Ascii);
+      
+      return p1 + p2;
+    }
 
     let customThanksMessage = "Thank you for playing Kaun Banega Dharm Shiromani!\nSpecial thanks to all contributors and scholars who helped build this question bank.";
 
@@ -713,7 +762,8 @@
 
         statusEl.innerText = "Decrypting payload...";
         
-        const bytes = CryptoJS.AES.decrypt(encryptedStr, SECRET_KEY);
+        const secretKey = getSecretKey();
+        const bytes = CryptoJS.AES.decrypt(encryptedStr, secretKey);
         const decryptedJSON = bytes.toString(CryptoJS.enc.Utf8);
 
         if (!decryptedJSON) {
@@ -830,14 +880,23 @@
         let flag = String(row[7] || "").trim().toLowerCase();
         let explanationText = row[8] ? String(row[8]).trim() : "";
 
+        // Column J: Question Type (T, A, V, P)
+        let rawQType = row[9] ? String(row[9]).trim().toUpperCase() : "T";
+        let qType = ["T", "A", "V", "P"].includes(rawQType) ? rawQType : "T";
+
+        // Column K: Media URL
+        let mediaUrl = row[10] ? String(row[10]).trim() : "";
+
         if (!qId || !questionText || !correctOpt) continue;
 
         if (!map.has(qId)) {
-          map.set(qId, { qId, numericLevel: numLevel, en: null, hi: null });
+          map.set(qId, { qId, numericLevel: numLevel, qType: qType, mediaUrl: mediaUrl, en: null, hi: null });
         }
 
         let entry = map.get(qId);
         entry.numericLevel = numLevel;
+        entry.qType = qType;
+        entry.mediaUrl = mediaUrl;
 
         let langData = {
           qText: questionText,
@@ -959,7 +1018,7 @@
       // Hide/disable bulb initially while answering
       setupBulbState(false);
 
-      document.getElementById('lbl-level').innerText = `${currentQuestionData.numericLevel}`;
+      document.getElementById('lbl-level').innerText = `${currentQuestionData.qId}9${currentQuestionData.numericLevel * 10}`;
       
       const currentPrize = prizeLadder[Math.min(currentIndex, prizeLadder.length - 1)];
       document.getElementById('lbl-prize').innerText = `Question ${currentIndex + 1} • Points: ${currentPrize}`;
@@ -975,7 +1034,53 @@
       ]);
 
       renderOptions();
-      startTimer();
+
+      // Check for Media Question Types (P, A, V)
+      if (['P', 'A', 'V'].includes(currentQuestionData.qType)) {
+        showMediaModal(currentQuestionData.qType, currentQuestionData.mediaUrl);
+      } else {
+        startTimer();
+      }
+    }
+
+    function showMediaModal(type, url) {
+      stopTimer(); // Pause timer while modal is open
+      const titleEl = document.getElementById('media-title');
+      const containerEl = document.getElementById('media-content');
+      containerEl.innerHTML = '';
+
+      if (type === 'P') {
+        titleEl.innerText = '🖼️ Picture Question / चित्र प्रश्न';
+        const img = document.createElement('img');
+        img.src = url;
+        img.alt = 'Question Image';
+        containerEl.appendChild(img);
+      } else if (type === 'A') {
+        titleEl.innerText = '🎵 Audio Question / ऑडियो प्रश्न';
+        const audio = document.createElement('audio');
+        audio.controls = true;
+        audio.autoplay = true;
+        audio.src = url;
+        containerEl.appendChild(audio);
+      } else if (type === 'V') {
+        titleEl.innerText = '🎥 Video Question / वीडियो प्रश्न';
+        const video = document.createElement('video');
+        video.controls = true;
+        video.autoplay = true;
+        video.src = url;
+        containerEl.appendChild(video);
+      }
+
+      document.getElementById('media-modal').style.display = 'flex';
+    }
+
+    function closeMediaModal() {
+      const containerEl = document.getElementById('media-content');
+      const mediaElements = containerEl.querySelectorAll('audio, video');
+      mediaElements.forEach(el => el.pause()); // Stop playback on close
+      
+      document.getElementById('media-modal').style.display = 'none';
+      startTimer(); // Resume timer after acknowledgement
     }
 
     function renderOptions() {
