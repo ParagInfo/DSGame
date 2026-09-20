@@ -970,7 +970,7 @@
       // Hide/disable bulb initially while answering
       setupBulbState(false);
 
-      document.getElementById('lbl-level').innerText = `${currentQuestionData.numericLevel}`;
+      document.getElementById('lbl-level').innerText = `${currentIndex + 1} | Lvl ${currentQuestionData.numericLevel}`;
       
       const currentPrize = prizeLadder[Math.min(currentIndex, prizeLadder.length - 1)];
       document.getElementById('lbl-prize').innerText = `Question ${currentIndex + 1} • Points: ${currentPrize}`;
