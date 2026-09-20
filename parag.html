@@ -1043,37 +1043,44 @@
       }
     }
 
-    function showMediaModal(type, url) {
-      stopTimer(); // Pause timer while modal is open
-      const titleEl = document.getElementById('media-title');
-      const containerEl = document.getElementById('media-content');
-      containerEl.innerHTML = '';
+function showMediaModal(type, url) {
+  stopTimer(); // Pause timer while modal is open
+  const titleEl = document.getElementById('media-title');
+  const containerEl = document.getElementById('media-content');
+  containerEl.innerHTML = '';
 
-      if (type === 'P') {
-        titleEl.innerText = '🖼️ Picture Question / चित्र प्रश्न';
-        const img = document.createElement('img');
-        img.src = url;
-        img.alt = 'Question Image';
-        containerEl.appendChild(img);
-      } else if (type === 'A') {
-        titleEl.innerText = '🎵 Audio Question / ऑडियो प्रश्न';
-        const audio = document.createElement('audio');
-        audio.controls = true;
-        audio.autoplay = true;
-        audio.src = url;
-        containerEl.appendChild(audio);
-      } else if (type === 'V') {
-        titleEl.innerText = '🎥 Video Question / वीडियो प्रश्न';
-        const video = document.createElement('video');
-        video.controls = true;
-        video.autoplay = true;
-        video.src = url;
-        containerEl.appendChild(video);
-      }
+  // 1. Unhide the modal FIRST so elements have layout context
+  document.getElementById('media-modal').style.display = 'flex';
 
-      document.getElementById('media-modal').style.display = 'flex';
-    }
+  if (type === 'P') {
+    titleEl.innerText = '🖼️ Picture Question / चित्र प्रश्न';
+    const img = document.createElement('img');
+    img.src = url;
+    img.alt = 'Question Image';
+    containerEl.appendChild(img);
+  } else if (type === 'A') {
+    titleEl.innerText = '🎵 Audio Question / ऑडियो प्रश्न';
+    const audio = document.createElement('audio');
+    audio.controls = true;
+    audio.src = url;
+    containerEl.appendChild(audio);
 
+    // Explicitly call .play() and handle browser autoplay blocks gracefully
+    audio.play().catch(error => {
+      console.warn('Autoplay prevented by browser policy. User must press Play:', error);
+    });
+  } else if (type === 'V') {
+    titleEl.innerText = '🎥 Video Question / वीडियो प्रश्न';
+    const video = document.createElement('video');
+    video.controls = true;
+    video.src = url;
+    containerEl.appendChild(video);
+
+    video.play().catch(error => {
+      console.warn('Autoplay prevented by browser policy:', error);
+    });
+  }
+}
     function closeMediaModal() {
       const containerEl = document.getElementById('media-content');
       const mediaElements = containerEl.querySelectorAll('audio, video');
