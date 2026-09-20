@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kaun Banega Dharm Shiromani</title>
+    <!-- CryptoJS for AES Decryption -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #0d0221;
+            --panel-bg: #190a38;
+            --accent-gold: #ffd700;
+            --text-color: #ffffff;
+            --button-border: #4a2574;
+            --button-hover: #6b3ba7;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: radial-gradient(circle, #1a0845 0%, #080017 100%);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            color: var(--accent-gold);
+            margin: 0 0 10px 0;
+            font-size: 2.2rem;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        button.action-btn {
+            background-color: var(--panel-bg);
+            color: var(--accent-gold);
+            border: 2px solid var(--accent-gold);
+            padding: 10px 20px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        button.action-btn:hover {
+            background-color: var(--accent-gold);
+            color: var(--bg-color);
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: var(--panel-bg);
+            border: 2px solid var(--accent-gold);
+            margin: 5% auto;
+            padding: 25px;
+            width: 80%;
+            max-width: 800px;
+            border-radius: 12px;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.2);
+            color: var(--text-color);
+            position: relative;
+        }
+
+        .close-btn {
+            color: var(--accent-gold);
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close-btn:hover {
+            color: #fff;
+        }
+
+        .modal-body {
+            margin-top: 20px;
+            line-height: 1.6;
+            max-height: 70vh;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .modal-body h2, .modal-body h3 {
+            color: var(--accent-gold);
+        }
+
+        .rule-divider {
+            border: 0;
+            height: 1px;
+            background: linear-gradient(to right, transparent, var(--accent-gold), transparent);
+            margin: 20px 0;
+        }
+
+        /* Game Layout Placeholder */
+        .game-container {
+            width: 100%;
+            max-width: 900px;
+            background: var(--panel-bg);
+            border: 1px solid var(--button-border);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>कौन बनेगा धर्म शिरोमणि</h1>
+        <div class="nav-buttons">
+            <button class="action-btn" id="instructionsBtn" onclick="openInstructionsModal()">Rules & Instructions</button>
+            <button class="action-btn" id="thanksBtn" onclick="openThanksModal()">Thanks</button>
+        </div>
+    </div>
+
+    <div class="game-container">
+        <p id="gameStatus">Loading questions and game data...</p>
+    </div>
+
+    <!-- Instructions Modal -->
+    <div id="instructionsModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeInstructionsModal()">&times;</span>
+            <h2 style="color: var(--accent-gold); margin-top: 0;">Rules & Instructions</h2>
+            <div id="instructionsContent" class="modal-body">
+                <p>Loading rules...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Thanks Modal -->
+    <div id="thanksModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeThanksModal()">&times;</span>
+            <h2 style="color: var(--accent-gold); margin-top: 0;">Acknowledgments</h2>
+            <div id="thanksContent" class="modal-body">
+                <p>Thank you for playing Kaun Banega Dharm Shiromani!</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Store cell A2 and A3 contents globally
+        let rulesHTML_A2 = "";
+        let rulesHTML_A3 = "";
+        let questionsData = [];
+
+        // Secret key reconstruction
+        function getSecretKey() {
+            const part1 = "S2F1bkJhbmVnYURoYXJt"; // Base64 chunk
+            const part2 = "U2hpcm9tYW5pMjAyNA=="; // Base64 chunk
+            return atob(part1) + atob(part2);
+        }
+
+        // Fetch and Decrypt Questions Data
+        async function loadEncryptedData() {
+            const statusEl = document.getElementById("gameStatus");
+            try {
+                const response = await fetch('questions.enc');
+                if (!response.ok) {
+                    throw new Error("Unable to locate encrypted data file.");
+                }
+                const encryptedText = await response.text();
+                const secretKey = getSecretKey();
+                
+                // AES Decryption
+                const decryptedBytes = CryptoJS.AES.decrypt(encryptedText, secretKey);
+                const decryptedText = decryptedBytes.toString(CryptoJS.enc.Utf8);
+
+                if (!decryptedText) {
+                    throw new Error("Decryption failed. Check key or payload.");
+                }
+
+                // Parse payload (JSON matrix or structure representing rows & columns)
+                const parsedData = JSON.parse(decryptedText);
+
+                // Extract Cell A2 (Row index 1, Col index 0) and Cell A3 (Row index 2, Col index 0)
+                if (Array.isArray(parsedData) && parsedData.length >= 3) {
+                    rulesHTML_A2 = parsedData[1] && parsedData[1][0] ? parsedData[1][0] : "";
+                    rulesHTML_A3 = parsedData[2] && parsedData[2][0] ? parsedData[2][0] : "";
+                } else if (parsedData.cells) {
+                    // Alternative dictionary object fallback (A2, A3 key binding)
+                    rulesHTML_A2 = parsedData.cells['A2'] || "";
+                    rulesHTML_A3 = parsedData.cells['A3'] || "";
+                }
+
+                statusEl.textContent = "Data loaded successfully. Ready to play!";
+            } catch (err) {
+                console.error(err);
+                statusEl.textContent = "Error loading game data: " + err.message;
+            }
+        }
+
+        // Instructions Modal Functions
+        function openInstructionsModal() {
+            const modal = document.getElementById("instructionsModal");
+            const container = document.getElementById("instructionsContent");
+
+            if (rulesHTML_A2 || rulesHTML_A3) {
+                container.innerHTML = `
+                    <div class="rule-section">
+                        ${rulesHTML_A2}
+                    </div>
+                    <hr class="rule-divider"/>
+                    <div class="rule-section">
+                        ${rulesHTML_A3}
+                    </div>
+                `;
+            } else {
+                container.innerHTML = "<p>Instructions content is unavailable or currently loading.</p>";
+            }
+
+            modal.style.display = "block";
+        }
+
+        function closeInstructionsModal() {
+            document.getElementById("instructionsModal").style.display = "none";
+        }
+
+        // Thanks Modal Functions
+        function openThanksModal() {
+            document.getElementById("thanksModal").style.display = "block";
+        }
+
+        function closeThanksModal() {
+            document.getElementById("thanksModal").style.display = "none";
+        }
+
+        // Close modals when clicking backdrop
+        window.onclick = function(event) {
+            const instModal = document.getElementById("instructionsModal");
+            const thanksModal = document.getElementById("thanksModal");
+            if (event.target === instModal) {
+                instModal.style.display = "none";
+            }
+            if (event.target === thanksModal) {
+                thanksModal.style.display = "none";
+            }
+        };
+
+        // Initialize on load
+        window.addEventListener('DOMContentLoaded', () => {
+            loadEncryptedData();
+        });
+    </script>
+</body>
+</html>
