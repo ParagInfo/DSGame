@@ -420,20 +420,27 @@
 
     /* Media Popup Styling */
     .media-container {
-      margin: 15px 0;
+      margin: 10px 0;
       display: flex;
       justify-content: center;
       align-items: center;
       width: 100%;
-      max-height: 250px;
+      max-height: 220px;
       overflow: hidden;
       border-radius: 8px;
       background: #000;
     }
 
+    .media-instruction {
+      font-size: 0.8rem;
+      color: #38bdf8;
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+
     .media-container img, .media-container video {
       max-width: 100%;
-      max-height: 240px;
+      max-height: 210px;
       object-fit: contain;
     }
 
@@ -473,11 +480,15 @@
     .modal-content {
       background: #180533;
       border: 2px solid #d4af37;
-      padding: 20px;
+      padding: 16px;
       border-radius: 12px;
       text-align: center;
       width: 100%;
-      max-width: 420px;
+      max-width: 380px;
+    }
+
+    .modal-content h3 {
+      font-size: 1rem;
     }
 
     .poll-bars {
@@ -517,9 +528,10 @@
       background: #ffd700;
       color: #000;
       border: none;
-      padding: 8px 20px;
+      padding: 6px 16px;
       border-radius: 6px;
       font-weight: bold;
+      font-size: 0.85rem;
       cursor: pointer;
     }
 
@@ -587,9 +599,12 @@
   <!-- Media Popup Modal -->
   <div class="modal" id="media-modal">
     <div class="modal-content">
-      <h3 style="color: #ffd700; margin-bottom: 12px;" id="media-title">
+      <h3 style="color: #ffd700; margin-bottom: 6px;" id="media-title">
         Media Question
       </h3>
+      <div class="media-instruction" id="media-instruction">
+        Please press the Play button to listen/watch / कृपया सुनने/देखने के लिए प्ले बटन दबाएं
+      </div>
       <div class="media-container" id="media-content">
         <!-- Dynamic media content goes here -->
       </div>
@@ -1043,44 +1058,41 @@
       }
     }
 
-function showMediaModal(type, url) {
-  stopTimer(); // Pause timer while modal is open
-  const titleEl = document.getElementById('media-title');
-  const containerEl = document.getElementById('media-content');
-  containerEl.innerHTML = '';
+    function showMediaModal(type, url) {
+      stopTimer(); // Pause timer while modal is open
+      const titleEl = document.getElementById('media-title');
+      const instructionEl = document.getElementById('media-instruction');
+      const containerEl = document.getElementById('media-content');
+      containerEl.innerHTML = '';
 
-  // 1. Unhide the modal FIRST so elements have layout context
-  document.getElementById('media-modal').style.display = 'flex';
+      document.getElementById('media-modal').style.display = 'flex';
 
-  if (type === 'P') {
-    titleEl.innerText = '🖼️ Picture Question / चित्र प्रश्न';
-    const img = document.createElement('img');
-    img.src = url;
-    img.alt = 'Question Image';
-    containerEl.appendChild(img);
-  } else if (type === 'A') {
-    titleEl.innerText = '🎵 Audio Question / ऑडियो प्रश्न';
-    const audio = document.createElement('audio');
-    audio.controls = true;
-    audio.src = url;
-    containerEl.appendChild(audio);
+      if (type === 'P') {
+        titleEl.innerText = '🖼️ Picture Question / चित्र प्रश्न';
+        instructionEl.style.display = 'none';
+        const img = document.createElement('img');
+        img.src = url;
+        img.alt = 'Question Image';
+        containerEl.appendChild(img);
+      } else if (type === 'A') {
+        titleEl.innerText = '🎵 Audio Question / ऑडियो प्रश्न';
+        instructionEl.innerText = 'Please press the Play button to listen / सुनने के लिए प्ले बटन दबाएं';
+        instructionEl.style.display = 'block';
+        const audio = document.createElement('audio');
+        audio.controls = true;
+        audio.src = url;
+        containerEl.appendChild(audio);
+      } else if (type === 'V') {
+        titleEl.innerText = '🎥 Video Question / वीडियो प्रश्न';
+        instructionEl.innerText = 'Please press the Play button to watch / देखने के लिए प्ले बटन दबाएं';
+        instructionEl.style.display = 'block';
+        const video = document.createElement('video');
+        video.controls = true;
+        video.src = url;
+        containerEl.appendChild(video);
+      }
+    }
 
-    // Explicitly call .play() and handle browser autoplay blocks gracefully
-    audio.play().catch(error => {
-      console.warn('Autoplay prevented by browser policy. User must press Play:', error);
-    });
-  } else if (type === 'V') {
-    titleEl.innerText = '🎥 Video Question / वीडियो प्रश्न';
-    const video = document.createElement('video');
-    video.controls = true;
-    video.src = url;
-    containerEl.appendChild(video);
-
-    video.play().catch(error => {
-      console.warn('Autoplay prevented by browser policy:', error);
-    });
-  }
-}
     function closeMediaModal() {
       const containerEl = document.getElementById('media-content');
       const mediaElements = containerEl.querySelectorAll('audio, video');
