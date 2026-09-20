@@ -831,21 +831,19 @@
         }
 
         // Parse Sheet 2 Data (Instructions / A2 Title and A3 Content)
-        if (data.sheet2 && Array.isArray(data.sheet2) && data.sheet2.length > 0) {
-          const colA = data.sheet2
-            .map(row => (Array.isArray(row) && row[0] !== undefined) ? String(row[0]).trim() : "")
-            .filter(text => text !== "");
+        // Parse Sheet 2 Data (A2 English, A3 Hindi)
+        if (data.sheet2 && Array.isArray(data.sheet2)) {
+          // Row 2 is index 1 (Cell A2), Row 3 is index 2 (Cell A3)
+          const cellA2 = (data.sheet2[1] && data.sheet2[1][0] !== undefined) ? String(data.sheet2[1][0]).trim() : "";
+          const cellA3 = (data.sheet2[2] && data.sheet2[2][0] !== undefined) ? String(data.sheet2[2][0]).trim() : "";
 
-          if (colA.length >= 2) {
-            customInstructionsTitle = colA[0]; 
-            customInstructionsBody = colA[1];  
-          } else if (colA.length === 1) {
-            customInstructionsBody = colA[0];
+          // Combine both cells with line breaks to render both English and Hindi
+          const combinedBody = [cellA2, cellA3].filter(text => text !== "").join("<br><br>");
+
+          if (combinedBody !== "") {
+            customInstructionsBody = combinedBody;
           }
         } else {
-          if (data.instructionsTitle && data.instructionsTitle.trim() !== "") {
-            customInstructionsTitle = data.instructionsTitle;
-          }
           if (data.instructionsBody && data.instructionsBody.trim() !== "") {
             customInstructionsBody = data.instructionsBody;
           }
