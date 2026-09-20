@@ -831,12 +831,16 @@
         }
 
         // Parse Sheet 2 Data (Instructions / A2 Title and A3 Content)
-        if (data.sheet2 && Array.isArray(data.sheet2)) {
-          if (data.sheet2[1] && data.sheet2[1][0]) {
-            customInstructionsTitle = String(data.sheet2[1][0]).trim(); // Row 2 (Cell A2)
-          }
-          if (data.sheet2[2] && data.sheet2[2][0]) {
-            customInstructionsBody = String(data.sheet2[2][0]).trim(); // Row 3 (Cell A3)
+        if (data.sheet2 && Array.isArray(data.sheet2) && data.sheet2.length > 0) {
+          const colA = data.sheet2
+            .map(row => (Array.isArray(row) && row[0] !== undefined) ? String(row[0]).trim() : "")
+            .filter(text => text !== "");
+
+          if (colA.length >= 2) {
+            customInstructionsTitle = colA[0]; 
+            customInstructionsBody = colA[1];  
+          } else if (colA.length === 1) {
+            customInstructionsBody = colA[0];
           }
         } else {
           if (data.instructionsTitle && data.instructionsTitle.trim() !== "") {
@@ -846,7 +850,7 @@
             customInstructionsBody = data.instructionsBody;
           }
         }
-
+        //
         pairedQuestionsBank = parseAndPairData(data.questions || data.sheet1 || []);
 
         if (pairedQuestionsBank.length === 0) {
