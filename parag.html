@@ -842,8 +842,8 @@
       const expEn = (currentQuestionData.en && currentQuestionData.en.explanation) ? currentQuestionData.en.explanation : "";
       const expHi = (currentQuestionData.hi && currentQuestionData.hi.explanation) ? currentQuestionData.hi.explanation : "";
 
-      document.getElementById('modal-explanation-en').innerText = expEn;
-      document.getElementById('modal-explanation-hi').innerText = expHi;
+      document.getElementById('modal-explanation-en').innerHTML = expEn;
+      document.getElementById('modal-explanation-hi').innerHTML = expHi;
 
       document.getElementById('explanation-modal').style.display = 'flex';
     }
