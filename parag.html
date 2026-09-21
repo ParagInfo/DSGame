@@ -830,17 +830,32 @@
           customThanksMessage = data.thanksMessage;
         }
 
-        // Parse Sheet 2 Data (Cell A2 for Title, Cell A3 for Body Content)
-        if (data.sheet2 && Array.isArray(data.sheet2) && data.sheet2.length >= 3) {
-          const cellA2 = (Array.isArray(data.sheet2[1]) && data.sheet2[1][0] !== undefined) ? String(data.sheet2[1][0]).trim() : "";
-          const cellA3 = (Array.isArray(data.sheet2[2]) && data.sheet2[2][0] !== undefined) ? String(data.sheet2[2][0]).trim() : "";
+        // Target Sheet 2 safely regardless of object format
+        let sheet2Data = data.sheet2 || (data.sheets && data.sheets[1]) || null;
 
-          if (cellA2 !== "") {
-            customInstructionsTitle = cellA2;
+        if (sheet2Data) {
+          // Normalize to a 2D array if it is packed as row objects
+          let rows = [];
+          if (Array.isArray(sheet2Data)) {
+            rows = sheet2Data;
+          } else if (typeof sheet2Data === 'object') {
+            rows = Object.values(sheet2Data);
           }
-          if (cellA3 !== "") {
-            customInstructionsBody = cellA3;
+
+          let valA2 = "";
+          let valA3 = "";
+
+          // Extract Cell A2 (Row index 1 or row with key 1)
+          if (rows.length > 1 && rows[1]) {
+            valA2 = Array.isArray(rows[1]) ? (rows[1][0] || "") : (rows[1].A || rows[1][0] || "");
           }
+          // Extract Cell A3 (Row index 2 or row with key 2)
+          if (rows.length > 2 && rows[2]) {
+            valA3 = Array.isArray(rows[2]) ? (rows[2][0] || "") : (rows[2].A || rows[2][0] || "");
+          }
+
+          if (String(valA2).trim() !== "") customInstructionsTitle = String(valA2).trim();
+          if (String(valA3).trim() !== "") customInstructionsBody = String(valA3).trim();
         } else {
           if (data.instructionsTitle && data.instructionsTitle.trim() !== "") {
             customInstructionsTitle = data.instructionsTitle;
