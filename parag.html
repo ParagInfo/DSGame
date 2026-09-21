@@ -29,7 +29,6 @@
       padding: 8px;
     }
 
-    /* Setup / Modal Overlay */
     .setup-modal {
       display: flex;
       position: fixed;
@@ -176,7 +175,6 @@
       box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
     }
 
-    /* Main App Layout */
     #app-container {
       display: flex;
       flex-direction: column;
@@ -338,7 +336,6 @@
       font-weight: 500;
     }
 
-    /* Bulb Icon Button */
     .bulb-btn {
       position: absolute;
       top: auto;
@@ -432,7 +429,6 @@
       margin-right: 6px;
     }
 
-    /* Media Popup Styling */
     .media-container {
       margin: 10px 0;
       display: flex;
@@ -463,7 +459,6 @@
       margin: 10px 0;
     }
 
-    /* Modal Overlay Style */
     .end-screen {
       position: absolute;
       top: 50%;
@@ -507,7 +502,6 @@
       font-size: 1rem;
     }
 
-    /* Link formatting for modal dynamic HTML */
     .modal-content a {
       color: #38bdf8;
       text-decoration: underline;
@@ -599,7 +593,6 @@
       
       <div class="status-msg" id="status-msg">Decrypting question bank...</div>
 
-      <!-- Timer Option -->
       <div class="form-group">
         <label class="title">Timer Mode:</label>
         <div class="radio-group">
@@ -623,7 +616,7 @@
     </div>
   </div>
 
-  <!-- Instructions Modal (Sheet2 Data) -->
+  <!-- Instructions Modal (Sheet 2 Data) -->
   <div class="modal" id="instructions-modal">
     <div class="modal-content">
       <h3 style="color: #ffd700; margin-bottom: 12px;" id="instructions-title">Instructions / नियम एवं निर्देश</h3>
@@ -637,15 +630,11 @@
   <!-- Media Popup Modal -->
   <div class="modal" id="media-modal">
     <div class="modal-content">
-      <h3 style="color: #ffd700; margin-bottom: 6px;" id="media-title">
-        Media Question
-      </h3>
+      <h3 style="color: #ffd700; margin-bottom: 6px;" id="media-title">Media Question</h3>
       <div class="media-instruction" id="media-instruction">
         Please press the Play button to listen/watch / कृपया सुनने/देखने के लिए प्ले बटन दबाएं
       </div>
-      <div class="media-container" id="media-content">
-        <!-- Dynamic media content goes here -->
-      </div>
+      <div class="media-container" id="media-content"></div>
       <button class="close-btn" onclick="closeMediaModal()">Acknowledge & Proceed to Question</button>
     </div>
   </div>
@@ -733,9 +722,7 @@
       </div>
 
       <div class="question-box">
-        <!-- Light Bulb Icon Button -->
         <button class="bulb-btn" id="bulb-btn" onclick="openExplanationModal()" title="View Explanation">💡</button>
-
         <div class="lang-en" id="lbl-question-en">Loading...</div>
         <div class="lang-hi" id="lbl-question-hi">लोड हो रहा है...</div>
       </div>
@@ -793,11 +780,45 @@
     let timeRemaining = 0;
     let timerInterval = null;
 
-    // Timeout tracker for advancing to next step
     let nextStepTimeout = null;
     let pendingNextStepCallback = null;
 
     window.addEventListener('DOMContentLoaded', loadAndDecryptQuestions);
+
+    // Universal helper to pull cell values from any Sheet 2 JS object structure
+    function getCellValue(sheetObj, targetRow, targetCol = 0) {
+      if (!sheetObj) return "";
+
+      // Pattern 1: Direct key lookup (e.g. "A2", "A3")
+      const cellName = String.fromCharCode(65 + targetCol) + targetRow;
+      if (sheetObj[cellName] !== undefined) {
+        return typeof sheetObj[cellName] === 'object' ? (sheetObj[cellName].v || "") : sheetObj[cellName];
+      }
+
+      // Pattern 2: Array of arrays [row][col] (0-indexed -> targetRow - 1)
+      if (Array.isArray(sheetObj)) {
+        const row = sheetObj[targetRow - 1];
+        if (Array.isArray(row)) return row[targetCol] || "";
+        if (typeof row === 'object' && row !== null) {
+          return row[String.fromCharCode(65 + targetCol)] || row[targetCol] || Object.values(row)[targetCol] || "";
+        }
+      }
+
+      // Pattern 3: Keyed row object (e.g., sheetObj["2"] or sheetObj["1"])
+      const rowKey = String(targetRow - 1); // 0-indexed string
+      const rowKey1 = String(targetRow);   // 1-indexed string
+      const matchedRow = sheetObj[rowKey] || sheetObj[rowKey1];
+
+      if (matchedRow) {
+        if (Array.isArray(matchedRow)) return matchedRow[targetCol] || "";
+        if (typeof matchedRow === 'object') {
+          return matchedRow[String.fromCharCode(65 + targetCol)] || matchedRow[targetCol] || Object.values(matchedRow)[targetCol] || "";
+        }
+        return matchedRow;
+      }
+
+      return "";
+    }
 
     async function loadAndDecryptQuestions() {
       const statusEl = document.getElementById("status-msg");
@@ -830,32 +851,15 @@
           customThanksMessage = data.thanksMessage;
         }
 
-        // Target Sheet 2 safely regardless of object format
-        let sheet2Data = data.sheet2 || (data.sheets && data.sheets[1]) || null;
+        // Extract Sheet 2 data regardless of structural variation
+        const sheet2Obj = data.sheet2 || (data.sheets && data.sheets[1]) || null;
 
-        if (sheet2Data) {
-          // Normalize to a 2D array if it is packed as row objects
-          let rows = [];
-          if (Array.isArray(sheet2Data)) {
-            rows = sheet2Data;
-          } else if (typeof sheet2Data === 'object') {
-            rows = Object.values(sheet2Data);
-          }
+        if (sheet2Obj) {
+          const rawA2 = getCellValue(sheet2Obj, 2, 0); // Row 2, Col A
+          const rawA3 = getCellValue(sheet2Obj, 3, 0); // Row 3, Col A
 
-          let valA2 = "";
-          let valA3 = "";
-
-          // Extract Cell A2 (Row index 1 or row with key 1)
-          if (rows.length > 1 && rows[1]) {
-            valA2 = Array.isArray(rows[1]) ? (rows[1][0] || "") : (rows[1].A || rows[1][0] || "");
-          }
-          // Extract Cell A3 (Row index 2 or row with key 2)
-          if (rows.length > 2 && rows[2]) {
-            valA3 = Array.isArray(rows[2]) ? (rows[2][0] || "") : (rows[2].A || rows[2][0] || "");
-          }
-
-          if (String(valA2).trim() !== "") customInstructionsTitle = String(valA2).trim();
-          if (String(valA3).trim() !== "") customInstructionsBody = String(valA3).trim();
+          if (String(rawA2).trim() !== "") customInstructionsTitle = String(rawA2).trim();
+          if (String(rawA3).trim() !== "") customInstructionsBody = String(rawA3).trim();
         } else {
           if (data.instructionsTitle && data.instructionsTitle.trim() !== "") {
             customInstructionsTitle = data.instructionsTitle;
@@ -913,11 +917,9 @@
       document.getElementById('thanks-modal').style.display = 'none';
     }
 
-    /* Explanation Popup Controls */
     function openExplanationModal() {
       if (!currentQuestionData) return;
 
-      // Pause/Cancel the background auto-advance timer if it's currently running
       if (nextStepTimeout) {
         clearTimeout(nextStepTimeout);
         nextStepTimeout = null;
@@ -935,7 +937,6 @@
     function closeExplanationModal() {
       document.getElementById('explanation-modal').style.display = 'none';
 
-      // If there is a pending action (e.g. going to next question or end game), execute it now
       if (pendingNextStepCallback) {
         const callback = pendingNextStepCallback;
         pendingNextStepCallback = null;
@@ -979,11 +980,8 @@
         let flag = String(row[7] || "").trim().toLowerCase();
         let explanationText = row[8] ? String(row[8]).trim() : "";
 
-        // Column J: Question Type (T, A, V, P)
         let rawQType = row[9] ? String(row[9]).trim().toUpperCase() : "T";
         let qType = ["T", "A", "V", "P"].includes(rawQType) ? rawQType : "T";
-
-        // Column K: Media URL
         let mediaUrl = row[10] ? String(row[10]).trim() : "";
 
         if (!qId || !questionText || !correctOpt) continue;
@@ -1114,7 +1112,6 @@
         return;
       }
 
-      // Hide/disable bulb initially while answering
       setupBulbState(false);
 
       document.getElementById('lbl-level').innerText = `${currentQuestionData.qId}9${currentQuestionData.numericLevel * 10}`;
@@ -1134,7 +1131,6 @@
 
       renderOptions();
 
-      // Check for Media Question Types (P, A, V)
       if (['P', 'A', 'V'].includes(currentQuestionData.qType)) {
         showMediaModal(currentQuestionData.qType, currentQuestionData.mediaUrl);
       } else {
@@ -1143,7 +1139,7 @@
     }
 
     function showMediaModal(type, url) {
-      stopTimer(); // Pause timer while modal is open
+      stopTimer();
       const titleEl = document.getElementById('media-title');
       const instructionEl = document.getElementById('media-instruction');
       const containerEl = document.getElementById('media-content');
@@ -1180,10 +1176,10 @@
     function closeMediaModal() {
       const containerEl = document.getElementById('media-content');
       const mediaElements = containerEl.querySelectorAll('audio, video');
-      mediaElements.forEach(el => el.pause()); // Stop playback on close
+      mediaElements.forEach(el => el.pause());
       
       document.getElementById('media-modal').style.display = 'none';
-      startTimer(); // Resume timer after acknowledgement
+      startTimer();
     }
 
     function renderOptions() {
@@ -1213,7 +1209,6 @@
       selectedBtn.classList.add('selected');
 
       setTimeout(() => {
-        // Enable bulb immediately after selection / reveal
         setupBulbState(true);
 
         if (selectedOption.isCorrect) {
@@ -1229,7 +1224,6 @@
             }
           };
 
-          // Delay moving to next question (allows time to click bulb)
           nextStepTimeout = setTimeout(() => {
             if (pendingNextStepCallback) {
               const cb = pendingNextStepCallback;
@@ -1252,7 +1246,6 @@
             endGame(false);
           };
 
-          // Delay moving to game over
           nextStepTimeout = setTimeout(() => {
             if (pendingNextStepCallback) {
               const cb = pendingNextStepCallback;
@@ -1303,15 +1296,13 @@
 
     function handleTimeout() {
       canSelect = false;
-      
-      // Reveal correct answer on timeout
+
       currentOptions.forEach((opt, idx) => {
         if (opt.isCorrect) {
           document.getElementById(`opt-btn-${idx}`).classList.add('correct');
         }
       });
 
-      // Enable bulb so user can check explanation
       setupBulbState(true);
 
       pendingNextStepCallback = () => {
@@ -1395,7 +1386,7 @@
     function useQuit() {
       if (!canSelect) return;
       stopTimer();
-      
+
       const safeVal = currentIndex > 0 ? prizeLadder[currentIndex - 1] : "0";
       document.getElementById('quit-modal-msg').innerText = `Are you sure you want to quit? You will leave with ${safeVal} Points. / क्या आप खेल छोड़ना चाहते हैं? आप ${safeVal} पॉइंट्स लेकर जाएंगे।`;
       document.getElementById('quit-modal').style.display = 'flex';
@@ -1423,10 +1414,10 @@
     function endGame(isVictory, isQuit = false) {
       stopTimer();
       canSelect = false;
-      
+
       const optionButtons = document.querySelectorAll('.option-btn');
       optionButtons.forEach(btn => btn.style.pointerEvents = 'none');
-      
+
       const lifelineButtons = document.querySelectorAll('.lifeline-btn');
       lifelineButtons.forEach(btn => btn.style.pointerEvents = 'none');
 
@@ -1462,7 +1453,7 @@
 
       const optionButtons = document.querySelectorAll('.option-btn');
       optionButtons.forEach(btn => btn.style.pointerEvents = 'auto');
-      
+
       const lifelineButtons = document.querySelectorAll('.lifeline-btn');
       lifelineButtons.forEach(btn => btn.style.pointerEvents = 'auto');
 
