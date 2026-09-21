@@ -469,7 +469,6 @@
       margin: 10px 0;
     }
 
-    /* Modal Overlay Style */
     .end-screen {
       position: absolute;
       top: 50%;
@@ -715,7 +714,7 @@
           <span class="title-hi">कौन बनेगा धर्म शिरोमणि</span>
         </div>
         <div class="meta-badges">
-          <span class="badge badge-level" id="lbl-level">1</span>
+          <span class="badge badge-level" id="lbl-level">Lvl 1</span>
         </div>
       </div>
 
@@ -770,70 +769,91 @@
       return p1 + p2;
     }
 
-    function extractCellA2(sheet2Data) {
-      if (!sheet2Data) return "";
+    function extractSheet2Content(data) {
+      let cellA1 = ""; // Acknowledgements / Thanks
+      let cellA2 = ""; // Instructions / Rules
 
-      // Case 1: Plain string
-      if (typeof sheet2Data === "string") {
-        return sheet2Data;
+      // Direct property shortcuts if explicit keys exist in JSON payload
+      if (data.thanksMessage) cellA1 = String(data.thanksMessage);
+      if (data.thanks) cellA1 = cellA1 || String(data.thanks);
+      if (data.instructionsBody) cellA2 = String(data.instructionsBody);
+      if (data.instructions) cellA2 = cellA2 || String(data.instructions);
+      if (data.A1 || data.a1) cellA1 = cellA1 || String(data.A1.v || data.A1);
+      if (data.A2 || data.a2) cellA2 = cellA2 || String(data.A2.v || data.A2);
+
+      // Locate Sheet2 in data payload
+      let s2 = data.sheet2 || data.Sheet2 || data["Sheet 2"] || data.sheet_2 || 
+               data.Instructions || data.instructions || data["Instructions / Rules"] ||
+               data.Rules || data["Sheet2"] || data["1"];
+
+      if (!s2 && Array.isArray(data) && data.length > 1) {
+        s2 = data[1];
       }
 
-      // Case 2: Raw SheetJS Worksheet Object e.g., { "A2": { v: "content" } }
-      if (typeof sheet2Data === "object" && !Array.isArray(sheet2Data)) {
-        const cellKeys = ["A2", "a2", "A1", "a1", "B1", "b1", "B2", "b2"];
-        for (let key of cellKeys) {
-          if (sheet2Data[key] !== undefined) {
-            let val = sheet2Data[key];
-            if (typeof val === "object" && val !== null) {
-              return val.v || val.w || val.t || "";
-            }
-            return String(val);
-          }
-        }
-        for (let k in sheet2Data) {
-          let val = sheet2Data[k];
-          if (typeof val === "object" && val !== null && (val.v || val.w)) return val.v || val.w;
-          if (typeof val === "string" && val.trim() !== "") return val;
-        }
-      }
-
-      // Case 3: Array structure (SheetJS sheet_to_json or 2D array)
-      if (Array.isArray(sheet2Data) && sheet2Data.length > 0) {
-        // 2D Array format (e.g. [ ["Header A1"], ["Content A2"] ])
-        if (Array.isArray(sheet2Data[0])) {
-          if (sheet2Data.length > 1 && sheet2Data[1] && sheet2Data[1].length > 0) {
-            return String(sheet2Data[1][0] ?? "");
-          }
-          if (sheet2Data[0] && sheet2Data[0].length > 0) {
-            return String(sheet2Data[0][0] ?? "");
-          }
-        }
-
-        // Array of Objects format (e.g. [ { "Header": "Content Cell A2" } ])
-        if (typeof sheet2Data[0] === "object" && sheet2Data[0] !== null) {
-          // Check if any row has an explicit 'A2' property
-          for (let row of sheet2Data) {
-            if (row["A2"] !== undefined) return String(row["A2"]);
-            if (row["a2"] !== undefined) return String(row["a2"]);
-          }
-
-          // Default SheetJS behavior: Row 1 (A1) becomes object keys, Row 2 (A2) is index 0 first value
-          let firstObjValues = Object.values(sheet2Data[0]);
-          if (firstObjValues.length > 0 && firstObjValues[0] !== undefined && firstObjValues[0] !== null && String(firstObjValues[0]).trim() !== "") {
-            return String(firstObjValues[0]);
-          }
-
-          // Fallback to row index 1 if row index 0 was empty or structural header
-          if (sheet2Data.length > 1 && typeof sheet2Data[1] === "object" && sheet2Data[1] !== null) {
-            let secondObjValues = Object.values(sheet2Data[1]);
-            if (secondObjValues.length > 0 && secondObjValues[0] !== undefined) {
-              return String(secondObjValues[0]);
-            }
+      if (!s2 && typeof data === "object") {
+        for (let k in data) {
+          if (!["questions", "sheet1", "Sheet1", "sheet_1", "Sheet_1", "thanksMessage", "instructionsTitle", "instructionsBody"].includes(k)) {
+            s2 = data[k];
+            break;
           }
         }
       }
 
-      return "";
+      if (!s2) return { cellA1, cellA2 };
+
+      // Parse JSON string if s2 was serialized
+      if (typeof s2 === "string") {
+        try {
+          s2 = JSON.parse(s2);
+        } catch(e) {
+          if (!cellA2) cellA2 = s2;
+        }
+      }
+
+      // Handle raw SheetJS worksheet object (Coordinates e.g. s2["A1"], s2["A2"])
+      if (typeof s2 === "object" && !Array.isArray(s2)) {
+        if (s2["A1"] || s2["a1"]) {
+          let val = s2["A1"] || s2["a1"];
+          cellA1 = cellA1 || String(val.v || val.w || val);
+        }
+        if (s2["A2"] || s2["a2"]) {
+          let val = s2["A2"] || s2["a2"];
+          cellA2 = cellA2 || String(val.v || val.w || val);
+        }
+      }
+
+      // Handle Array structures (SheetJS sheet_to_json or 2D array)
+      if (Array.isArray(s2) && s2.length > 0) {
+        // 2D Array format: [ ["Cell A1 Content"], ["Cell A2 Content"] ]
+        if (Array.isArray(s2[0])) {
+          if (s2[0] && s2[0].length > 0) cellA1 = cellA1 || String(s2[0][0] ?? "");
+          if (s2.length > 1 && s2[1] && s2[1].length > 0) cellA2 = cellA2 || String(s2[1][0] ?? "");
+          else if (s2[0] && s2[0].length > 1) cellA2 = cellA2 || String(s2[0][1] ?? "");
+        } 
+        // Array of Objects format
+        else if (typeof s2[0] === "object" && s2[0] !== null) {
+          // Check for explicit key names inside objects
+          for (let row of s2) {
+            if ((row["A1"] || row["a1"]) && !cellA1) cellA1 = String(row["A1"] || row["a1"]);
+            if ((row["A2"] || row["a2"]) && !cellA2) cellA2 = String(row["A2"] || row["a2"]);
+          }
+
+          // Default SheetJS behavior: XLSX.utils.sheet_to_json(sheet2) uses Row 1 (A1) as Key, Row 2 (A2) as Value
+          if (s2.length === 1) {
+            let keys = Object.keys(s2[0]);
+            let values = Object.values(s2[0]);
+            if (keys.length > 0) cellA1 = cellA1 || String(keys[0]);
+            if (values.length > 0) cellA2 = cellA2 || String(values[0]);
+          } else if (s2.length > 1) {
+            let firstRowVals = Object.values(s2[0]);
+            let secondRowVals = Object.values(s2[1]);
+            if (firstRowVals.length > 0) cellA1 = cellA1 || String(firstRowVals[0]);
+            if (secondRowVals.length > 0) cellA2 = cellA2 || String(secondRowVals[0]);
+          }
+        }
+      }
+
+      return { cellA1, cellA2 };
     }
 
     let customThanksMessage = "Thank you for playing Kaun Banega Dharm Shiromani!\nSpecial thanks to all contributors and scholars who helped build this question bank.";
@@ -896,31 +916,15 @@
 
         const data = JSON.parse(decryptedJSON);
 
-        if (data.thanksMessage && data.thanksMessage.trim() !== "") {
-          customThanksMessage = data.thanksMessage;
+        // Extract Cell A1 (Thanks) and Cell A2 (Instructions) from Sheet 2
+        const { cellA1, cellA2 } = extractSheet2Content(data);
+
+        if (cellA1 && cellA1.trim() !== "") {
+          customThanksMessage = cellA1.trim();
         }
 
-        const sheet2Data = data.sheet2 || data.Sheet2 || data["Sheet 2"] || data["sheet 2"] || 
-                           data.sheet_2 || data.Sheet_2 || data.Instructions || data.instructions || 
-                           data.Rules || data.rules || data["Instructions / Rules"];
-
-        let targetSheet2 = sheet2Data;
-        if (!targetSheet2) {
-          for (let k in data) {
-            if (!["questions", "sheet1", "Sheet1", "sheet_1", "Sheet_1", "thanksMessage", "instructionsTitle", "instructionsBody"].includes(k)) {
-              targetSheet2 = data[k];
-              break;
-            }
-          }
-        }
-
-        let extractedText = extractCellA2(targetSheet2);
-        if (!extractedText && data.instructionsBody) {
-          extractedText = data.instructionsBody;
-        }
-
-        if (extractedText && String(extractedText).trim() !== "") {
-          customInstructionsBody = String(extractedText)
+        if (cellA2 && cellA2.trim() !== "") {
+          customInstructionsBody = cellA2
             .trim()
             .replace(/\r\n/g, "<br>")
             .replace(/\n/g, "<br>");
@@ -978,7 +982,6 @@
       document.getElementById('thanks-modal').style.display = 'none';
     }
 
-    /* Explanation Popup Controls */
     function openExplanationModal() {
       if (!currentQuestionData) return;
 
@@ -1042,11 +1045,8 @@
         let flag = String(row[7] || "").trim().toLowerCase();
         let explanationText = row[8] ? String(row[8]).trim() : "";
 
-        // Column J: Question Type (T, A, V, P)
         let rawQType = row[9] ? String(row[9]).trim().toUpperCase() : "T";
         let qType = ["T", "A", "V", "P"].includes(rawQType) ? rawQType : "T";
-
-        // Column K: Media URL
         let mediaUrl = row[10] ? String(row[10]).trim() : "";
 
         if (!qId || !questionText || !correctOpt) continue;
@@ -1371,7 +1371,6 @@
       setupBulbState(true);
 
       pendingNextStepCallback = () => {
-        alert("Time is up! / समय समाप्त!");
         endGame(false);
       };
 
