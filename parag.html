@@ -616,7 +616,7 @@
     </div>
   </div>
 
-  <!-- Instructions Modal (Sheet 2 Data) -->
+  <!-- Instructions Modal -->
   <div class="modal" id="instructions-modal">
     <div class="modal-content">
       <h3 style="color: #ffd700; margin-bottom: 12px;" id="instructions-title">Instructions / नियम एवं निर्देश</h3>
@@ -785,36 +785,35 @@
 
     window.addEventListener('DOMContentLoaded', loadAndDecryptQuestions);
 
-    // Universal helper to pull cell values from any Sheet 2 JS object structure
-    function getCellValue(sheetObj, targetRow, targetCol = 0) {
-      if (!sheetObj) return "";
+    // Helper to safely fetch text content from direct keys or matrix cells
+    function extractCellText(source, rowIdx, colIdx) {
+      if (!source) return "";
+      if (typeof source === "string") return source;
 
-      // Pattern 1: Direct key lookup (e.g. "A2", "A3")
-      const cellName = String.fromCharCode(65 + targetCol) + targetRow;
-      if (sheetObj[cellName] !== undefined) {
-        return typeof sheetObj[cellName] === 'object' ? (sheetObj[cellName].v || "") : sheetObj[cellName];
-      }
-
-      // Pattern 2: Array of arrays [row][col] (0-indexed -> targetRow - 1)
-      if (Array.isArray(sheetObj)) {
-        const row = sheetObj[targetRow - 1];
-        if (Array.isArray(row)) return row[targetCol] || "";
-        if (typeof row === 'object' && row !== null) {
-          return row[String.fromCharCode(65 + targetCol)] || row[targetCol] || Object.values(row)[targetCol] || "";
+      // 1D Array check
+      if (Array.isArray(source)) {
+        let row = source[rowIdx];
+        if (typeof row === "string") return row;
+        if (Array.isArray(row)) return row[colIdx] || "";
+        if (typeof row === "object" && row !== null) {
+          return row["A"] || row[0] || row.v || Object.values(row)[0] || "";
         }
       }
 
-      // Pattern 3: Keyed row object (e.g., sheetObj["2"] or sheetObj["1"])
-      const rowKey = String(targetRow - 1); // 0-indexed string
-      const rowKey1 = String(targetRow);   // 1-indexed string
-      const matchedRow = sheetObj[rowKey] || sheetObj[rowKey1];
-
-      if (matchedRow) {
-        if (Array.isArray(matchedRow)) return matchedRow[targetCol] || "";
-        if (typeof matchedRow === 'object') {
-          return matchedRow[String.fromCharCode(65 + targetCol)] || matchedRow[targetCol] || Object.values(matchedRow)[targetCol] || "";
+      // 2D Object/Matrix check
+      if (typeof source === "object") {
+        let cellName = String.fromCharCode(65 + colIdx) + (rowIdx + 1); // e.g., A2, A3
+        if (source[cellName] !== undefined) {
+          let val = source[cellName];
+          return typeof val === "object" ? (val.v || val.w || "") : val;
         }
-        return matchedRow;
+        
+        let row = source[rowIdx] || source[String(rowIdx)] || source[String(rowIdx + 1)];
+        if (row) {
+          if (typeof row === "string") return row;
+          if (Array.isArray(row)) return row[colIdx] || "";
+          if (typeof row === "object") return row["A"] || row[0] || row.v || Object.values(row)[0] || "";
+        }
       }
 
       return "";
@@ -847,29 +846,39 @@
 
         const data = JSON.parse(decryptedJSON);
 
-        if (data.thanksMessage && data.thanksMessage.trim() !== "") {
+        // 1. Direct property mapping (Same pattern as Thanks message)
+        if (data.thanksMessage && String(data.thanksMessage).trim() !== "") {
           customThanksMessage = data.thanksMessage;
         }
 
-        // Extract Sheet 2 data regardless of structural variation
-        const sheet2Obj = data.sheet2 || (data.sheets && data.sheets[1]) || null;
+        if (data.instructionsTitle && String(data.instructionsTitle).trim() !== "") {
+          customInstructionsTitle = String(data.instructionsTitle).trim();
+        }
 
-        if (sheet2Obj) {
-          const rawA2 = getCellValue(sheet2Obj, 2, 0); // Row 2, Col A
-          const rawA3 = getCellValue(sheet2Obj, 3, 0); // Row 3, Col A
+        if (data.instructionsBody && String(data.instructionsBody).trim() !== "") {
+          customInstructionsBody = String(data.instructionsBody).trim();
+        }
 
-          if (String(rawA2).trim() !== "") customInstructionsTitle = String(rawA2).trim();
-          if (String(rawA3).trim() !== "") customInstructionsBody = String(rawA3).trim();
-        } else {
-          if (data.instructionsTitle && data.instructionsTitle.trim() !== "") {
-            customInstructionsTitle = data.instructionsTitle;
+        if (data.instructions && String(data.instructions).trim() !== "") {
+          customInstructionsBody = String(data.instructions).trim();
+        }
+
+        // 2. Sheet2 extraction (Handles sheet2, Sheet2, sheet_2, or sheets[1])
+        let sheet2Data = data.sheet2 || data.Sheet2 || data.sheet_2 || (data.sheets && data.sheets[1]);
+
+        if (sheet2Data) {
+          let cellA2 = extractCellText(sheet2Data, 1, 0); // Row 2 (index 1), Col A (index 0)
+          let cellA3 = extractCellText(sheet2Data, 2, 0); // Row 3 (index 2), Col A (index 0)
+
+          if (String(cellA2).trim() !== "") {
+            customInstructionsTitle = String(cellA2).trim();
           }
-          if (data.instructionsBody && data.instructionsBody.trim() !== "") {
-            customInstructionsBody = data.instructionsBody;
+          if (String(cellA3).trim() !== "") {
+            customInstructionsBody = String(cellA3).trim();
           }
         }
 
-        pairedQuestionsBank = parseAndPairData(data.questions || data.sheet1 || []);
+        pairedQuestionsBank = parseAndPairData(data.questions || data.sheet1 || data.Sheet1 || []);
 
         if (pairedQuestionsBank.length === 0) {
           throw new Error("No valid questions found in data.");
