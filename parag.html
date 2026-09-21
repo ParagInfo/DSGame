@@ -1343,18 +1343,35 @@
 
       let percentages = [0, 0, 0, 0];
       let correctIdx = currentOptions.findIndex(o => o.isCorrect);
-      let mainShare = Math.floor(Math.random() * 26) + 50;
+
+      // Check which options are currently active (visible)
+      let activeIndices = [];
+      for (let i = 0; i < 4; i++) {
+        const btn = document.getElementById(`opt-btn-${i}`);
+        if (btn && btn.style.visibility !== 'hidden') {
+          activeIndices.push(i);
+        }
+      }
+
+      let mainShare = Math.floor(Math.random() * 26) + 50; // 50% - 75%
+      percentages[correctIdx] = mainShare;
       let remaining = 100 - mainShare;
 
-      percentages[correctIdx] = mainShare;
-      let wrongIndices = [0, 1, 2, 3].filter(i => i !== correctIdx);
-      let p1 = Math.floor(Math.random() * (remaining + 1));
-      let p2 = Math.floor(Math.random() * (remaining - p1 + 1));
-      let p3 = remaining - p1 - p2;
+      let wrongActiveIndices = activeIndices.filter(i => i !== correctIdx);
 
-      percentages[wrongIndices[0]] = p1;
-      percentages[wrongIndices[1]] = p2;
-      percentages[wrongIndices[2]] = p3;
+      if (wrongActiveIndices.length === 1) {
+        // If 50:50 was used, all remaining percentage goes to the only other active wrong option
+        percentages[wrongActiveIndices[0]] = remaining;
+      } else {
+        // Standard calculation across 3 wrong options
+        let p1 = Math.floor(Math.random() * (remaining + 1));
+        let p2 = Math.floor(Math.random() * (remaining - p1 + 1));
+        let p3 = remaining - p1 - p2;
+
+        percentages[wrongActiveIndices[0]] = p1;
+        percentages[wrongActiveIndices[1]] = p2;
+        percentages[wrongActiveIndices[2]] = p3;
+      }
 
       for (let i = 0; i < 4; i++) {
         document.getElementById(`pval-${i}`).innerText = percentages[i] + "%";
