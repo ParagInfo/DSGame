@@ -507,7 +507,6 @@
       font-size: 1rem;
     }
 
-    /* Link formatting for modal dynamic HTML */
     .modal-content a {
       color: #38bdf8;
       text-decoration: underline;
@@ -515,6 +514,23 @@
 
     .modal-content a:visited {
       color: #a855f7;
+    }
+
+    /* Debug Log Panel Styling */
+    .debug-panel {
+      margin-top: 15px;
+      padding: 10px;
+      background: #000000;
+      border: 1px dashed #ef4444;
+      border-radius: 6px;
+      text-align: left;
+      font-family: monospace;
+      font-size: 0.75rem;
+      color: #4ade80;
+      max-height: 150px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
     }
 
     .poll-bars {
@@ -630,7 +646,11 @@
       <div id="instructions-body" style="color: #fef08a; font-size: 0.95rem; margin-bottom: 20px; text-align: left; line-height: 1.5; word-break: break-word;">
         Loading instructions...
       </div>
-      <button class="close-btn" onclick="closeInstructionsModal()">Close</button>
+      
+      <!-- Debug Log Console Output in Modal -->
+      <div id="debug-log-box" class="debug-panel">DEBUG LOGS:<br></div>
+
+      <button class="close-btn" onclick="closeInstructionsModal()" style="margin-top: 10px;">Close</button>
     </div>
   </div>
 
@@ -797,6 +817,14 @@
     let nextStepTimeout = null;
     let pendingNextStepCallback = null;
 
+    function logDebug(msg) {
+      console.log("[DEBUG]", msg);
+      const dbgBox = document.getElementById("debug-log-box");
+      if (dbgBox) {
+        dbgBox.innerText += "\n" + msg;
+      }
+    }
+
     window.addEventListener('DOMContentLoaded', loadAndDecryptQuestions);
 
     async function loadAndDecryptQuestions() {
@@ -826,25 +854,54 @@
 
         const data = JSON.parse(decryptedJSON);
 
-        // Parse Sheet 2 Data (A1 -> thanksMessage, A2 -> instructionsBody)
-        if (data.sheet2 && Array.isArray(data.sheet2) && data.sheet2.length > 0) {
-          const colA = data.sheet2
-            .map(row => (Array.isArray(row) && row[0] !== undefined) ? String(row[0]).trim() : "")
-            .filter(text => text !== "");
+        // Debug output to trace keys in decrypted object
+        logDebug("Decrypted JSON Keys: " + Object.keys(data).join(", "));
 
-          if (colA.length >= 1 && colA[0] !== "") {
-            customThanksMessage = colA[0]; // A1 cell for Thanks / Ack
-          }
-          if (colA.length >= 2 && colA[1] !== "") {
-            customInstructionsBody = colA[1]; // A2 cell for Instructions / Rules
+        // Parse Sheet 2 Data
+        if (data.sheet2) {
+          logDebug("data.sheet2 exists. IsArray? " + Array.isArray(data.sheet2) + " | Length: " + (data.sheet2.length || 0));
+          logDebug("data.sheet2 raw content sample: " + JSON.stringify(data.sheet2).substring(0, 200));
+
+          if (Array.isArray(data.sheet2) && data.sheet2.length > 0) {
+            // Attempt Extraction 1: standard 2D array representation
+            let colA = data.sheet2
+              .map(row => (Array.isArray(row) && row[0] !== undefined) ? String(row[0]).trim() : "")
+              .filter(text => text !== "");
+
+            logDebug("Extraction 1 (Filtered Col A array): " + JSON.stringify(colA));
+
+            if (colA.length >= 1) {
+              customThanksMessage = colA[0];
+              logDebug("Set customThanksMessage (A1): " + customThanksMessage.substring(0, 30) + "...");
+            }
+            if (colA.length >= 2) {
+              customInstructionsBody = colA[1];
+              logDebug("Set customInstructionsBody (A2): " + customInstructionsBody.substring(0, 30) + "...");
+            } else {
+              logDebug("colA has less than 2 items! Length: " + colA.length);
+              
+              // Fallback Extraction: checking object format if row objects were created by sheet_to_json
+              if (data.sheet2[0] && typeof data.sheet2[0] === 'object') {
+                logDebug("Attempting fallback row object inspection...");
+                let allValues = [];
+                data.sheet2.forEach((rowObj, idx) => {
+                  let firstVal = Object.values(rowObj)[0];
+                  if (firstVal !== undefined) allValues.push(String(firstVal).trim());
+                  logDebug(`Row ${idx} keys: ${Object.keys(rowObj).join(",")} | val: ${firstVal}`);
+                });
+
+                if (allValues.length >= 2) {
+                  customThanksMessage = allValues[0];
+                  customInstructionsBody = allValues[1];
+                  logDebug("Fallback successfully extracted A2 instruction!");
+                }
+              }
+            }
           }
         } else {
-          if (data.thanksMessage && data.thanksMessage.trim() !== "") {
-            customThanksMessage = data.thanksMessage;
-          }
-          if (data.instructionsBody && data.instructionsBody.trim() !== "") {
-            customInstructionsBody = data.instructionsBody;
-          }
+          logDebug("data.sheet2 is UNDEFINED!");
+          if (data.thanksMessage) customThanksMessage = data.thanksMessage;
+          if (data.instructionsBody) customInstructionsBody = data.instructionsBody;
         }
 
         if (data.instructionsTitle && data.instructionsTitle.trim() !== "") {
@@ -877,6 +934,7 @@
         statusEl.style.color = "#ef4444";
         startBtn.disabled = true;
         startBtn.innerText = "Error Loading Data";
+        logDebug("ERROR: " + err.message);
       }
     }
 
