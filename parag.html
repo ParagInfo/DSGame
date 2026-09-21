@@ -623,7 +623,7 @@
     </div>
   </div>
 
-  <!-- Instructions Modal (Sheet2 Data) -->
+  <!-- Instructions Modal -->
   <div class="modal" id="instructions-modal">
     <div class="modal-content">
       <h3 style="color: #ffd700; margin-bottom: 12px;" id="instructions-title">Instructions / नियम एवं निर्देश</h3>
@@ -668,7 +668,7 @@
   <div class="modal" id="thanks-modal">
     <div class="modal-content">
       <h3 style="color: #ffd700; margin-bottom: 12px;">Acknowledgments & Thanks</h3>
-      <div id="thanks-msg-body" style="color: #fef08a; font-size: 0.95rem; margin-bottom: 20px; text-align: center; white-space: pre-wrap; word-break: break-word;">
+      <div id="thanks-msg-body" style="color: #fef08a; font-size: 0.95rem; margin-bottom: 20px; text-align: center; word-break: break-word;">
         Loading message...
       </div>
       <button class="close-btn" onclick="closeThanksModal()">Close</button>
@@ -753,7 +753,11 @@
   </div>
 
   <script>
-    const ENCRYPTED_BANK_URL = "./questions.enc";
+    // Obfuscated Encrypted Bank Target Name ("./questions.enc")
+    function getEncryptedBankUrl() {
+      const parts = [46, 47, 113, 117, 101, 115, 116, 105, 111, 110, 115, 46, 101, 110, 99];
+      return String.fromCharCode(...parts);
+    }
 
     function getSecretKey() {
       const part1Base64 = "RGhhcm1TaGlyb21hbmkyMDI2IQ=="; 
@@ -765,7 +769,7 @@
       return p1 + p2;
     }
 
-    let customThanksMessage = "Thank you for playing Kaun Banega Dharm Shiromani!\nSpecial thanks to all contributors and scholars who helped build this question bank.";
+    let customThanksMessage = "Thank you for playing Kaun Banega Dharm Shiromani!";
     let customInstructionsTitle = "Instructions / नियम एवं निर्देश";
     let customInstructionsBody = "No specific instructions provided.";
 
@@ -797,7 +801,35 @@
     let nextStepTimeout = null;
     let pendingNextStepCallback = null;
 
-    window.addEventListener('DOMContentLoaded', loadAndDecryptQuestions);
+    window.addEventListener('DOMContentLoaded', initApp);
+
+    async function initApp() {
+      await loadParamsFromExcel();
+      await loadAndDecryptQuestions();
+    }
+
+    async function loadParamsFromExcel() {
+      try {
+        const response = await fetch('./Questions1.xlsx');
+        if (!response.ok) return;
+
+        const arrayBuffer = await response.arrayBuffer();
+        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+
+        const paramsSheetName = workbook.SheetNames.find(s => s.trim().toLowerCase() === 'params');
+        if (paramsSheetName) {
+          const sheet = workbook.Sheets[paramsSheetName];
+          if (sheet['A1'] && sheet['A1'].v) {
+            customThanksMessage = String(sheet['A1'].v);
+          }
+          if (sheet['A2'] && sheet['A2'].v) {
+            customInstructionsBody = String(sheet['A2'].v);
+          }
+        }
+      } catch (e) {
+        console.warn("Could not read Questions1.xlsx parameters:", e);
+      }
+    }
 
     async function loadAndDecryptQuestions() {
       const statusEl = document.getElementById("status-msg");
@@ -807,7 +839,7 @@
         statusEl.innerText = "Fetching encrypted bank...";
         statusEl.style.color = "#38bdf8";
 
-        const response = await fetch(ENCRYPTED_BANK_URL);
+        const response = await fetch(getEncryptedBankUrl());
         if (!response.ok) {
           throw new Error(`HTTP Error status: ${response.status}`);
         }
@@ -826,26 +858,7 @@
 
         const data = JSON.parse(decryptedJSON);
 
-        if (data.thanksMessage && data.thanksMessage.trim() !== "") {
-          customThanksMessage = data.thanksMessage;
-        }
-
-        // Parse Sheet 2 Data directly reading Cell A2 (index 1) for Instructions
-        if (data.sheet2 && Array.isArray(data.sheet2) && data.sheet2.length > 1) {
-          let rowA2 = data.sheet2[1];
-          let cellA2Val = (Array.isArray(rowA2) && rowA2[0] !== undefined) ? String(rowA2[0]).trim() : "";
-          if (cellA2Val !== "") {
-            customInstructionsBody = cellA2Val;
-          }
-        } else if (data.instructionsBody && data.instructionsBody.trim() !== "") {
-          customInstructionsBody = data.instructionsBody;
-        }
-
-        if (data.instructionsTitle && data.instructionsTitle.trim() !== "") {
-          customInstructionsTitle = data.instructionsTitle;
-        }
-
-        pairedQuestionsBank = parseAndPairData(data.questions || data.sheet1 || []);
+        pairedQuestionsBank = parseAndPairData(data.questions || data.sheet1 || (Array.isArray(data) ? data : []));
 
         if (pairedQuestionsBank.length === 0) {
           throw new Error("No valid questions found in data.");
@@ -885,7 +898,7 @@
     }
 
     function openThanksModal() {
-      document.getElementById('thanks-msg-body').innerText = customThanksMessage;
+      document.getElementById('thanks-msg-body').innerHTML = customThanksMessage;
       document.getElementById('thanks-modal').style.display = 'flex';
     }
 
