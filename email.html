@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact Form</title>
+
+  <!-- Step 4a: Load EmailJS SDK -->
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+  
+  <script type="text/javascript">
+    (function() {
+      // REPLACE WITH YOUR PUBLIC KEY
+      emailjs.init("YOUR_PUBLIC_KEY");
+    })();
+  </script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 500px;
+      margin: 50px auto;
+      padding: 20px;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      box-sizing: border-box;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    button {
+      background-color: #2563eb;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button:disabled {
+      background-color: #93c5fd;
+    }
+    #status-message {
+      margin-top: 15px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Send a Message</h2>
+
+  <form id="contact-form" onsubmit="sendEmailInBackground(event)">
+    <div class="form-group">
+      <label for="from_name">Your Name</label>
+      <input type="text" id="from_name" name="from_name" required>
+    </div>
+
+    <div class="form-group">
+      <label for="from_email">Your Email</label>
+      <input type="email" id="from_email" name="from_email" required>
+    </div>
+
+    <div class="form-group">
+      <label for="message">Message</label>
+      <textarea id="message" name="message" rows="5" required></textarea>
+    </div>
+
+    <button type="submit" id="submit-btn">Send Email</button>
+  </form>
+
+  <div id="status-message"></div>
+
+  <script>
+    function sendEmailInBackground(event) {
+      event.preventDefault(); // Prevents page reload
+
+      const submitBtn = document.getElementById('submit-btn');
+      const statusMsg = document.getElementById('status-message');
+
+      // Update UI to show progress
+      submitBtn.disabled = true;
+      submitBtn.innerText = 'Sending...';
+      statusMsg.style.color = 'black';
+      statusMsg.innerText = '';
+
+      // REPLACE WITH YOUR SERVICE ID AND TEMPLATE ID
+      const serviceID = 'YOUR_SERVICE_ID';
+      const templateID = 'YOUR_TEMPLATE_ID';
+
+      emailjs.sendForm(serviceID, templateID, '#contact-form')
+        .then(() => {
+          submitBtn.disabled = false;
+          submitBtn.innerText = 'Send Email';
+          statusMsg.style.color = 'green';
+          statusMsg.innerText = 'Email sent successfully!';
+          document.getElementById('contact-form').reset();
+        }, (error) => {
+          submitBtn.disabled = false;
+          submitBtn.innerText = 'Send Email';
+          statusMsg.style.color = 'red';
+          statusMsg.innerText = 'Failed to send email. Please try again.';
+          console.error('EmailJS Error:', error);
+        });
+    }
+  </script>
+
+</body>
+</html>
