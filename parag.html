@@ -761,20 +761,24 @@
         </button>
 
         <!-- Flip Question Lifeline Icon -->
-        <button class="lifeline-btn" id="life-flip" onclick="useFlip()" title="Flip Question">
+        <button id="life-flip" class="lifeline-btn" onclick="useFlip()">
           <svg viewBox="0 0 160 100" xmlns="http://www.w3.org/2000/svg">
-            <ellipse cx="80" cy="50" rx="75" ry="45" fill="#7A3DB8" stroke="#4A1875" stroke-width="2"/>
-            <ellipse cx="80" cy="50" rx="65" ry="36" fill="#3D1259"/>
-            <ellipse cx="80" cy="50" rx="65" ry="36" fill="none" stroke="#F5C431" stroke-width="3"/>
-            <g fill="#F5C431">
-              <path d="M 55 42 C 68 42, 75 58, 90 58 L 92 58 L 92 52 L 108 61 L 92 70 L 92 64 L 90 64 C 71 64, 63 48, 55 48 Z"/>
-              <path d="M 55 58 C 63 58, 68 50, 74 45.5 L 70 41 C 65 45, 60 52, 55 52 Z"/>
-              <path d="M 90 36 C 85 36, 81 40, 77 44.5 L 81 49 C 84 45, 87 42, 90 42 L 92 42 L 92 36 Z"/>
-              <polygon points="92,30 108,39 92,48"/>
-            </g>
+          <ellipse cx="80" cy="50" rx="75" ry="45" fill="#a855f7" stroke="#3b0764" stroke-width="2"/>
+          <ellipse cx="80" cy="50" rx="65" ry="36" fill="#3b0764"/>
+          <ellipse cx="80" cy="50" rx="65" ry="36" fill="none" stroke="#eab308" stroke-width="3"/>
+          <!-- Icon Group: Crossing Curved Arrows -->
+          <g fill="none" stroke="#eab308" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M 56 64 C 68 64, 76 36, 92 36 L 98 36" />
+            <path d="M 56 36 C 68 36, 76 64, 92 64 L 98 64" />
+          </g>
+          <!-- Arrowheads -->
+          <g fill="#eab308">
+            <polygon points="94,26 112,36 94,46" />
+            <polygon points="94,54 112,64 94,74" />
+          </g>
           </svg>
-        </button>
-
+      </button>
+         
         <!-- Standardized QUIT Button -->
         <button class="lifeline-btn quit-btn" id="life-quit" onclick="useQuit()" title="Quit Game">
           <svg viewBox="0 0 160 100" xmlns="http://www.w3.org/2000/svg">
