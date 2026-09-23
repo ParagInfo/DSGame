@@ -269,7 +269,6 @@
       filter: drop-shadow(0 0 6px rgba(245, 196, 49, 0.6));
     }
 
-    /* Standardized QUIT Button matching other Lifeline icons */
     .lifeline-btn.quit-btn {
       padding: 0;
     }
@@ -356,7 +355,6 @@
       font-weight: 500;
     }
 
-    /* Bulb Icon Button */
     .bulb-btn {
       position: absolute;
       top: auto;
@@ -450,7 +448,6 @@
       margin-right: 6px;
     }
 
-    /* Media Popup Styling */
     .media-container {
       margin: 10px 0;
       display: flex;
@@ -481,7 +478,6 @@
       margin: 10px 0;
     }
 
-    /* Modal Overlay Style */
     .end-screen {
       position: absolute;
       top: 50%;
@@ -525,7 +521,6 @@
       font-size: 1rem;
     }
 
-    /* Link formatting for modal dynamic HTML */
     .modal-content a {
       color: #38bdf8;
       text-decoration: underline;
@@ -766,12 +761,10 @@
           <ellipse cx="80" cy="50" rx="75" ry="45" fill="#a855f7" stroke="#3b0764" stroke-width="2"/>
           <ellipse cx="80" cy="50" rx="65" ry="36" fill="#3b0764"/>
           <ellipse cx="80" cy="50" rx="65" ry="36" fill="none" stroke="#eab308" stroke-width="3"/>
-          <!-- Icon Group: Crossing Curved Arrows -->
           <g fill="none" stroke="#eab308" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
             <path d="M 56 64 C 68 64, 76 36, 92 36 L 98 36" />
             <path d="M 56 36 C 68 36, 76 64, 92 64 L 98 64" />
           </g>
-          <!-- Arrowheads -->
           <g fill="#eab308">
             <polygon points="94,26 112,36 94,46" />
             <polygon points="94,54 112,64 94,74" />
@@ -789,7 +782,7 @@
           </svg>
         </button>
 
-        <!-- Media Replay Button (Last Item) -->
+        <!-- Media Replay Button -->
         <button class="lifeline-btn media-btn" id="life-media-replay" onclick="replayMedia()"></button>
       </div>
 
@@ -805,7 +798,6 @@
       </div>
 
       <div class="question-box">
-        <!-- Light Bulb Icon Button -->
         <button class="bulb-btn" id="bulb-btn" onclick="openExplanationModal()" title="View Explanation">💡</button>
 
         <div class="lang-en" id="lbl-question-en">Loading...</div>
@@ -827,21 +819,26 @@
   </div>
 
   <script>
-    // URL Parameter Helper Functions
+    // URL Parameter Helpers
     function getUrlParam(param) {
       const urlParams = new URLSearchParams(window.location.search);
       return urlParams.get(param);
     }
 
-    function isDebugQuestionMode() {
+    function isDebugMode() {
       const currentFilename = window.location.pathname.split('/').pop().toLowerCase();
       const isDebug = getUrlParam('debug') === 'true';
-      const hasQuestion = getUrlParam('question') !== null;
-      
-      return currentFilename !== 'index.html' && isDebug && hasQuestion;
+      return currentFilename !== 'index.html' && isDebug;
     }
 
-    // Obfuscated Encrypted Bank Target Name ("./questions.enc")
+    function isMediaOnlyMode() {
+      return isDebugMode() && getUrlParam('mediaOnly') === 'true';
+    }
+
+    function isDebugQuestionMode() {
+      return isDebugMode() && getUrlParam('question') !== null;
+    }
+
     function getEncryptedBankUrl() {
       const parts = [46, 47, 113, 117, 101, 115, 116, 105, 111, 110, 115, 46, 101, 110, 99];
       return String.fromCharCode(...parts);
@@ -885,7 +882,6 @@
     let timeRemaining = 0;
     let timerInterval = null;
 
-    // Timeout tracker for advancing to next step
     let nextStepTimeout = null;
     let pendingNextStepCallback = null;
 
@@ -948,11 +944,8 @@
 
         pairedQuestionsBank = parseAndPairData(data.questions || data.sheet1 || (Array.isArray(data) ? data : []));
 
-        // Detect non-index.html filename & check debug parameter
-        const currentFilename = window.location.pathname.split('/').pop().toLowerCase();
-        const isDebugMode = getUrlParam('debug') === 'true';
-
-        if (currentFilename !== 'index.html' && isDebugMode) {
+        // Optional filter: Media-only questions when mediaOnly=true parameter is present
+        if (isMediaOnlyMode()) {
           pairedQuestionsBank = pairedQuestionsBank.filter(q => ['A', 'V', 'P'].includes(q.qType));
         }
 
@@ -1002,13 +995,11 @@
       document.getElementById('thanks-modal').style.display = 'none';
     }
 
-    /* Explanation Popup Controls */
     function openExplanationModal() {
       if (!currentQuestionData) return;
 
-      stopTimer(); // Pause timer while viewing explanation
+      stopTimer();
 
-      // Pause/Cancel the background auto-advance timer if it's currently running
       if (nextStepTimeout) {
         clearTimeout(nextStepTimeout);
         nextStepTimeout = null;
@@ -1026,7 +1017,6 @@
     function closeExplanationModal() {
       document.getElementById('explanation-modal').style.display = 'none';
 
-      // If there is a pending action (e.g. going to next question or end game), execute it now
       if (pendingNextStepCallback) {
         const callback = pendingNextStepCallback;
         pendingNextStepCallback = null;
@@ -1072,11 +1062,9 @@
         let flag = String(row[7] || "").trim().toLowerCase();
         let explanationText = row[8] ? String(row[8]).trim() : "";
 
-        // Column J: Question Type (T, A, V, P)
         let rawQType = row[9] ? String(row[9]).trim().toUpperCase() : "T";
         let qType = ["T", "A", "V", "P"].includes(rawQType) ? rawQType : "T";
 
-        // Column K: Media URL
         let mediaUrl = row[10] ? String(row[10]).trim() : "";
 
         if (!qId || !questionText || !correctOpt) continue;
@@ -1200,7 +1188,7 @@
       if (nextStepTimeout) { clearTimeout(nextStepTimeout); nextStepTimeout = null; }
       pendingNextStepCallback = null;
 
-      // Debug Direct Question Check
+      // Direct Question ID Override
       const targetQId = getUrlParam('question');
       if (isDebugQuestionMode() && targetQId) {
         const forcedQuestion = pairedQuestionsBank.find(q => String(q.qId) === String(targetQId));
@@ -1208,7 +1196,7 @@
           currentQuestionData = forcedQuestion;
           usedQuestionIDs.add(forcedQuestion.qId);
         } else {
-          console.warn(`Question ID ${targetQId} not found in bank. Reverting to normal selection.`);
+          console.warn(`Question ID ${targetQId} not found in current bank context. Falling back to default selection.`);
           currentQuestionData = getNextQuestion();
         }
       } else {
@@ -1220,7 +1208,6 @@
         return;
       }
 
-      // Hide/disable bulb initially while answering
       setupBulbState(false);
 
       document.getElementById('lbl-level').innerText = `${currentQuestionData.qId}9${currentQuestionData.numericLevel * 10}`;
@@ -1240,7 +1227,6 @@
 
       renderOptions();
 
-      // Configure Media Replay Button SVG icon based on QType
       const mediaBtn = document.getElementById('life-media-replay');
       if (['P', 'A', 'V'].includes(currentQuestionData.qType)) {
         let mediaIconSvg = '';
@@ -1326,21 +1312,21 @@
       }
     }
 
-   function closeMediaModal() {
-     const containerEl = document.getElementById('media-content');
-     const mediaElements = containerEl.querySelectorAll('audio, video');
-     mediaElements.forEach(el => el.pause());
+    function closeMediaModal() {
+      const containerEl = document.getElementById('media-content');
+      const mediaElements = containerEl.querySelectorAll('audio, video');
+      mediaElements.forEach(el => el.pause());
   
-     document.getElementById('media-modal').style.display = 'none';
+      document.getElementById('media-modal').style.display = 'none';
 
-     if (canSelect && isTimedMode) {
-       if (timeRemaining > 0) {
-         resumeTimer();
-       } else {
-         startTimer();
-       }
-     }
-   }
+      if (canSelect && isTimedMode) {
+        if (timeRemaining > 0) {
+          resumeTimer();
+        } else {
+          startTimer();
+        }
+      }
+    }
 
     function renderOptions() {
       const grid = document.getElementById('options-grid');
