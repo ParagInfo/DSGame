@@ -827,6 +827,20 @@
   </div>
 
   <script>
+    // URL Parameter Helper Functions
+    function getUrlParam(param) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(param);
+    }
+
+    function isDebugQuestionMode() {
+      const currentFilename = window.location.pathname.split('/').pop().toLowerCase();
+      const isDebug = getUrlParam('debug') === 'true';
+      const hasQuestion = getUrlParam('question') !== null;
+      
+      return currentFilename !== 'index.html' && isDebug && hasQuestion;
+    }
+
     // Obfuscated Encrypted Bank Target Name ("./questions.enc")
     function getEncryptedBankUrl() {
       const parts = [46, 47, 113, 117, 101, 115, 116, 105, 111, 110, 115, 46, 101, 110, 99];
@@ -936,8 +950,7 @@
 
         // Detect non-index.html filename & check debug parameter
         const currentFilename = window.location.pathname.split('/').pop().toLowerCase();
-        const urlParams = new URLSearchParams(window.location.search);
-        const isDebugMode = urlParams.get('debug') === 'true';
+        const isDebugMode = getUrlParam('debug') === 'true';
 
         if (currentFilename !== 'index.html' && isDebugMode) {
           pairedQuestionsBank = pairedQuestionsBank.filter(q => ['A', 'V', 'P'].includes(q.qType));
@@ -1187,7 +1200,20 @@
       if (nextStepTimeout) { clearTimeout(nextStepTimeout); nextStepTimeout = null; }
       pendingNextStepCallback = null;
 
-      currentQuestionData = getNextQuestion();
+      // Debug Direct Question Check
+      const targetQId = getUrlParam('question');
+      if (isDebugQuestionMode() && targetQId) {
+        const forcedQuestion = pairedQuestionsBank.find(q => String(q.qId) === String(targetQId));
+        if (forcedQuestion) {
+          currentQuestionData = forcedQuestion;
+          usedQuestionIDs.add(forcedQuestion.qId);
+        } else {
+          console.warn(`Question ID ${targetQId} not found in bank. Reverting to normal selection.`);
+          currentQuestionData = getNextQuestion();
+        }
+      } else {
+        currentQuestionData = getNextQuestion();
+      }
 
       if (!currentQuestionData) {
         endGame(true);
@@ -1214,12 +1240,11 @@
 
       renderOptions();
 
-      // Configure Media Replay Button SVG icon based on QType (Icon only, no text label)
+      // Configure Media Replay Button SVG icon based on QType
       const mediaBtn = document.getElementById('life-media-replay');
       if (['P', 'A', 'V'].includes(currentQuestionData.qType)) {
         let mediaIconSvg = '';
         if (currentQuestionData.qType === 'P') {
-          // Picture Icon
           mediaIconSvg = `<svg viewBox="0 0 160 100" xmlns="http://www.w3.org/2000/svg">
             <ellipse cx="80" cy="50" rx="75" ry="45" fill="#0284c7" stroke="#032b43" stroke-width="2"/>
             <ellipse cx="80" cy="50" rx="65" ry="36" fill="#032b43"/>
@@ -1231,22 +1256,17 @@
             </g>
           </svg>`;
         } else if (currentQuestionData.qType === 'A') {
-          // Audio Icon
           mediaIconSvg = `<svg viewBox="0 0 160 100" xmlns="http://www.w3.org/2000/svg">
             <ellipse cx="80" cy="50" rx="75" ry="45" fill="#0284c7" stroke="#032b43" stroke-width="2"/>
             <ellipse cx="80" cy="50" rx="65" ry="36" fill="#032b43"/>
             <ellipse cx="80" cy="50" rx="65" ry="36" fill="none" stroke="#38bdf8" stroke-width="3"/>
             <g fill="#38bdf8">
-              <!-- Left Notehead -->
               <ellipse cx="56" cy="62" rx="7" ry="5" transform="rotate(-20 56 62)"/>
-              <!-- Right Notehead -->
               <ellipse cx="88" cy="56" rx="7" ry="5" transform="rotate(-20 88 56)"/>
-              <!-- Stems and Connecting Beam -->
               <path d="M 61 60 V 34 L 93 28 V 54 L 89 54 V 32 L 65 37 V 60 Z"/>
             </g>
           </svg>`;
         } else if (currentQuestionData.qType === 'V') {
-          // Video Icon
           mediaIconSvg = `<svg viewBox="0 0 160 100" xmlns="http://www.w3.org/2000/svg">
             <ellipse cx="80" cy="50" rx="75" ry="45" fill="#0284c7" stroke="#032b43" stroke-width="2"/>
             <ellipse cx="80" cy="50" rx="65" ry="36" fill="#032b43"/>
@@ -1272,7 +1292,7 @@
     }
 
     function showMediaModal(type, url) {
-      stopTimer(); // Pause timer while modal is open
+      stopTimer();
       const titleEl = document.getElementById('media-title');
       const instructionEl = document.getElementById('media-instruction');
       const containerEl = document.getElementById('media-content');
@@ -1309,11 +1329,10 @@
    function closeMediaModal() {
      const containerEl = document.getElementById('media-content');
      const mediaElements = containerEl.querySelectorAll('audio, video');
-     mediaElements.forEach(el => el.pause()); // Stop playback on close
+     mediaElements.forEach(el => el.pause());
   
      document.getElementById('media-modal').style.display = 'none';
 
-  // FIX: Start/Resume timer properly when acknowledging the media modal
      if (canSelect && isTimedMode) {
        if (timeRemaining > 0) {
          resumeTimer();
@@ -1350,7 +1369,6 @@
       selectedBtn.classList.add('selected');
 
       setTimeout(() => {
-        // Enable bulb immediately after selection / reveal
         setupBulbState(true);
 
         if (selectedOption.isCorrect) {
@@ -1366,7 +1384,6 @@
             }
           };
 
-          // Delay moving to next question (allows time to click bulb)
           nextStepTimeout = setTimeout(() => {
             if (pendingNextStepCallback) {
               const cb = pendingNextStepCallback;
@@ -1389,7 +1406,6 @@
             endGame(false);
           };
 
-          // Delay moving to game over
           nextStepTimeout = setTimeout(() => {
             if (pendingNextStepCallback) {
               const cb = pendingNextStepCallback;
@@ -1456,14 +1472,12 @@
     function handleTimeout() {
       canSelect = false;
       
-      // Reveal correct answer on timeout
       currentOptions.forEach((opt, idx) => {
         if (opt.isCorrect) {
           document.getElementById(`opt-btn-${idx}`).classList.add('correct');
         }
       });
 
-      // Enable bulb so user can check explanation
       setupBulbState(true);
 
       pendingNextStepCallback = () => {
@@ -1497,14 +1511,13 @@
 
     function useAudience() {
       if (lifelineAudienceUsed || !canSelect) return;
-      stopTimer(); // Pause timer while modal is open
+      stopTimer();
       lifelineAudienceUsed = true;
       document.getElementById('life-audience').classList.add('used');
 
       let percentages = [0, 0, 0, 0];
       let correctIdx = currentOptions.findIndex(o => o.isCorrect);
 
-      // Check which options are currently active (visible)
       let activeIndices = [];
       for (let i = 0; i < 4; i++) {
         const btn = document.getElementById(`opt-btn-${i}`);
@@ -1513,17 +1526,15 @@
         }
       }
 
-      let mainShare = Math.floor(Math.random() * 26) + 50; // 50% - 75%
+      let mainShare = Math.floor(Math.random() * 26) + 50;
       percentages[correctIdx] = mainShare;
       let remaining = 100 - mainShare;
 
       let wrongActiveIndices = activeIndices.filter(i => i !== correctIdx);
 
       if (wrongActiveIndices.length === 1) {
-        // If 50:50 was used, all remaining percentage goes to the only other active wrong option
         percentages[wrongActiveIndices[0]] = remaining;
       } else {
-        // Standard calculation across 3 wrong options
         let p1 = Math.floor(Math.random() * (remaining + 1));
         let p2 = Math.floor(Math.random() * (remaining - p1 + 1));
         let p3 = remaining - p1 - p2;
@@ -1567,7 +1578,7 @@
 
     function useQuit() {
       if (!canSelect) return;
-      stopTimer(); // Pause timer while quit modal is open
+      stopTimer();
       
       const safeVal = currentIndex > 0 ? prizeLadder[currentIndex - 1] : "0";
       document.getElementById('quit-modal-msg').innerText = `Are you sure you want to quit? You will leave with ${safeVal} Points. / क्या आप खेल छोड़ना चाहते हैं? आप ${safeVal} पॉइंट्स लेकर जाएंगे।`;
