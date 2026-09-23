@@ -269,20 +269,13 @@
       filter: drop-shadow(0 0 6px rgba(245, 196, 49, 0.6));
     }
 
+    /* Standardized QUIT Button matching other Lifeline icons */
     .lifeline-btn.quit-btn {
-      width: auto;
-      height: 42px;
-      padding: 0 18px;
-      border-radius: 21px;
-      border: 1.5px solid #ef4444;
-      background: radial-gradient(circle, #7f1d1d 0%, #360707 100%);
-      color: #fca5a5;
-      font-weight: bold;
-      font-size: 0.85rem;
+      padding: 0;
     }
 
     .lifeline-btn.quit-btn:hover {
-      box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+      filter: drop-shadow(0 0 6px rgba(239, 68, 68, 0.8));
     }
 
     .lifeline-btn.media-btn {
@@ -782,11 +775,18 @@
           </svg>
         </button>
 
-        <!-- Media Replay Button (Icon-Only) -->
+        <!-- Standardized QUIT Button -->
+        <button class="lifeline-btn quit-btn" id="life-quit" onclick="useQuit()" title="Quit Game">
+          <svg viewBox="0 0 160 100" xmlns="http://www.w3.org/2000/svg">
+            <ellipse cx="80" cy="50" rx="75" ry="45" fill="#7f1d1d" stroke="#360707" stroke-width="2"/>
+            <ellipse cx="80" cy="50" rx="65" ry="36" fill="#360707"/>
+            <ellipse cx="80" cy="50" rx="65" ry="36" fill="none" stroke="#ef4444" stroke-width="3"/>
+            <text x="80" y="58" font-family="'Segoe UI', Arial, sans-serif" font-weight="bold" font-size="24" fill="#fca5a5" text-anchor="middle">QUIT</text>
+          </svg>
+        </button>
+
+        <!-- Media Replay Button (Last Item) -->
         <button class="lifeline-btn media-btn" id="life-media-replay" onclick="replayMedia()"></button>
-        
-        <!-- Quit Button -->
-        <button class="lifeline-btn quit-btn" id="life-quit" onclick="useQuit()">QUIT</button>
       </div>
 
       <div class="timer-container" id="timer-container">
