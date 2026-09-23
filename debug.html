@@ -54,9 +54,9 @@
 
     .setup-card h1 {
       color: #ffd700;
-      font-size: 1.4rem;
+      font-size: 1.2rem;
       text-transform: uppercase;
-      letter-spacing: 1px;
+      letter-spacing: 0.5px;
       margin-bottom: 2px;
     }
 
@@ -207,7 +207,7 @@
     .title-en {
       font-weight: bold;
       color: #ffd700;
-      font-size: 0.95rem;
+      font-size: 0.75rem;
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
@@ -215,7 +215,7 @@
     .title-hi {
       font-weight: 600;
       color: #fef08a;
-      font-size: 0.85rem;
+      font-size: 0.65rem;
     }
 
     .meta-badges {
@@ -269,7 +269,6 @@
       filter: drop-shadow(0 0 6px rgba(245, 196, 49, 0.6));
     }
 
-    /* Standardized QUIT Button matching other Lifeline icons */
     .lifeline-btn.quit-btn {
       padding: 0;
     }
@@ -356,7 +355,6 @@
       font-weight: 500;
     }
 
-    /* Bulb Icon Button */
     .bulb-btn {
       position: absolute;
       top: auto;
@@ -450,7 +448,6 @@
       margin-right: 6px;
     }
 
-    /* Media Popup Styling */
     .media-container {
       margin: 10px 0;
       display: flex;
@@ -481,7 +478,6 @@
       margin: 10px 0;
     }
 
-    /* Modal Overlay Style */
     .end-screen {
       position: absolute;
       top: 50%;
@@ -525,7 +521,6 @@
       font-size: 1rem;
     }
 
-    /* Link formatting for modal dynamic HTML */
     .modal-content a {
       color: #38bdf8;
       text-decoration: underline;
@@ -761,20 +756,22 @@
         </button>
 
         <!-- Flip Question Lifeline Icon -->
-        <button class="lifeline-btn" id="life-flip" onclick="useFlip()" title="Flip Question">
+        <button id="life-flip" class="lifeline-btn" onclick="useFlip()">
           <svg viewBox="0 0 160 100" xmlns="http://www.w3.org/2000/svg">
-            <ellipse cx="80" cy="50" rx="75" ry="45" fill="#7A3DB8" stroke="#4A1875" stroke-width="2"/>
-            <ellipse cx="80" cy="50" rx="65" ry="36" fill="#3D1259"/>
-            <ellipse cx="80" cy="50" rx="65" ry="36" fill="none" stroke="#F5C431" stroke-width="3"/>
-            <g fill="#F5C431">
-              <path d="M 55 42 C 68 42, 75 58, 90 58 L 92 58 L 92 52 L 108 61 L 92 70 L 92 64 L 90 64 C 71 64, 63 48, 55 48 Z"/>
-              <path d="M 55 58 C 63 58, 68 50, 74 45.5 L 70 41 C 65 45, 60 52, 55 52 Z"/>
-              <path d="M 90 36 C 85 36, 81 40, 77 44.5 L 81 49 C 84 45, 87 42, 90 42 L 92 42 L 92 36 Z"/>
-              <polygon points="92,30 108,39 92,48"/>
-            </g>
+          <ellipse cx="80" cy="50" rx="75" ry="45" fill="#a855f7" stroke="#3b0764" stroke-width="2"/>
+          <ellipse cx="80" cy="50" rx="65" ry="36" fill="#3b0764"/>
+          <ellipse cx="80" cy="50" rx="65" ry="36" fill="none" stroke="#eab308" stroke-width="3"/>
+          <g fill="none" stroke="#eab308" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M 56 64 C 68 64, 76 36, 92 36 L 98 36" />
+            <path d="M 56 36 C 68 36, 76 64, 92 64 L 98 64" />
+          </g>
+          <g fill="#eab308">
+            <polygon points="94,26 112,36 94,46" />
+            <polygon points="94,54 112,64 94,74" />
+          </g>
           </svg>
-        </button>
-
+      </button>
+         
         <!-- Standardized QUIT Button -->
         <button class="lifeline-btn quit-btn" id="life-quit" onclick="useQuit()" title="Quit Game">
           <svg viewBox="0 0 160 100" xmlns="http://www.w3.org/2000/svg">
@@ -785,7 +782,7 @@
           </svg>
         </button>
 
-        <!-- Media Replay Button (Last Item) -->
+        <!-- Media Replay Button -->
         <button class="lifeline-btn media-btn" id="life-media-replay" onclick="replayMedia()"></button>
       </div>
 
@@ -801,7 +798,6 @@
       </div>
 
       <div class="question-box">
-        <!-- Light Bulb Icon Button -->
         <button class="bulb-btn" id="bulb-btn" onclick="openExplanationModal()" title="View Explanation">💡</button>
 
         <div class="lang-en" id="lbl-question-en">Loading...</div>
@@ -823,7 +819,22 @@
   </div>
 
   <script>
-    // Obfuscated Encrypted Bank Target Name ("./questions.enc")
+    // URL Parameter Helpers
+    function getUrlParam(param) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(param);
+    }
+
+    function isDebugMode() {
+      const currentFilename = window.location.pathname.split('/').pop().toLowerCase();
+      const isDebug = getUrlParam('debug') === 'true';
+      return currentFilename !== 'index.html' && isDebug;
+    }
+
+    function isDebugQuestionMode() {
+      return isDebugMode() && getUrlParam('question') !== null;
+    }
+
     function getEncryptedBankUrl() {
       const parts = [46, 47, 113, 117, 101, 115, 116, 105, 111, 110, 115, 46, 101, 110, 99];
       return String.fromCharCode(...parts);
@@ -849,12 +860,14 @@
       "6,40,000", "12,50,000", "25,00,000", "50,00,000", "7,00,00,000"
     ];
 
+    let rawDecryptedBank = [];
     let pairedQuestionsBank = [];
     let questionsByLevelMap = new Map();
     let sortedLevels = [];
     let usedQuestionIDs = new Set();
     let currentQuestionData = null;
     let currentIndex = 0;
+    let maxGameQuestions = 15; // Standard 15-question game
     let canSelect = true;
 
     let lifeline5050Used = false;
@@ -867,7 +880,6 @@
     let timeRemaining = 0;
     let timerInterval = null;
 
-    // Timeout tracker for advancing to next step
     let nextStepTimeout = null;
     let pendingNextStepCallback = null;
 
@@ -928,19 +940,25 @@
 
         const data = JSON.parse(decryptedJSON);
 
-        pairedQuestionsBank = parseAndPairData(data.questions || data.sheet1 || (Array.isArray(data) ? data : []));
+        rawDecryptedBank = parseAndPairData(data.questions || data.sheet1 || (Array.isArray(data) ? data : []));
 
-        // Detect non-index.html filename & check debug parameter
-        const currentFilename = window.location.pathname.split('/').pop().toLowerCase();
-        const urlParams = new URLSearchParams(window.location.search);
-        const isDebugMode = urlParams.get('debug') === 'true';
-
-        if (currentFilename !== 'index.html' && isDebugMode) {
-          pairedQuestionsBank = pairedQuestionsBank.filter(q => ['A', 'V', 'P'].includes(q.qType));
+        // Filter question bank according to Debug Mode
+        if (isDebugQuestionMode()) {
+          const targetQId = getUrlParam('question');
+          pairedQuestionsBank = rawDecryptedBank.filter(q => String(q.qId) === String(targetQId));
+          maxGameQuestions = 1; // Only 1 question to test; end immediately after
+        } else if (isDebugMode()) {
+          // debug=true without question param defaults to Media-Only mode
+          pairedQuestionsBank = rawDecryptedBank.filter(q => ['A', 'V', 'P'].includes(q.qType));
+          maxGameQuestions = Math.min(15, pairedQuestionsBank.length);
+        } else {
+          // Standard Game Mode
+          pairedQuestionsBank = [...rawDecryptedBank];
+          maxGameQuestions = 15;
         }
 
         if (pairedQuestionsBank.length === 0) {
-          throw new Error("No valid questions found in data.");
+          throw new Error("No valid questions found for current mode.");
         }
 
         questionsByLevelMap.clear();
@@ -985,11 +1003,11 @@
       document.getElementById('thanks-modal').style.display = 'none';
     }
 
-    /* Explanation Popup Controls */
     function openExplanationModal() {
       if (!currentQuestionData) return;
 
-      // Pause/Cancel the background auto-advance timer if it's currently running
+      stopTimer();
+
       if (nextStepTimeout) {
         clearTimeout(nextStepTimeout);
         nextStepTimeout = null;
@@ -1007,11 +1025,12 @@
     function closeExplanationModal() {
       document.getElementById('explanation-modal').style.display = 'none';
 
-      // If there is a pending action (e.g. going to next question or end game), execute it now
       if (pendingNextStepCallback) {
         const callback = pendingNextStepCallback;
         pendingNextStepCallback = null;
         callback();
+      } else if (canSelect && isTimedMode && timeRemaining > 0) {
+        resumeTimer();
       }
     }
 
@@ -1051,11 +1070,9 @@
         let flag = String(row[7] || "").trim().toLowerCase();
         let explanationText = row[8] ? String(row[8]).trim() : "";
 
-        // Column J: Question Type (T, A, V, P)
         let rawQType = row[9] ? String(row[9]).trim().toUpperCase() : "T";
         let qType = ["T", "A", "V", "P"].includes(rawQType) ? rawQType : "T";
 
-        // Column K: Media URL
         let mediaUrl = row[10] ? String(row[10]).trim() : "";
 
         if (!qId || !questionText || !correctOpt) continue;
@@ -1176,8 +1193,14 @@
     function loadQuestion() {
       canSelect = true;
       stopTimer();
+      timeRemaining = timeLimitPerQuestion; // Reset remaining time for the new question
       if (nextStepTimeout) { clearTimeout(nextStepTimeout); nextStepTimeout = null; }
       pendingNextStepCallback = null;
+
+      if (currentIndex >= maxGameQuestions) {
+        endGame(true);
+        return;
+      }
 
       currentQuestionData = getNextQuestion();
 
@@ -1186,7 +1209,6 @@
         return;
       }
 
-      // Hide/disable bulb initially while answering
       setupBulbState(false);
 
       document.getElementById('lbl-level').innerText = `${currentQuestionData.qId}9${currentQuestionData.numericLevel * 10}`;
@@ -1206,12 +1228,10 @@
 
       renderOptions();
 
-      // Configure Media Replay Button SVG icon based on QType (Icon only, no text label)
       const mediaBtn = document.getElementById('life-media-replay');
       if (['P', 'A', 'V'].includes(currentQuestionData.qType)) {
         let mediaIconSvg = '';
         if (currentQuestionData.qType === 'P') {
-          // Picture Icon
           mediaIconSvg = `<svg viewBox="0 0 160 100" xmlns="http://www.w3.org/2000/svg">
             <ellipse cx="80" cy="50" rx="75" ry="45" fill="#0284c7" stroke="#032b43" stroke-width="2"/>
             <ellipse cx="80" cy="50" rx="65" ry="36" fill="#032b43"/>
@@ -1223,22 +1243,17 @@
             </g>
           </svg>`;
         } else if (currentQuestionData.qType === 'A') {
-          // Audio Icon
           mediaIconSvg = `<svg viewBox="0 0 160 100" xmlns="http://www.w3.org/2000/svg">
             <ellipse cx="80" cy="50" rx="75" ry="45" fill="#0284c7" stroke="#032b43" stroke-width="2"/>
             <ellipse cx="80" cy="50" rx="65" ry="36" fill="#032b43"/>
             <ellipse cx="80" cy="50" rx="65" ry="36" fill="none" stroke="#38bdf8" stroke-width="3"/>
             <g fill="#38bdf8">
-              <!-- Left Notehead -->
               <ellipse cx="56" cy="62" rx="7" ry="5" transform="rotate(-20 56 62)"/>
-              <!-- Right Notehead -->
               <ellipse cx="88" cy="56" rx="7" ry="5" transform="rotate(-20 88 56)"/>
-              <!-- Stems and Connecting Beam -->
               <path d="M 61 60 V 34 L 93 28 V 54 L 89 54 V 32 L 65 37 V 60 Z"/>
             </g>
           </svg>`;
         } else if (currentQuestionData.qType === 'V') {
-          // Video Icon
           mediaIconSvg = `<svg viewBox="0 0 160 100" xmlns="http://www.w3.org/2000/svg">
             <ellipse cx="80" cy="50" rx="75" ry="45" fill="#0284c7" stroke="#032b43" stroke-width="2"/>
             <ellipse cx="80" cy="50" rx="65" ry="36" fill="#032b43"/>
@@ -1264,7 +1279,7 @@
     }
 
     function showMediaModal(type, url) {
-      stopTimer(); // Pause timer while modal is open
+      stopTimer();
       const titleEl = document.getElementById('media-title');
       const instructionEl = document.getElementById('media-instruction');
       const containerEl = document.getElementById('media-content');
@@ -1301,11 +1316,16 @@
     function closeMediaModal() {
       const containerEl = document.getElementById('media-content');
       const mediaElements = containerEl.querySelectorAll('audio, video');
-      mediaElements.forEach(el => el.pause()); // Stop playback on close
-      
+      mediaElements.forEach(el => el.pause());
+  
       document.getElementById('media-modal').style.display = 'none';
-      if (canSelect && isTimedMode && timeRemaining > 0) {
-        resumeTimer();
+
+      if (canSelect && isTimedMode) {
+        if (timeRemaining > 0 && timeRemaining < timeLimitPerQuestion) {
+          resumeTimer();
+        } else {
+          startTimer();
+        }
       }
     }
 
@@ -1336,7 +1356,6 @@
       selectedBtn.classList.add('selected');
 
       setTimeout(() => {
-        // Enable bulb immediately after selection / reveal
         setupBulbState(true);
 
         if (selectedOption.isCorrect) {
@@ -1345,14 +1364,13 @@
 
           pendingNextStepCallback = () => {
             currentIndex++;
-            if (currentIndex < prizeLadder.length) {
+            if (currentIndex < maxGameQuestions) {
               loadQuestion();
             } else {
               endGame(true);
             }
           };
 
-          // Delay moving to next question (allows time to click bulb)
           nextStepTimeout = setTimeout(() => {
             if (pendingNextStepCallback) {
               const cb = pendingNextStepCallback;
@@ -1375,7 +1393,6 @@
             endGame(false);
           };
 
-          // Delay moving to game over
           nextStepTimeout = setTimeout(() => {
             if (pendingNextStepCallback) {
               const cb = pendingNextStepCallback;
@@ -1442,14 +1459,12 @@
     function handleTimeout() {
       canSelect = false;
       
-      // Reveal correct answer on timeout
       currentOptions.forEach((opt, idx) => {
         if (opt.isCorrect) {
           document.getElementById(`opt-btn-${idx}`).classList.add('correct');
         }
       });
 
-      // Enable bulb so user can check explanation
       setupBulbState(true);
 
       pendingNextStepCallback = () => {
@@ -1483,13 +1498,13 @@
 
     function useAudience() {
       if (lifelineAudienceUsed || !canSelect) return;
+      stopTimer();
       lifelineAudienceUsed = true;
       document.getElementById('life-audience').classList.add('used');
 
       let percentages = [0, 0, 0, 0];
       let correctIdx = currentOptions.findIndex(o => o.isCorrect);
 
-      // Check which options are currently active (visible)
       let activeIndices = [];
       for (let i = 0; i < 4; i++) {
         const btn = document.getElementById(`opt-btn-${i}`);
@@ -1498,17 +1513,15 @@
         }
       }
 
-      let mainShare = Math.floor(Math.random() * 26) + 50; // 50% - 75%
+      let mainShare = Math.floor(Math.random() * 26) + 50;
       percentages[correctIdx] = mainShare;
       let remaining = 100 - mainShare;
 
       let wrongActiveIndices = activeIndices.filter(i => i !== correctIdx);
 
       if (wrongActiveIndices.length === 1) {
-        // If 50:50 was used, all remaining percentage goes to the only other active wrong option
         percentages[wrongActiveIndices[0]] = remaining;
       } else {
-        // Standard calculation across 3 wrong options
         let p1 = Math.floor(Math.random() * (remaining + 1));
         let p2 = Math.floor(Math.random() * (remaining - p1 + 1));
         let p3 = remaining - p1 - p2;
@@ -1537,6 +1550,9 @@
 
     function closePoll() {
       document.getElementById("poll-modal").style.display = "none";
+      if (canSelect && isTimedMode && timeRemaining > 0) {
+        resumeTimer();
+      }
     }
 
     function useFlip() {
@@ -1585,7 +1601,7 @@
 
       if (isVictory) {
         document.getElementById('end-status-title').innerText = "Shubhkamnayein! Master of Dharm";
-        document.getElementById('final-prize-val').innerText = `${prizeLadder[prizeLadder.length - 1]} Points`;
+        document.getElementById('final-prize-val').innerText = `${prizeLadder[Math.min(currentIndex, prizeLadder.length - 1)]} Points`;
       } else if (isQuit) {
         document.getElementById('end-status-title').innerText = "You Chose to Quit / आपने खेल छोड़ दिया";
         document.getElementById('final-prize-val').innerText = `${finalVal} Points`;
