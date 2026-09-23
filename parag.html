@@ -831,10 +831,6 @@
       return currentFilename !== 'index.html' && isDebug;
     }
 
-    function isMediaOnlyMode() {
-      return isDebugMode() && getUrlParam('mediaOnly') === 'true';
-    }
-
     function isDebugQuestionMode() {
       return isDebugMode() && getUrlParam('question') !== null;
     }
@@ -864,12 +860,14 @@
       "6,40,000", "12,50,000", "25,00,000", "50,00,000", "7,00,00,000"
     ];
 
+    let rawDecryptedBank = [];
     let pairedQuestionsBank = [];
     let questionsByLevelMap = new Map();
     let sortedLevels = [];
     let usedQuestionIDs = new Set();
     let currentQuestionData = null;
     let currentIndex = 0;
+    let maxGameQuestions = 15; // Standard 15-question game
     let canSelect = true;
 
     let lifeline5050Used = false;
@@ -942,15 +940,25 @@
 
         const data = JSON.parse(decryptedJSON);
 
-        pairedQuestionsBank = parseAndPairData(data.questions || data.sheet1 || (Array.isArray(data) ? data : []));
+        rawDecryptedBank = parseAndPairData(data.questions || data.sheet1 || (Array.isArray(data) ? data : []));
 
-        // Optional filter: Media-only questions when mediaOnly=true parameter is present
-        if (isMediaOnlyMode()) {
-          pairedQuestionsBank = pairedQuestionsBank.filter(q => ['A', 'V', 'P'].includes(q.qType));
+        // Filter question bank according to Debug Mode
+        if (isDebugQuestionMode()) {
+          const targetQId = getUrlParam('question');
+          pairedQuestionsBank = rawDecryptedBank.filter(q => String(q.qId) === String(targetQId));
+          maxGameQuestions = 1; // Only 1 question to test; end immediately after
+        } else if (isDebugMode()) {
+          // debug=true without question param defaults to Media-Only mode
+          pairedQuestionsBank = rawDecryptedBank.filter(q => ['A', 'V', 'P'].includes(q.qType));
+          maxGameQuestions = Math.min(15, pairedQuestionsBank.length);
+        } else {
+          // Standard Game Mode
+          pairedQuestionsBank = [...rawDecryptedBank];
+          maxGameQuestions = 15;
         }
 
         if (pairedQuestionsBank.length === 0) {
-          throw new Error("No valid questions found in data.");
+          throw new Error("No valid questions found for current mode.");
         }
 
         questionsByLevelMap.clear();
@@ -1188,20 +1196,12 @@
       if (nextStepTimeout) { clearTimeout(nextStepTimeout); nextStepTimeout = null; }
       pendingNextStepCallback = null;
 
-      // Direct Question ID Override
-      const targetQId = getUrlParam('question');
-      if (isDebugQuestionMode() && targetQId) {
-        const forcedQuestion = pairedQuestionsBank.find(q => String(q.qId) === String(targetQId));
-        if (forcedQuestion) {
-          currentQuestionData = forcedQuestion;
-          usedQuestionIDs.add(forcedQuestion.qId);
-        } else {
-          console.warn(`Question ID ${targetQId} not found in current bank context. Falling back to default selection.`);
-          currentQuestionData = getNextQuestion();
-        }
-      } else {
-        currentQuestionData = getNextQuestion();
+      if (currentIndex >= maxGameQuestions) {
+        endGame(true);
+        return;
       }
+
+      currentQuestionData = getNextQuestion();
 
       if (!currentQuestionData) {
         endGame(true);
@@ -1363,7 +1363,7 @@
 
           pendingNextStepCallback = () => {
             currentIndex++;
-            if (currentIndex < prizeLadder.length) {
+            if (currentIndex < maxGameQuestions) {
               loadQuestion();
             } else {
               endGame(true);
@@ -1600,7 +1600,7 @@
 
       if (isVictory) {
         document.getElementById('end-status-title').innerText = "Shubhkamnayein! Master of Dharm";
-        document.getElementById('final-prize-val').innerText = `${prizeLadder[prizeLadder.length - 1]} Points`;
+        document.getElementById('final-prize-val').innerText = `${prizeLadder[Math.min(currentIndex, prizeLadder.length - 1)]} Points`;
       } else if (isQuit) {
         document.getElementById('end-status-title').innerText = "You Chose to Quit / आपने खेल छोड़ दिया";
         document.getElementById('final-prize-val').innerText = `${finalVal} Points`;
