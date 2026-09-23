@@ -1229,7 +1229,12 @@
             <ellipse cx="80" cy="50" rx="65" ry="36" fill="#032b43"/>
             <ellipse cx="80" cy="50" rx="65" ry="36" fill="none" stroke="#38bdf8" stroke-width="3"/>
             <g fill="#38bdf8">
-              <path d="M 62 42 L 62 60 A 8 8 0 1 1 54 52 A 8 8 0 0 1 62 60 L 62 36 L 94 30 L 94 54 A 8 8 0 1 1 86 46 A 8 8 0 0 1 94 54 L 94 30 L 62 36 Z"/>
+              <!-- Left Notehead -->
+              <ellipse cx="56" cy="62" rx="7" ry="5" transform="rotate(-20 56 62)"/>
+              <!-- Right Notehead -->
+              <ellipse cx="88" cy="56" rx="7" ry="5" transform="rotate(-20 88 56)"/>
+              <!-- Stems and Connecting Beam -->
+              <path d="M 61 60 V 34 L 93 28 V 54 L 89 54 V 32 L 65 37 V 60 Z"/>
             </g>
           </svg>`;
         } else if (currentQuestionData.qType === 'V') {
