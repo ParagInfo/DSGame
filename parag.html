@@ -1193,6 +1193,7 @@
     function loadQuestion() {
       canSelect = true;
       stopTimer();
+      timeRemaining = timeLimitPerQuestion; // Reset remaining time for the new question
       if (nextStepTimeout) { clearTimeout(nextStepTimeout); nextStepTimeout = null; }
       pendingNextStepCallback = null;
 
@@ -1320,7 +1321,7 @@
       document.getElementById('media-modal').style.display = 'none';
 
       if (canSelect && isTimedMode) {
-        if (timeRemaining > 0) {
+        if (timeRemaining > 0 && timeRemaining < timeLimitPerQuestion) {
           resumeTimer();
         } else {
           startTimer();
