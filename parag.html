@@ -1302,6 +1302,7 @@
       }
     }
 
+    /*
     function closeMediaModal() {
       const containerEl = document.getElementById('media-content');
       const mediaElements = containerEl.querySelectorAll('audio, video');
@@ -1312,6 +1313,24 @@
         resumeTimer();
       }
     }
+    */
+
+   function closeMediaModal() {
+     const containerEl = document.getElementById('media-content');
+     const mediaElements = containerEl.querySelectorAll('audio, video');
+     mediaElements.forEach(el => el.pause()); // Stop playback on close
+  
+     document.getElementById('media-modal').style.display = 'none';
+
+  // FIX: Start/Resume timer properly when acknowledging the media modal
+     if (canSelect && isTimedMode) {
+       if (timeRemaining > 0) {
+         resumeTimer();
+       } else {
+         startTimer();
+       }
+     }
+   }
 
     function renderOptions() {
       const grid = document.getElementById('options-grid');
