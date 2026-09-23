@@ -237,37 +237,55 @@
     .lifelines-container {
       display: flex;
       justify-content: center;
+      align-items: center;
       gap: 12px;
       margin: 8px 0;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
     }
 
     .lifeline-btn {
-      padding: 8px 16px;
-      border-radius: 20px;
-      border: 1.5px solid #ffd700;
-      background: radial-gradient(circle, #3a0066 0%, #110022 100%);
-      color: #ffd700;
-      font-weight: bold;
-      font-size: 0.8rem;
+      width: 65px;
+      height: 42px;
+      padding: 0;
+      border-radius: 21px;
+      border: none;
+      background: transparent;
       cursor: pointer;
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      flex-shrink: 0;
+      transition: transform 0.2s, filter 0.2s;
     }
 
+    .lifeline-btn svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .lifeline-btn:hover:not(.used) {
+      transform: scale(1.05);
+      filter: drop-shadow(0 0 6px rgba(245, 196, 49, 0.6));
+    }
+
+    /* Standardized QUIT Button matching other Lifeline icons */
     .lifeline-btn.quit-btn {
-      border-color: #ef4444;
-      background: radial-gradient(circle, #7f1d1d 0%, #360707 100%);
-      color: #fca5a5;
+      padding: 0;
     }
 
     .lifeline-btn.quit-btn:hover {
-      box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+      filter: drop-shadow(0 0 6px rgba(239, 68, 68, 0.8));
+    }
+
+    .lifeline-btn.media-btn {
+      display: none;
     }
 
     .lifeline-btn.used {
-      opacity: 0.3;
-      border-color: #555;
-      color: #888;
+      opacity: 0.35;
       cursor: not-allowed;
+      filter: grayscale(80%);
     }
 
     .timer-container {
@@ -715,10 +733,60 @@
       </div>
 
       <div class="lifelines-container">
-        <button class="lifeline-btn" id="life-5050" onclick="use5050()">50:50</button>
-        <button class="lifeline-btn" id="life-audience" onclick="useAudience()">Audience</button>
-        <button class="lifeline-btn" id="life-flip" onclick="useFlip()">FLIP</button>
-        <button class="lifeline-btn quit-btn" id="life-quit" onclick="useQuit()">QUIT</button>
+        <!-- 50:50 Lifeline Icon -->
+        <button class="lifeline-btn" id="life-5050" onclick="use5050()" title="50:50">
+          <svg viewBox="0 0 160 100" xmlns="http://www.w3.org/2000/svg">
+            <ellipse cx="80" cy="50" rx="75" ry="45" fill="#7A3DB8" stroke="#4A1875" stroke-width="2"/>
+            <ellipse cx="80" cy="50" rx="65" ry="36" fill="#3D1259"/>
+            <ellipse cx="80" cy="50" rx="65" ry="36" fill="none" stroke="#F5C431" stroke-width="3"/>
+            <text x="80" y="58" font-family="'Segoe UI', Arial, sans-serif" font-weight="bold" font-size="28" fill="#F5C431" text-anchor="middle">50:50</text>
+          </svg>
+        </button>
+
+        <!-- Audience Poll Lifeline Icon -->
+        <button class="lifeline-btn" id="life-audience" onclick="useAudience()" title="Audience Poll">
+          <svg viewBox="0 0 160 100" xmlns="http://www.w3.org/2000/svg">
+            <ellipse cx="80" cy="50" rx="75" ry="45" fill="#7A3DB8" stroke="#4A1875" stroke-width="2"/>
+            <ellipse cx="80" cy="50" rx="65" ry="36" fill="#3D1259"/>
+            <ellipse cx="80" cy="50" rx="65" ry="36" fill="none" stroke="#F5C431" stroke-width="3"/>
+            <g fill="#F5C431">
+              <circle cx="60" cy="45" r="7"/>
+              <path d="M 49 61 C 49 55, 54 51, 60 51 C 62.5 51, 64.8 51.8, 66.5 53 C 64.3 55.5, 63 58.6, 63 62 L 49 62 C 49 61.6, 49 61.3, 49 61 Z"/>
+              <circle cx="100" cy="45" r="7"/>
+              <path d="M 111 61 C 111 55, 106 51, 100 51 C 97.5 51, 95.2 51.8, 93.5 53 C 95.7 55.5, 97 58.6, 97 62 L 111 62 C 111 61.6, 111 61.3, 111 61 Z"/>
+              <circle cx="80" cy="41" r="9"/>
+              <path d="M 67 62 C 67 55, 73 50, 80 50 C 87 50, 93 55, 93 62 L 67 62 Z"/>
+            </g>
+          </svg>
+        </button>
+
+        <!-- Flip Question Lifeline Icon -->
+        <button class="lifeline-btn" id="life-flip" onclick="useFlip()" title="Flip Question">
+          <svg viewBox="0 0 160 100" xmlns="http://www.w3.org/2000/svg">
+            <ellipse cx="80" cy="50" rx="75" ry="45" fill="#7A3DB8" stroke="#4A1875" stroke-width="2"/>
+            <ellipse cx="80" cy="50" rx="65" ry="36" fill="#3D1259"/>
+            <ellipse cx="80" cy="50" rx="65" ry="36" fill="none" stroke="#F5C431" stroke-width="3"/>
+            <g fill="#F5C431">
+              <path d="M 55 42 C 68 42, 75 58, 90 58 L 92 58 L 92 52 L 108 61 L 92 70 L 92 64 L 90 64 C 71 64, 63 48, 55 48 Z"/>
+              <path d="M 55 58 C 63 58, 68 50, 74 45.5 L 70 41 C 65 45, 60 52, 55 52 Z"/>
+              <path d="M 90 36 C 85 36, 81 40, 77 44.5 L 81 49 C 84 45, 87 42, 90 42 L 92 42 L 92 36 Z"/>
+              <polygon points="92,30 108,39 92,48"/>
+            </g>
+          </svg>
+        </button>
+
+        <!-- Standardized QUIT Button -->
+        <button class="lifeline-btn quit-btn" id="life-quit" onclick="useQuit()" title="Quit Game">
+          <svg viewBox="0 0 160 100" xmlns="http://www.w3.org/2000/svg">
+            <ellipse cx="80" cy="50" rx="75" ry="45" fill="#7f1d1d" stroke="#360707" stroke-width="2"/>
+            <ellipse cx="80" cy="50" rx="65" ry="36" fill="#360707"/>
+            <ellipse cx="80" cy="50" rx="65" ry="36" fill="none" stroke="#ef4444" stroke-width="3"/>
+            <text x="80" y="58" font-family="'Segoe UI', Arial, sans-serif" font-weight="bold" font-size="24" fill="#fca5a5" text-anchor="middle">QUIT</text>
+          </svg>
+        </button>
+
+        <!-- Media Replay Button (Last Item) -->
+        <button class="lifeline-btn media-btn" id="life-media-replay" onclick="replayMedia()"></button>
       </div>
 
       <div class="timer-container" id="timer-container">
@@ -1138,12 +1206,61 @@
 
       renderOptions();
 
-      // Check for Media Question Types (P, A, V)
+      // Configure Media Replay Button SVG icon based on QType (Icon only, no text label)
+      const mediaBtn = document.getElementById('life-media-replay');
       if (['P', 'A', 'V'].includes(currentQuestionData.qType)) {
+        let mediaIconSvg = '';
+        if (currentQuestionData.qType === 'P') {
+          // Picture Icon
+          mediaIconSvg = `<svg viewBox="0 0 160 100" xmlns="http://www.w3.org/2000/svg">
+            <ellipse cx="80" cy="50" rx="75" ry="45" fill="#0284c7" stroke="#032b43" stroke-width="2"/>
+            <ellipse cx="80" cy="50" rx="65" ry="36" fill="#032b43"/>
+            <ellipse cx="80" cy="50" rx="65" ry="36" fill="none" stroke="#38bdf8" stroke-width="3"/>
+            <g fill="#38bdf8">
+              <rect x="52" y="32" width="56" height="36" rx="4" fill="none" stroke="#38bdf8" stroke-width="3"/>
+              <circle cx="64" cy="42" r="4"/>
+              <polygon points="56,62 70,48 80,58 92,44 104,62"/>
+            </g>
+          </svg>`;
+        } else if (currentQuestionData.qType === 'A') {
+          // Audio Icon
+          mediaIconSvg = `<svg viewBox="0 0 160 100" xmlns="http://www.w3.org/2000/svg">
+            <ellipse cx="80" cy="50" rx="75" ry="45" fill="#0284c7" stroke="#032b43" stroke-width="2"/>
+            <ellipse cx="80" cy="50" rx="65" ry="36" fill="#032b43"/>
+            <ellipse cx="80" cy="50" rx="65" ry="36" fill="none" stroke="#38bdf8" stroke-width="3"/>
+            <g fill="#38bdf8">
+              <!-- Left Notehead -->
+              <ellipse cx="56" cy="62" rx="7" ry="5" transform="rotate(-20 56 62)"/>
+              <!-- Right Notehead -->
+              <ellipse cx="88" cy="56" rx="7" ry="5" transform="rotate(-20 88 56)"/>
+              <!-- Stems and Connecting Beam -->
+              <path d="M 61 60 V 34 L 93 28 V 54 L 89 54 V 32 L 65 37 V 60 Z"/>
+            </g>
+          </svg>`;
+        } else if (currentQuestionData.qType === 'V') {
+          // Video Icon
+          mediaIconSvg = `<svg viewBox="0 0 160 100" xmlns="http://www.w3.org/2000/svg">
+            <ellipse cx="80" cy="50" rx="75" ry="45" fill="#0284c7" stroke="#032b43" stroke-width="2"/>
+            <ellipse cx="80" cy="50" rx="65" ry="36" fill="#032b43"/>
+            <ellipse cx="80" cy="50" rx="65" ry="36" fill="none" stroke="#38bdf8" stroke-width="3"/>
+            <g fill="#38bdf8">
+              <rect x="52" y="34" width="38" height="32" rx="4"/>
+              <polygon points="94,40 108,32 108,68 94,60"/>
+            </g>
+          </svg>`;
+        }
+        mediaBtn.innerHTML = mediaIconSvg;
+        mediaBtn.style.display = 'inline-flex';
         showMediaModal(currentQuestionData.qType, currentQuestionData.mediaUrl);
       } else {
+        mediaBtn.style.display = 'none';
         startTimer();
       }
+    }
+
+    function replayMedia() {
+      if (!currentQuestionData || !['P', 'A', 'V'].includes(currentQuestionData.qType)) return;
+      showMediaModal(currentQuestionData.qType, currentQuestionData.mediaUrl);
     }
 
     function showMediaModal(type, url) {
@@ -1187,7 +1304,9 @@
       mediaElements.forEach(el => el.pause()); // Stop playback on close
       
       document.getElementById('media-modal').style.display = 'none';
-      startTimer(); // Resume timer after acknowledgement
+      if (canSelect && isTimedMode && timeRemaining > 0) {
+        resumeTimer();
+      }
     }
 
     function renderOptions() {
@@ -1275,6 +1394,21 @@
       timeRemaining = timeLimitPerQuestion;
       updateTimerUI();
 
+      timerInterval = setInterval(() => {
+        timeRemaining--;
+        updateTimerUI();
+        if (timeRemaining <= 0) {
+          stopTimer();
+          handleTimeout();
+        }
+      }, 1000);
+    }
+
+    function resumeTimer() {
+      stopTimer();
+      if (!isTimedMode) return;
+
+      updateTimerUI();
       timerInterval = setInterval(() => {
         timeRemaining--;
         updateTimerUI();
@@ -1424,15 +1558,8 @@
 
     function closeQuitModal() {
       document.getElementById('quit-modal').style.display = 'none';
-      if (canSelect && isTimedMode && !timerInterval) {
-        timerInterval = setInterval(() => {
-          timeRemaining--;
-          updateTimerUI();
-          if (timeRemaining <= 0) {
-            stopTimer();
-            handleTimeout();
-          }
-        }, 1000);
+      if (canSelect && isTimedMode && timeRemaining > 0) {
+        resumeTimer();
       }
     }
 
