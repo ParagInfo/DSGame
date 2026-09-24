@@ -7,6 +7,8 @@
   
   <!-- Supabase JS Client Library -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- SheetJS Library for reading local XLSX file -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
   <style>
     * {
@@ -620,7 +622,7 @@
       <h1>Kaun Banega Dharm Shiromani</h1>
       <h2>कौन बनेगा धर्म शिरोमणि</h2>
       
-      <div class="status-msg" id="status-msg">Connecting to Supabase...</div>
+      <div class="status-msg" id="status-msg">Loading configuration parameters...</div>
 
       <!-- Timer Option -->
       <div class="form-group">
@@ -844,7 +846,6 @@
       "6,40,000", "12,50,000", "25,00,000", "50,00,000", "7,00,00,000"
     ];
 
-    // Difficulty Mapping per Question Level (1.0 to 15.0)
     const questionLevels = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0];
 
     let usedQuestionIDs = new Set();
@@ -873,10 +874,48 @@
       const statusEl = document.getElementById("status-msg");
       const startBtn = document.getElementById("start-btn");
 
+      // Load parameters from local Questions1.xlsx file (params tab)
+      await loadLocalParams();
+
       statusEl.innerText = "System ready. Click Start Game to begin!";
       statusEl.style.color = "#22c55e";
       startBtn.disabled = false;
       startBtn.innerText = "Start Game";
+    }
+
+    async function loadLocalParams() {
+      try {
+        const response = await fetch("Questions1.xlsx", { cache: "no-store" });
+        if (!response.ok) throw new Error("Local Questions1.xlsx not found");
+
+        const arrayBuffer = await response.arrayBuffer();
+        const workbook = XLSX.read(arrayBuffer, { type: "array" });
+
+        // Search specifically for the 'params' sheet
+        const paramsSheetName = workbook.SheetNames.find(s => s.trim().toLowerCase() === "params");
+        
+        if (paramsSheetName) {
+          const paramsSheet = workbook.Sheets[paramsSheetName];
+          const rawParams = XLSX.utils.sheet_to_json(paramsSheet, { header: 1, defval: "" });
+
+          rawParams.forEach(row => {
+            if (row && row.length >= 2) {
+              const key = String(row[0]).trim().toLowerCase();
+              const val = String(row[1]).trim();
+
+              if (key === "thanks_message" && val !== "") {
+                customThanksMessage = val;
+              } else if (key === "instructions_title" && val !== "") {
+                customInstructionsTitle = val;
+              } else if (key === "instructions_body" && val !== "") {
+                customInstructionsBody = val;
+              }
+            }
+          });
+        }
+      } catch (err) {
+        console.warn("Could not load local Questions1.xlsx params sheet. Using default UI text.", err);
+      }
     }
 
     function openInstructionsModal() {
@@ -1014,7 +1053,7 @@
       document.getElementById('lbl-question-en').innerText = currentQuestionData.en_qtext || '';
       document.getElementById('lbl-question-hi').innerText = currentQuestionData.hi_qtext || '';
 
-      // Combine English and Hindi options (Server sends options in an unlabelled array)
+      // Combine English and Hindi choices
       let choices = (currentQuestionData.en_wrongs || []).map((enVal, idx) => ({
         en: enVal,
         hi: (currentQuestionData.hi_wrongs || [])[idx] || ''
@@ -1137,7 +1176,7 @@
         return;
       }
 
-      const result = data[0]; // Returns { is_correct, correct_answer, explanation }
+      const result = data[0];
       currentExplanationText = result.explanation || "";
 
       setTimeout(() => {
@@ -1168,7 +1207,6 @@
           selectedBtn.classList.remove('selected');
           selectedBtn.classList.add('incorrect');
 
-          // Highlight correct option returned from server
           currentOptions.forEach((opt, idx) => {
             if (opt.en.trim() === result.correct_answer.trim()) {
               document.getElementById(`opt-btn-${idx}`).classList.add('correct');
@@ -1245,7 +1283,6 @@
     async function handleTimeout() {
       canSelect = false;
 
-      // Get correct answer from server to display
       const { data } = await supabaseClient.rpc('check_answer', {
         p_qid: currentQuestionData.qId,
         p_selected_answer: '',
@@ -1283,7 +1320,6 @@
       lifeline5050Used = true;
       document.getElementById('life-5050').classList.add('used');
 
-      // Randomly hide 2 option elements on frontend
       let hiddenIndices = [];
       while (hiddenIndices.length < 2) {
         let randIdx = Math.floor(Math.random() * 4);
