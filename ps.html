@@ -514,12 +514,22 @@
       text-align: center;
       width: 100%;
       max-width: 450px;
-      max-height: 85vh;
-      overflow-y: auto;
+      height: 85vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 0 20px rgba(0,0,0,0.8);
     }
 
     .modal-content h3 {
       font-size: 1rem;
+      flex-shrink: 0;
+    }
+
+    .modal-body-scroll {
+      flex-grow: 1;
+      overflow-y: auto;
+      margin: 10px 0 15px 0;
+      padding-right: 5px;
     }
 
     .modal-content a {
@@ -568,11 +578,15 @@
       background: #ffd700;
       color: #000;
       border: none;
-      padding: 6px 16px;
+      padding: 8px 16px;
       border-radius: 6px;
       font-weight: bold;
       font-size: 0.85rem;
       cursor: pointer;
+      flex-shrink: 0;
+      align-self: center;
+      width: 100%;
+      max-width: 150px;
     }
 
     .modal-btn-group {
@@ -580,6 +594,7 @@
       gap: 10px;
       justify-content: center;
       margin-top: 15px;
+      flex-shrink: 0;
     }
 
     .cancel-btn {
@@ -652,8 +667,10 @@
   <div class="modal" id="instructions-modal">
     <div class="modal-content">
       <h3 style="color: #ffd700; margin-bottom: 12px;" id="instructions-title">Instructions / नियम एवं निर्देश</h3>
-      <div id="instructions-body" style="color: #fef08a; font-size: 0.95rem; margin-bottom: 20px; text-align: left; line-height: 1.5; word-break: break-word;">
-        Loading instructions...
+      <div class="modal-body-scroll">
+        <div id="instructions-body" style="color: #fef08a; font-size: 0.95rem; text-align: left; line-height: 1.5; word-break: break-word;">
+          Loading instructions...
+        </div>
       </div>
       <button class="close-btn" onclick="closeInstructionsModal()">Close</button>
     </div>
@@ -665,11 +682,13 @@
       <h3 style="color: #ffd700; margin-bottom: 6px;" id="media-title">
         Media Question
       </h3>
-      <div class="media-instruction" id="media-instruction">
-        Please press the Play button to listen/watch / कृपया सुनने/देखने के लिए प्ले बटन दबाएं
-      </div>
-      <div class="media-container" id="media-content">
-        <!-- Dynamic media content goes here -->
+      <div class="modal-body-scroll">
+        <div class="media-instruction" id="media-instruction">
+          Please press the Play button to listen/watch / कृपया सुनने/देखने के लिए प्ले बटन दबाएं
+        </div>
+        <div class="media-container" id="media-content">
+          <!-- Dynamic media content goes here -->
+        </div>
       </div>
       <button class="close-btn" onclick="closeMediaModal()">Acknowledge & Proceed to Question</button>
     </div>
@@ -681,8 +700,10 @@
       <h3 style="color: #ffd700; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; gap: 8px;">
         💡 Explanation / स्पष्टीकरण
       </h3>
-      <div style="text-align: left; background: #0b0118; border: 1px solid #38bdf8; border-radius: 8px; padding: 12px; margin-bottom: 15px;">
-        <div id="modal-explanation-en" style="color: #e2e8f0; font-size: 0.85rem; margin-bottom: 8px; line-height: 1.4;"></div>
+      <div class="modal-body-scroll">
+        <div style="text-align: left; background: #0b0118; border: 1px solid #38bdf8; border-radius: 8px; padding: 12px;">
+          <div id="modal-explanation-en" style="color: #e2e8f0; font-size: 0.85rem; line-height: 1.4;"></div>
+        </div>
       </div>
       <button class="close-btn" onclick="closeExplanationModal()">Continue / आगे बढ़ें</button>
     </div>
@@ -692,8 +713,10 @@
   <div class="modal" id="thanks-modal">
     <div class="modal-content">
       <h3 style="color: #ffd700; margin-bottom: 12px;">Acknowledgments & Thanks</h3>
-      <div id="thanks-msg-body" style="color: #fef08a; font-size: 0.95rem; margin-bottom: 20px; text-align: center; word-break: break-word;">
-        Loading message...
+      <div class="modal-body-scroll">
+        <div id="thanks-msg-body" style="color: #fef08a; font-size: 0.95rem; text-align: center; word-break: break-word;">
+          Loading message...
+        </div>
       </div>
       <button class="close-btn" onclick="closeThanksModal()">Close</button>
     </div>
@@ -703,11 +726,13 @@
   <div class="modal" id="poll-modal">
     <div class="modal-content">
       <h3 style="color: #ffd700; margin-bottom: 10px;">Audience Poll Result</h3>
-      <div class="poll-bars">
-        <div class="poll-col"><span id="pval-0" style="font-size: 0.8rem; color:#fef08a; margin-bottom: 4px;">0%</span><div class="poll-bar" id="pbar-0"></div><span style="color:#38bdf8; font-weight:bold; margin-top: 4px;">A</span></div>
-        <div class="poll-col"><span id="pval-1" style="font-size: 0.8rem; color:#fef08a; margin-bottom: 4px;">0%</span><div class="poll-bar" id="pbar-1"></div><span style="color:#38bdf8; font-weight:bold; margin-top: 4px;">B</span></div>
-        <div class="poll-col"><span id="pval-2" style="font-size: 0.8rem; color:#fef08a; margin-bottom: 4px;">0%</span><div class="poll-bar" id="pbar-2"></div><span style="color:#38bdf8; font-weight:bold; margin-top: 4px;">C</span></div>
-        <div class="poll-col"><span id="pval-3" style="font-size: 0.8rem; color:#fef08a; margin-bottom: 4px;">0%</span><div class="poll-bar" id="pbar-3"></div><span style="color:#38bdf8; font-weight:bold; margin-top: 4px;">D</span></div>
+      <div class="modal-body-scroll">
+        <div class="poll-bars">
+          <div class="poll-col"><span id="pval-0" style="font-size: 0.8rem; color:#fef08a; margin-bottom: 4px;">0%</span><div class="poll-bar" id="pbar-0"></div><span style="color:#38bdf8; font-weight:bold; margin-top: 4px;">A</span></div>
+          <div class="poll-col"><span id="pval-1" style="font-size: 0.8rem; color:#fef08a; margin-bottom: 4px;">0%</span><div class="poll-bar" id="pbar-1"></div><span style="color:#38bdf8; font-weight:bold; margin-top: 4px;">B</span></div>
+          <div class="poll-col"><span id="pval-2" style="font-size: 0.8rem; color:#fef08a; margin-bottom: 4px;">0%</span><div class="poll-bar" id="pbar-2"></div><span style="color:#38bdf8; font-weight:bold; margin-top: 4px;">C</span></div>
+          <div class="poll-col"><span id="pval-3" style="font-size: 0.8rem; color:#fef08a; margin-bottom: 4px;">0%</span><div class="poll-bar" id="pbar-3"></div><span style="color:#38bdf8; font-weight:bold; margin-top: 4px;">D</span></div>
+        </div>
       </div>
       <button class="close-btn" onclick="closePoll()">Continue</button>
     </div>
@@ -715,7 +740,7 @@
 
   <!-- Quit Confirmation Modal -->
   <div class="modal" id="quit-modal">
-    <div class="modal-content">
+    <div class="modal-content" style="height: auto; max-height: 85vh;">
       <h3 style="color: #ffd700; margin-bottom: 10px;">Quit Game? / खेल छोड़ें?</h3>
       <p style="color: #fef08a; font-size: 0.95rem; margin-bottom: 10px;" id="quit-modal-msg">Are you sure you want to quit?</p>
       <div class="modal-btn-group">
@@ -1041,11 +1066,12 @@
       }
 
       currentQuestionData = data[0];
-      usedQuestionIDs.add(currentQuestionData.qId);
+      const qIdentifier = currentQuestionData.qId || currentQuestionData.id;
+      usedQuestionIDs.add(qIdentifier);
 
       setupBulbState(false);
 
-      document.getElementById('lbl-level').innerText = `${currentQuestionData.qId}`;
+      document.getElementById('lbl-level').innerText = `${qIdentifier}`;
       
       const currentPrize = prizeLadder[Math.min(currentIndex, prizeLadder.length - 1)];
       document.getElementById('lbl-prize').innerText = `Question ${currentIndex + 1} • Points: ${currentPrize}`;
@@ -1163,9 +1189,11 @@
 
       selectedBtn.classList.add('selected');
 
+      const qIdentifier = currentQuestionData.qId || currentQuestionData.id;
+
       // Validate choice with Supabase server function
       const { data, error } = await supabaseClient.rpc('check_answer', {
-        p_qid: currentQuestionData.qId,
+        p_qid: qIdentifier,
         p_selected_answer: selectedOption.en,
         p_lang: 'en'
       });
@@ -1283,8 +1311,10 @@
     async function handleTimeout() {
       canSelect = false;
 
+      const qIdentifier = currentQuestionData.qId || currentQuestionData.id;
+
       const { data } = await supabaseClient.rpc('check_answer', {
-        p_qid: currentQuestionData.qId,
+        p_qid: qIdentifier,
         p_selected_answer: '',
         p_lang: 'en'
       });
