@@ -1191,6 +1191,11 @@
 
       const qIdentifier = currentQuestionData.qId || currentQuestionData.id;
 
+      console.log('RPC Arguments:', {
+  p_qid: qIdentifier,
+  p_selected_answer: selectedOption?.en,
+  p_lang: 'en'
+});
       // Validate choice with Supabase server function
       const { data, error } = await supabaseClient.rpc('check_answer', {
         p_qid: qIdentifier,
