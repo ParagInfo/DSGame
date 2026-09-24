@@ -618,16 +618,15 @@
     }
   </style>
 
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-HXPKJZ4B91"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-HXPKJZ4B91"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
 
-  gtag('config', 'G-HXPKJZ4B91');
-</script>
-  
+    gtag('config', 'G-HXPKJZ4B91');
+  </script>
 </head>
 <body>
 
@@ -856,7 +855,7 @@
 
   <script>
     // --- SUPABASE CONFIGURATION ---
-    const SUPABASE_URL = 'https://ndfdcobmnxsvtrdqpqti.supabase.co'; // e.g. 'https://xyzcompany.supabase.co'
+    const SUPABASE_URL = 'https://ndfdcobmnxsvtrdqpqti.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_-CMSV99N3ovQggn-eJhLLA_z5WFtag4';
 
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -899,7 +898,6 @@
       const statusEl = document.getElementById("status-msg");
       const startBtn = document.getElementById("start-btn");
 
-      // Load parameters from local Questions1.xlsx file (params tab)
       await loadLocalParams();
 
       statusEl.innerText = "System ready. Click Start Game to begin!";
@@ -916,7 +914,6 @@
         const arrayBuffer = await response.arrayBuffer();
         const workbook = XLSX.read(arrayBuffer, { type: "array" });
 
-        // Search specifically for the 'params' sheet
         const paramsSheetName = workbook.SheetNames.find(s => s.trim().toLowerCase() === "params");
         
         if (paramsSheetName) {
@@ -1053,7 +1050,6 @@
 
       let targetLevel = questionLevels[currentIndex] || 1.0;
 
-      // Request next question from Supabase RPC
       const { data, error } = await supabaseClient.rpc('get_next_question', {
         p_level: targetLevel,
         p_exclude_ids: Array.from(usedQuestionIDs)
@@ -1066,7 +1062,7 @@
       }
 
       currentQuestionData = data[0];
-      const qIdentifier = currentQuestionData.qId || currentQuestionData.id;
+      const qIdentifier = currentQuestionData.qId || currentQuestionData.qid || currentQuestionData.id;
       usedQuestionIDs.add(qIdentifier);
 
       setupBulbState(false);
@@ -1079,28 +1075,44 @@
       document.getElementById('lbl-question-en').innerText = currentQuestionData.en_qtext || '';
       document.getElementById('lbl-question-hi').innerText = currentQuestionData.hi_qtext || '';
 
-      // Combine English and Hindi choices
-      let choices = (currentQuestionData.en_wrongs || []).map((enVal, idx) => ({
-        en: enVal,
-        hi: (currentQuestionData.hi_wrongs || [])[idx] || ''
-      }));
+      // --- CRITICAL FIX: Combine Correct Option + Incorrect Options into standard choices pool ---
+      let choices = [];
+      
+      if (currentQuestionData.en_right) {
+        choices.push({
+          en: currentQuestionData.en_right,
+          hi: currentQuestionData.hi_right || ''
+        });
+      }
+
+      if (Array.isArray(currentQuestionData.en_wrongs)) {
+        currentQuestionData.en_wrongs.forEach((enVal, idx) => {
+          choices.push({
+            en: enVal,
+            hi: (currentQuestionData.hi_wrongs || [])[idx] || ''
+          });
+        });
+      }
 
       currentOptions = shuffleArray(choices);
       renderOptions();
 
+      const qTypeVal = currentQuestionData.qType || currentQuestionData.qtype;
+      const mediaUrlVal = currentQuestionData.mediaUrl || currentQuestionData.media_url;
+
       const mediaBtn = document.getElementById('life-media-replay');
-      if (['P', 'A', 'V'].includes(currentQuestionData.qType)) {
+      if (['P', 'A', 'V'].includes(qTypeVal)) {
         let mediaIconSvg = '';
-        if (currentQuestionData.qType === 'P') {
+        if (qTypeVal === 'P') {
           mediaIconSvg = `<svg viewBox="0 0 160 100" xmlns="http://www.w3.org/2000/svg"><ellipse cx="80" cy="50" rx="75" ry="45" fill="#0284c7" stroke="#032b43" stroke-width="2"/><ellipse cx="80" cy="50" rx="65" ry="36" fill="#032b43"/><ellipse cx="80" cy="50" rx="65" ry="36" fill="none" stroke="#38bdf8" stroke-width="3"/><g fill="#38bdf8"><rect x="52" y="32" width="56" height="36" rx="4" fill="none" stroke="#38bdf8" stroke-width="3"/><circle cx="64" cy="42" r="4"/><polygon points="56,62 70,48 80,58 92,44 104,62"/></g></svg>`;
-        } else if (currentQuestionData.qType === 'A') {
+        } else if (qTypeVal === 'A') {
           mediaIconSvg = `<svg viewBox="0 0 160 100" xmlns="http://www.w3.org/2000/svg"><ellipse cx="80" cy="50" rx="75" ry="45" fill="#0284c7" stroke="#032b43" stroke-width="2"/><ellipse cx="80" cy="50" rx="65" ry="36" fill="#032b43"/><ellipse cx="80" cy="50" rx="65" ry="36" fill="none" stroke="#38bdf8" stroke-width="3"/><g fill="#38bdf8"><ellipse cx="56" cy="62" rx="7" ry="5" transform="rotate(-20 56 62)"/><ellipse cx="88" cy="56" rx="7" ry="5" transform="rotate(-20 88 56)"/><path d="M 61 60 V 34 L 93 28 V 54 L 89 54 V 32 L 65 37 V 60 Z"/></g></svg>`;
-        } else if (currentQuestionData.qType === 'V') {
+        } else if (qTypeVal === 'V') {
           mediaIconSvg = `<svg viewBox="0 0 160 100" xmlns="http://www.w3.org/2000/svg"><ellipse cx="80" cy="50" rx="75" ry="45" fill="#0284c7" stroke="#032b43" stroke-width="2"/><ellipse cx="80" cy="50" rx="65" ry="36" fill="#032b43"/><ellipse cx="80" cy="50" rx="65" ry="36" fill="none" stroke="#38bdf8" stroke-width="3"/><g fill="#38bdf8"><rect x="52" y="34" width="38" height="32" rx="4"/><polygon points="94,40 108,32 108,68 94,60"/></g></svg>`;
         }
         mediaBtn.innerHTML = mediaIconSvg;
         mediaBtn.style.display = 'inline-flex';
-        showMediaModal(currentQuestionData.qType, currentQuestionData.mediaUrl);
+        showMediaModal(qTypeVal, mediaUrlVal);
       } else {
         mediaBtn.style.display = 'none';
         startTimer();
@@ -1108,8 +1120,11 @@
     }
 
     function replayMedia() {
-      if (!currentQuestionData || !['P', 'A', 'V'].includes(currentQuestionData.qType)) return;
-      showMediaModal(currentQuestionData.qType, currentQuestionData.mediaUrl);
+      const qTypeVal = currentQuestionData.qType || currentQuestionData.qtype;
+      const mediaUrlVal = currentQuestionData.mediaUrl || currentQuestionData.media_url;
+
+      if (!currentQuestionData || !['P', 'A', 'V'].includes(qTypeVal)) return;
+      showMediaModal(qTypeVal, mediaUrlVal);
     }
 
     function showMediaModal(type, url) {
@@ -1172,6 +1187,8 @@
         const btn = document.createElement('button');
         btn.className = 'option-btn';
         btn.id = `opt-btn-${idx}`;
+        btn.style.pointerEvents = 'auto';
+        btn.style.visibility = 'visible';
         btn.innerHTML = `
           <span class="opt-en"><span class="option-prefix">${prefixes[idx]}</span>${opt.en}</span>
           <span class="opt-hi">${opt.hi}</span>
@@ -1189,14 +1206,8 @@
 
       selectedBtn.classList.add('selected');
 
-      const qIdentifier = currentQuestionData.qId || currentQuestionData.id;
+      const qIdentifier = currentQuestionData.qId || currentQuestionData.qid || currentQuestionData.id;
 
-      console.log('RPC Arguments:', {
-  p_qid: qIdentifier,
-  p_selected_answer: selectedOption?.en,
-  p_lang: 'en'
-});
-      // Validate choice with Supabase server function
       const { data, error } = await supabaseClient.rpc('check_answer', {
         p_qid: qIdentifier,
         p_selected_answer: selectedOption.en,
@@ -1316,7 +1327,7 @@
     async function handleTimeout() {
       canSelect = false;
 
-      const qIdentifier = currentQuestionData.qId || currentQuestionData.id;
+      const qIdentifier = currentQuestionData.qId || currentQuestionData.qid || currentQuestionData.id;
 
       const { data } = await supabaseClient.rpc('check_answer', {
         p_qid: qIdentifier,
@@ -1350,23 +1361,42 @@
       }, 4000);
     }
 
-    function use5050() {
+    async function use5050() {
       if (lifeline5050Used || !canSelect) return;
-      lifeline5050Used = true;
-      document.getElementById('life-5050').classList.add('used');
+      
+      const qIdentifier = currentQuestionData.qId || currentQuestionData.qid || currentQuestionData.id;
 
-      let hiddenIndices = [];
-      while (hiddenIndices.length < 2) {
-        let randIdx = Math.floor(Math.random() * 4);
-        if (!hiddenIndices.includes(randIdx)) {
-          hiddenIndices.push(randIdx);
-        }
+      // Verify correct answer text from server
+      const { data } = await supabaseClient.rpc('check_answer', {
+        p_qid: qIdentifier,
+        p_selected_answer: currentOptions[0]?.en || '',
+        p_lang: 'en'
+      });
+
+      let correctAnswerText = currentQuestionData.en_right || "";
+      if (data && data[0] && data[0].correct_answer) {
+        correctAnswerText = data[0].correct_answer;
       }
+
+      let correctIndex = currentOptions.findIndex(opt => opt.en.trim() === correctAnswerText.trim());
+      if (correctIndex === -1) correctIndex = 0;
+
+      let wrongIndices = [];
+      currentOptions.forEach((_, idx) => {
+        if (idx !== correctIndex) wrongIndices.push(idx);
+      });
+
+      // Keep one wrong option and hide the other two
+      shuffleArray(wrongIndices);
+      let hiddenIndices = wrongIndices.slice(0, 2);
 
       hiddenIndices.forEach(idx => {
         const btn = document.getElementById(`opt-btn-${idx}`);
         if (btn) btn.style.visibility = 'hidden';
       });
+
+      lifeline5050Used = true;
+      document.getElementById('life-5050').classList.add('used');
     }
 
     function useAudience() {
