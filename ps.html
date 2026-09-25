@@ -840,6 +840,9 @@
     }
     var supabase = window.supabaseClient;
 
+    // Dynamic level mapping storage
+    let availableDbLevels = [1];
+
     // URL Parameter Helpers
     function getUrlParam(param) {
       const urlParams = new URLSearchParams(window.location.search);
@@ -847,9 +850,8 @@
     }
 
     function isDebugMode() {
-      const currentFilename = window.location.pathname.split('/').pop().toLowerCase();
       const isDebug = getUrlParam('debug') === 'true';
-      return currentFilename !== 'index.html' && isDebug;
+      return isDebug;
     }
 
     function isDebugQuestionMode() {
@@ -895,6 +897,7 @@
         statusEl.innerText = "Connecting to game server...";
         statusEl.style.color = "#38bdf8";
 
+        await fetchAvailableLevels();
         await loadParamsFromExcel();
 
         statusEl.innerText = "Ready to play!";
@@ -905,6 +908,42 @@
         statusEl.innerText = "Initialization failed: " + err.message;
         statusEl.style.color = "#ef4444";
       }
+    }
+
+    // Fetch distinct numeric levels available in QuestionsBank
+    async function fetchAvailableLevels() {
+      try {
+        const { data, error } = await supabase
+          .from('QuestionsBank')
+          .select('Level');
+
+        if (error || !data || data.length === 0) {
+          console.warn("Could not fetch levels from DB, using default level 1:", error);
+          return;
+        }
+
+        const uniqueLevels = Array.from(new Set(data.map(row => Number(row.Level))))
+                                  .filter(lvl => !isNaN(lvl))
+                                  .sort((a, b) => a - b);
+
+        if (uniqueLevels.length > 0) {
+          availableDbLevels = uniqueLevels;
+        }
+      } catch (e) {
+        console.warn("Error fetching available levels:", e);
+      }
+    }
+
+    // FIX #2: Accurately map current game question index (0 to 14) onto distinct DB levels
+    function getMappedLevel(gameStep) {
+      const totalDbLevels = availableDbLevels.length;
+      if (totalDbLevels === 0) return 1;
+
+      // Divides 15 steps into N equal segments corresponding to distinct levels
+      const levelIndex = Math.floor((gameStep / maxGameQuestions) * totalDbLevels);
+      const safeIndex = Math.min(Math.max(levelIndex, 0), totalDbLevels - 1);
+      
+      return availableDbLevels[safeIndex];
     }
 
     async function loadParamsFromExcel() {
@@ -930,85 +969,102 @@
       }
     }
 
-    // 2. Fetch Single Question via Secure SQL RPC
-async function getNextQuestionFromSupabase() {
-  let targetLevel = parseInt(currentIndex + 1, 10); 
-  let excludeArray = Array.from(usedQuestionIDs);
+    // Fetch Single Question via Secure SQL RPC using mapped levels
+    async function getNextQuestionFromSupabase() {
+      let targetLevel = getMappedLevel(currentIndex);
+      let excludeArray = Array.from(usedQuestionIDs);
 
-  const { data, error } = await supabase.rpc('get_next_question', {
-    target_level: targetLevel,
-    exclude_ids: excludeArray
-  });
-
-  if (error || !data || data.length === 0) {
-    console.error("RPC Error or No Data:", error);
-    return null;
-  }
-
-  let pairedList = parseAndPairData(data);
-  if (pairedList.length === 0) return null;
-
-  return pairedList[0];
-}
-    // Parse DB rows (Pairs English & Hindi entries by qId)
-// Parse DB rows (Pairs English & Hindi entries by qId)
-function parseAndPairData(records) {
-  let map = new Map();
-
-  records.forEach((row) => {
-    if (!row) return;
-
-    let qId = String(row.qid || "").trim();
-    let numLevel = parseFloat(row.numericlevel || 1.0);
-    let questionText = String(row.qtext || "").trim();
-    let choices = Array.isArray(row.choices) ? row.choices : [];
-    let flag = String(row.flag || "").trim().toLowerCase();
-    let explanationText = row.explanation ? String(row.explanation).trim() : "";
-    let qType = String(row.qtype || "T").trim().toUpperCase();
-    let mediaUrl = String(row.mediaurl || "").trim();
-
-    if (!qId || !questionText) return;
-
-    if (!map.has(qId)) {
-      map.set(qId, { 
-        qId: qId, 
-        numericLevel: numLevel, 
-        qType: qType, 
-        mediaUrl: mediaUrl, 
-        en: null, 
-        hi: null 
+      const { data, error } = await supabase.rpc('get_next_question', {
+        target_level: targetLevel,
+        exclude_ids: excludeArray
       });
+
+      if (error || !data || data.length === 0) {
+        console.error("RPC Error or No Data:", error);
+        return null;
+      }
+
+      let pairedList = parseAndPairData(data);
+      if (pairedList.length === 0) return null;
+
+      return pairedList[0];
     }
 
-    let entry = map.get(qId);
-    entry.numericLevel = numLevel;
-    entry.qType = qType;
-    entry.mediaUrl = mediaUrl;
+    // FIX #3: Direct fetch helper to debug specific A, V, P media questions by qid parameter
+    async function getDebugQuestionFromSupabase(targetQId) {
+      const { data, error } = await supabase
+        .from('QuestionsBank')
+        .select('*')
+        .eq('qid', targetQId);
 
-    let langData = {
-      qText: questionText,
-      choices: choices,
-      explanation: explanationText
-    };
+      if (error || !data || data.length === 0) {
+        console.error("Debug fetch error:", error);
+        return null;
+      }
 
-    if (flag.includes("hi") || flag.includes("हिंदी") || flag === "h") {
-      entry.hi = langData;
-    } else {
-      entry.en = langData;
+      let pairedList = parseAndPairData(data);
+      return pairedList.length > 0 ? pairedList[0] : null;
     }
-  });
 
-  let pairedList = [];
-  map.forEach((item) => {
-    if (item.en || item.hi) {
-      if (!item.en) item.en = item.hi;
-      if (!item.hi) item.hi = item.en;
-      pairedList.push(item);
+    // Parse DB rows (Pairs English & Hindi entries by qId)
+    function parseAndPairData(records) {
+      let map = new Map();
+
+      records.forEach((row) => {
+        if (!row) return;
+
+        let qId = String(row.qid || "").trim();
+        let numLevel = parseFloat(row.numericlevel || row.Level || 1.0);
+        let questionText = String(row.qtext || "").trim();
+        let choices = Array.isArray(row.choices) ? row.choices : [];
+        let flag = String(row.flag || "").trim().toLowerCase();
+        let explanationText = row.explanation ? String(row.explanation).trim() : "";
+        let qType = String(row.qtype || "T").trim().toUpperCase();
+        let mediaUrl = String(row.mediaurl || "").trim();
+
+        if (!qId || !questionText) return;
+
+        if (!map.has(qId)) {
+          map.set(qId, { 
+            qId: qId, 
+            numericLevel: numLevel, 
+            qType: qType, 
+            mediaUrl: mediaUrl, 
+            en: null, 
+            hi: null 
+          });
+        }
+
+        let entry = map.get(qId);
+        entry.numericLevel = numLevel;
+        entry.qType = qType;
+        entry.mediaUrl = mediaUrl;
+
+        let langData = {
+          qText: questionText,
+          choices: choices,
+          explanation: explanationText
+        };
+
+        if (flag.includes("hi") || flag.includes("हिंदी") || flag === "h") {
+          entry.hi = langData;
+        } else {
+          entry.en = langData;
+        }
+      });
+
+      let pairedList = [];
+      map.forEach((item) => {
+        if (item.en || item.hi) {
+          if (!item.en) item.en = item.hi;
+          if (!item.hi) item.hi = item.en;
+          pairedList.push(item);
+        }
+      });
+
+      return pairedList;
     }
-  });
 
-  return pairedList;
-}
     function openInstructionsModal() {
       document.getElementById('instructions-title').innerText = customInstructionsTitle;
       document.getElementById('instructions-body').innerHTML = customInstructionsBody;
@@ -1113,7 +1169,13 @@ function parseAndPairData(records) {
       document.getElementById('lbl-question-en').innerText = "Loading question from database...";
       document.getElementById('lbl-question-hi').innerText = "प्रश्न लोड हो रहा है...";
 
-      currentQuestionData = await getNextQuestionFromSupabase();
+      // FIX #3: Check debug question parameter, otherwise query normal level sequence
+      if (isDebugQuestionMode()) {
+        const debugQId = getUrlParam('question');
+        currentQuestionData = await getDebugQuestionFromSupabase(debugQId);
+      } else {
+        currentQuestionData = await getNextQuestionFromSupabase();
+      }
 
       if (!currentQuestionData) {
         alert("No more questions available for this level.");
@@ -1125,7 +1187,7 @@ function parseAndPairData(records) {
 
       setupBulbState(false);
 
-      document.getElementById('lbl-level').innerText = `${currentQuestionData.qId}9${currentQuestionData.numericLevel * 10}`;
+      document.getElementById('lbl-level').innerText = `ID: ${currentQuestionData.qId} | Level: ${currentQuestionData.numericLevel}`;
       
       const currentPrize = prizeLadder[Math.min(currentIndex, prizeLadder.length - 1)];
       document.getElementById('lbl-prize').innerText = `Question ${currentIndex + 1} • Points: ${currentPrize}`;
@@ -1133,17 +1195,20 @@ function parseAndPairData(records) {
       document.getElementById('lbl-question-en').innerText = currentQuestionData.en.qText;
       document.getElementById('lbl-question-hi').innerText = currentQuestionData.hi.qText;
 
-      // Pair choices index-by-index for bilingual display
-      currentOptions = [];
+      // FIX #1: Pair choices index-by-index AND shuffle them so Option A is not always the correct answer
+      let rawOptions = [];
       const enChoices = currentQuestionData.en.choices || [];
       const hiChoices = currentQuestionData.hi.choices || [];
 
       for (let i = 0; i < 4; i++) {
-        currentOptions.push({
+        rawOptions.push({
           en: enChoices[i] || "",
           hi: hiChoices[i] || ""
         });
       }
+
+      // Randomly shuffle option order for presentation
+      currentOptions = shuffleArray(rawOptions);
 
       renderOptions();
 
@@ -1299,7 +1364,7 @@ function parseAndPairData(records) {
 
       selectedBtn.classList.add('selected');
 
-      // Verify answer securely via RPC
+      // Verify answer securely via RPC using option text
       const { data: isCorrect, error } = await supabase.rpc('verify_answer', {
         target_qid: currentQuestionData.qId,
         selected_answer: selectedOption.en || selectedOption.hi
