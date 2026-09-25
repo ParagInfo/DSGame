@@ -925,7 +925,7 @@
       }
     }
 
-    // FIXED: Secure level fetching using get_available_levels RPC
+    // Secure level fetching using get_available_levels RPC
     async function fetchAvailableLevels() {
       try {
         const { data, error } = await supabase.rpc('get_available_levels');
@@ -980,10 +980,10 @@
       }
     }
 
-    // FIXED: Secure standard question fetching using get_next_question RPC
+    // Secure standard question fetching using get_next_question RPC
     async function getNextQuestionFromSupabase() {
       let targetLevel = getMappedLevel(currentIndex);
-      let excludeArray = Array.from(usedQuestionIDs);
+      let excludeArray = Array.from(usedQuestionIDs).map(id => String(id));
 
       const { data, error } = await supabase.rpc('get_next_question', {
         target_level: targetLevel,
@@ -1001,12 +1001,12 @@
       return pairedList[0];
     }
 
-    // FIXED: Secure debug question fetching using get_debug_question RPC
+    // Secure debug question fetching using get_debug_question RPC
     async function getDebugQuestionFromSupabase() {
       const targetQId = getDebugQuestionId();
 
       const { data, error } = await supabase.rpc('get_debug_question', {
-        target_qid: targetQId || null
+        target_qid: targetQId ? String(targetQId) : null
       });
 
       if (error || !data || data.length === 0) {
@@ -1025,27 +1025,28 @@
       return pairedList[Math.floor(Math.random() * pairedList.length)];
     }
 
+    // Parses and merges English & Hindi rows into a unified Question Object
     function parseAndPairData(records) {
       let map = new Map();
 
       records.forEach((row) => {
         if (!row) return;
 
-        let qId = String(row.qId || row.qid || row.Number || "").trim();
-        let numLevel = parseFloat(row.numericlevel || row.numericLevel || row.Level || row.level || 1.0);
-        let questionText = String(row.qtext || row.qText || row.Question || "").trim();
+        let qId = String(row.Number || row.qid || row.qId || "").trim();
+        let numLevel = parseFloat(row.Level || row.level || 1.0);
+        let questionText = String(row.Question || row.qtext || row.qText || "").trim();
         
-        let choices = [];
-        if (Array.isArray(row.choices)) {
-          choices = row.choices;
-        } else if (row.A || row.B || row.C || row.D) {
-          choices = [row.A || "", row.B || "", row.C || "", row.D || ""];
-        }
+        let choices = [
+          String(row.A || "").trim(),
+          String(row.B || "").trim(),
+          String(row.C || "").trim(),
+          String(row.D || "").trim()
+        ];
 
-        let flag = String(row.flag || "").trim().toLowerCase();
+        let flag = String(row.Flag || row.flag || "").trim().toLowerCase();
         let explanationText = row.explanation ? String(row.explanation).trim() : "";
-        let qType = String(row.qtype || row.qType || row.Qtype || "T").trim().toUpperCase();
-        let mediaUrl = String(row.mediaurl || row.mediaUrl || row.MediaUrl || "").trim();
+        let qType = String(row.Qtype || row.qtype || row.qType || "T").trim().toUpperCase();
+        let mediaUrl = String(row.MediaUrl || row.mediaurl || row.mediaUrl || "").trim();
 
         if (!qId || !questionText) return;
 
@@ -1062,8 +1063,8 @@
 
         let entry = map.get(qId);
         entry.numericLevel = numLevel;
-        entry.qType = qType;
-        entry.mediaUrl = mediaUrl;
+        if (qType && qType !== "T") entry.qType = qType;
+        if (mediaUrl) entry.mediaUrl = mediaUrl;
 
         let langData = {
           qText: questionText,
@@ -1206,7 +1207,7 @@
         return;
       }
 
-      usedQuestionIDs.add(currentQuestionData.qId);
+      usedQuestionIDs.add(String(currentQuestionData.qId));
 
       setupBulbState(false);
 
@@ -1387,7 +1388,7 @@
       });
     }
 
-    // FIXED: Secure answer verification using verify_answer RPC
+    // Secure answer verification using verify_answer RPC
     async function handleSelection(selectedBtn, selectedOption) {
       if (!canSelect) return;
       canSelect = false;
@@ -1395,10 +1396,16 @@
 
       selectedBtn.classList.add('selected');
 
+      const chosenText = selectedOption.en || selectedOption.hi;
+
       const { data: isCorrect, error } = await supabase.rpc('verify_answer', {
-        target_qid: currentQuestionData.qId,
-        selected_answer: selectedOption.en || selectedOption.hi
+        target_qid: String(currentQuestionData.qId),
+        selected_answer: String(chosenText)
       });
+
+      if (error) {
+        console.error("Answer verification error:", error);
+      }
 
       setTimeout(() => {
         setupBulbState(true);
@@ -1515,7 +1522,7 @@
       }, 4000);
     }
 
-    // FIXED: Secure 50:50 Lifeline using verify_answer RPC
+    // Secure 50:50 Lifeline using verify_answer RPC
     async function use5050() {
       if (lifeline5050Used || !canSelect) return;
       lifeline5050Used = true;
@@ -1526,8 +1533,8 @@
       for (let i = 0; i < 4; i++) {
         let optText = currentOptions[i].en || currentOptions[i].hi;
         let { data: isCorrect } = await supabase.rpc('verify_answer', {
-          target_qid: currentQuestionData.qId,
-          selected_answer: optText
+          target_qid: String(currentQuestionData.qId),
+          selected_answer: String(optText)
         });
         if (!isCorrect) wrongIndices.push(i);
       }
@@ -1541,7 +1548,7 @@
       });
     }
 
-    // FIXED: Secure Audience Poll Lifeline using verify_answer RPC
+    // Secure Audience Poll Lifeline using verify_answer RPC
     async function useAudience() {
       if (lifelineAudienceUsed || !canSelect) return;
       stopTimer();
@@ -1553,8 +1560,8 @@
       for (let i = 0; i < 4; i++) {
         let optText = currentOptions[i].en || currentOptions[i].hi;
         let { data: isCorrect } = await supabase.rpc('verify_answer', {
-          target_qid: currentQuestionData.qId,
-          selected_answer: optText
+          target_qid: String(currentQuestionData.qId),
+          selected_answer: String(optText)
         });
         if (isCorrect) {
           correctIdx = i;
