@@ -830,6 +830,7 @@
       <button class="thanks-btn" onclick="openThanksModal()">Acknowledgement / Thanks</button>
     </div>
   </div>
+
 <script>
     // 1. Initialize Supabase Client
     window.SUPABASE_URL = "https://ndfdcobmnxsvtrdqpqti.supabase.co";
@@ -1020,98 +1021,98 @@
     }
 
     // Parses and merges English & Hindi rows into a unified Question Object
-    // Parses and merges English & Hindi rows into a unified Question Object
-function parseAndPairData(rawData) {
-  if (!Array.isArray(rawData) || rawData.length === 0) return null;
+    function parseAndPairData(rawData) {
+      if (!Array.isArray(rawData) || rawData.length === 0) return null;
 
-  const paired = { en: null, hi: null };
+      const paired = { en: null, hi: null };
 
-  rawData.forEach(item => {
-    const flag = String(item.HEFlag || item.heflag || '').trim().toUpperCase();
-    if (flag === 'E') paired.en = item;
-    if (flag === 'H') paired.hi = item;
-  });
+      rawData.forEach(item => {
+        const flag = String(item.HEFlag || item.heflag || '').trim().toUpperCase();
+        if (flag === 'E') paired.en = item;
+        if (flag === 'H') paired.hi = item;
+      });
 
-  const enData = paired.en || rawData[0];
-  const hiData = paired.hi || rawData[0];
+      const enData = paired.en || rawData[0];
+      const hiData = paired.hi || rawData[0];
 
-  // Extract Question text safely checking every possible casing variant
-  const qEnText = enData.Question || enData.question || enData.Q || enData.q || '';
-  const qHiText = hiData.Question || hiData.question || hiData.Q || hiData.q || '';
+      // Extract Question text safely checking every possible casing variant
+      const qEnText = enData.Question || enData.question || enData.Q || enData.q || '';
+      const qHiText = hiData.Question || hiData.question || hiData.Q || hiData.q || '';
 
-  // Map raw options (Option 'A' represents the correct answer in raw data)
-  const rawOptions = [
-    { key: 'A', en: enData.A || enData.a, hi: hiData.A || hiData.a },
-    { key: 'B', en: enData.B || enData.b, hi: hiData.B || hiData.b },
-    { key: 'C', en: enData.C || enData.c, hi: hiData.C || hiData.c },
-    { key: 'D', en: enData.D || enData.d, hi: hiData.D || hiData.d }
-  ];
+      // Map raw options
+      const rawOptions = [
+        { key: 'A', en: enData.A || enData.a, hi: hiData.A || hiData.a },
+        { key: 'B', en: enData.B || enData.b, hi: hiData.B || hiData.b },
+        { key: 'C', en: enData.C || enData.c, hi: hiData.C || hiData.c },
+        { key: 'D', en: enData.D || enData.d, hi: hiData.D || hiData.d }
+      ];
 
-  // Fisher-Yates shuffle algorithm to randomize display order on screen
-  const shuffledOptions = [...rawOptions];
-  for (let i = shuffledOptions.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffledOptions[i], shuffledOptions[j]] = [shuffledOptions[j], shuffledOptions[i]];
-  }
+      // Fisher-Yates shuffle algorithm to randomize display order on screen
+      const shuffledOptions = [...rawOptions];
+      for (let i = shuffledOptions.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffledOptions[i], shuffledOptions[j]] = [shuffledOptions[j], shuffledOptions[i]];
+      }
 
-  return {
-    qId: enData.Number || enData.number || enData.id || enData.ID,
-    level: enData.Level || enData.level,
-    qType: String(enData.Qtype || enData.qtype || 'T').toUpperCase(),
-    mediaUrl: enData.URL || enData.url,
-    questionTextEn: qEnText,
-    questionTextHi: qHiText,
-    en: enData,
-    hi: hiData,
-    options: shuffledOptions
-  };
-}
+      return {
+        qId: enData.Number || enData.number || enData.id || enData.ID,
+        level: enData.Level || enData.level,
+        qType: String(enData.Qtype || enData.qtype || 'T').toUpperCase(),
+        mediaUrl: enData.URL || enData.url,
+        questionTextEn: qEnText,
+        questionTextHi: qHiText,
+        en: enData,
+        hi: hiData,
+        options: shuffledOptions
+      };
+    }
 
-async function loadQuestion() {
-  canSelect = true;
-  stopTimer();
+    async function loadQuestion() {
+      canSelect = true;
+      stopTimer();
 
-  let qData = null;
-  if (isDebugMode()) {
-    qData = await getDebugQuestionFromSupabase();
-  } else {
-    qData = await getNextQuestionFromSupabase();
-  }
+      let qData = null;
+      if (isDebugMode()) {
+        qData = await getDebugQuestionFromSupabase();
+      } else {
+        qData = await getNextQuestionFromSupabase();
+      }
 
-  if (!qData) {
-    alert("No suitable questions found or questions exhausted!");
-    endGame(false);
-    return;
-  }
+      if (!qData) {
+        alert("No suitable questions found or questions exhausted!");
+        endGame(false);
+        return;
+      }
 
-  currentQuestionData = qData;
-  usedQuestionIDs.add(qData.qId);
-  currentOptions = qData.options;
+      currentQuestionData = qData;
+      usedQuestionIDs.add(qData.qId);
+      currentOptions = qData.options;
 
-  // Set English and Hindi question text directly into DOM
-  const qEnEl = document.getElementById('q-text-en');
-  const qHiEl = document.getElementById('q-text-hi');
+      // Set English and Hindi question text directly into DOM
+      const qEnEl = document.getElementById('q-text-en');
+      const qHiEl = document.getElementById('q-text-hi');
 
-  if (qEnEl) qEnEl.innerText = qData.questionTextEn;
-  if (qHiEl) qHiEl.innerText = qData.questionTextHi;
+      if (qEnEl) qEnEl.innerText = qData.questionTextEn;
+      if (qHiEl) qHiEl.innerText = qData.questionTextHi;
 
-  // Set level and prize indicators
-  const levelEl = document.getElementById('current-level-display');
-  if (levelEl) levelEl.innerText = `Question ${currentIndex + 1} of ${maxGameQuestions} (Prize: ${prizeLadder[currentIndex]} Points)`;
+      // Set level and prize indicators
+      const levelEl = document.getElementById('current-level-display');
+      if (levelEl) levelEl.innerText = `Question ${currentIndex + 1} of ${maxGameQuestions} (Prize: ${prizeLadder[currentIndex]} Points)`;
 
-  setupBulbState(false);
-  renderOptions();
+      setupBulbState(false);
+      renderOptions();
 
-  // Handle Media Types (Picture, Audio, Video)
-  const replayBtn = document.getElementById('replay-media-btn');
-  if (['P', 'A', 'V'].includes(qData.qType)) {
-    if (replayBtn) replayBtn.style.display = 'inline-flex';
-    showMediaModal(qData.qType, qData.mediaUrl);
-  } else {
-    if (replayBtn) replayBtn.style.display = 'none';
-    if (isTimedMode) startTimer();
-  }
-}
+      // Handle Media Types (Picture, Audio, Video)
+      const replayBtn = document.getElementById('replay-media-btn');
+      if (['P', 'A', 'V'].includes(qData.qType)) {
+        if (replayBtn) replayBtn.style.display = 'inline-flex';
+        showMediaModal(qData.qType, qData.mediaUrl);
+      } else {
+        if (replayBtn) replayBtn.style.display = 'none';
+        if (isTimedMode) startTimer();
+      }
+    }
+
     function openInstructionsModal() {
       document.getElementById('instructions-title').innerText = customInstructionsTitle;
       document.getElementById('instructions-body').innerHTML = customInstructionsBody;
@@ -1201,55 +1202,10 @@ async function loadQuestion() {
       loadQuestion();
     }
 
-    async function loadQuestion() {
-      canSelect = true;
-      stopTimer();
-
-      let qData = null;
-      if (isDebugMode()) {
-        qData = await getDebugQuestionFromSupabase();
-      } else {
-        qData = await getNextQuestionFromSupabase();
-      }
-
-      if (!qData) {
-        alert("No suitable questions found or questions exhausted!");
-        endGame(false);
-        return;
-      }
-
-      currentQuestionData = qData;
-      usedQuestionIDs.add(qData.qId);
-      currentOptions = qData.options;
-
-      // Update question text
-      const qEnEl = document.getElementById('q-text-en');
-      const qHiEl = document.getElementById('q-text-hi');
-      if (qEnEl) qEnEl.innerText = qData.en.Question || '';
-      if (qHiEl) qHiEl.innerText = qData.hi.Question || '';
-
-      // Set level and prize indicators
-      const levelEl = document.getElementById('current-level-display');
-      if (levelEl) levelEl.innerText = `Question ${currentIndex + 1} of ${maxGameQuestions} (Prize: ${prizeLadder[currentIndex]} Points)`;
-
-      setupBulbState(false);
-      renderOptions();
-
-      // Handle Media Types (Picture, Audio, Video)
-      const replayBtn = document.getElementById('replay-media-btn');
-      if (['P', 'A', 'V'].includes(qData.qType)) {
-        if (replayBtn) replayBtn.style.display = 'inline-flex';
-        showMediaModal(qData.qType, qData.mediaUrl);
-      } else {
-        if (replayBtn) replayBtn.style.display = 'none';
-        if (isTimedMode) startTimer();
-      }
-    }
-
     function setupBulbState(makeActive = false) {
       const bulbBtn = document.getElementById('bulb-btn');
       if (!bulbBtn) return;
-      
+
       const expEn = (currentQuestionData && currentQuestionData.en && currentQuestionData.en.Explanation) ? currentQuestionData.en.Explanation.trim() : "";
       const expHi = (currentQuestionData && currentQuestionData.hi && currentQuestionData.hi.Explanation) ? currentQuestionData.hi.Explanation.trim() : "";
 
@@ -1322,7 +1278,7 @@ async function loadQuestion() {
           el.currentTime = 0;
         });
       }
-      
+
       document.getElementById('media-modal').style.display = 'none';
 
       if (canSelect && isTimedMode) {
@@ -1349,73 +1305,74 @@ async function loadQuestion() {
           <span class="opt-en"><span class="option-prefix">${prefixes[idx]}</span>${opt.en || ''}</span>
           <span class="opt-hi">${opt.hi || ''}</span>
         `;
-        
+
         btn.onclick = () => handleSelection(btn, opt);
         grid.appendChild(btn);
       });
     }
 
     async function handleSelection(selectedBtn, selectedOption) {
-  if (!canSelect) return;
-  canSelect = false;
-  stopTimer();
+      if (!canSelect) return;
+      canSelect = false;
+      stopTimer();
 
-  selectedBtn.classList.add('selected');
+      selectedBtn.classList.add('selected');
 
-  // Extracts English or Hindi text from the selected shuffled option
-  const chosenText = selectedOption.en || selectedOption.hi;
+      // Extracts English or Hindi text from the selected shuffled option
+      const chosenText = selectedOption.en || selectedOption.hi;
 
-  const { data: isCorrect, error } = await supabase.rpc('verify_answer', {
-    target_qid: String(currentQuestionData.qId),
-    selected_answer: String(chosenText)
-  });
+      const { data: isCorrect, error } = await supabase.rpc('verify_answer', {
+        target_qid: String(currentQuestionData.qId),
+        selected_answer: String(chosenText)
+      });
 
-  if (error) {
-    console.error("Answer verification error:", error);
-  }
+      if (error) {
+        console.error("Answer verification error:", error);
+      }
 
-  setTimeout(() => {
-    setupBulbState(true);
+      setTimeout(() => {
+        setupBulbState(true);
 
-    if (isCorrect) {
-      selectedBtn.classList.remove('selected');
-      selectedBtn.classList.add('correct');
+        if (isCorrect) {
+          selectedBtn.classList.remove('selected');
+          selectedBtn.classList.add('correct');
 
-      pendingNextStepCallback = () => {
-        currentIndex++;
-        if (currentIndex < maxGameQuestions) {
-          loadQuestion();
+          pendingNextStepCallback = () => {
+            currentIndex++;
+            if (currentIndex < maxGameQuestions) {
+              loadQuestion();
+            } else {
+              endGame(true);
+            }
+          };
+
+          nextStepTimeout = setTimeout(() => {
+            if (pendingNextStepCallback) {
+              const cb = pendingNextStepCallback;
+              pendingNextStepCallback = null;
+              cb();
+            }
+          }, 3500);
+
         } else {
-          endGame(true);
+          selectedBtn.classList.remove('selected');
+          selectedBtn.classList.add('incorrect');
+
+          pendingNextStepCallback = () => {
+            endGame(false);
+          };
+
+          nextStepTimeout = setTimeout(() => {
+            if (pendingNextStepCallback) {
+              const cb = pendingNextStepCallback;
+              pendingNextStepCallback = null;
+              cb();
+            }
+          }, 4000);
         }
-      };
-
-      nextStepTimeout = setTimeout(() => {
-        if (pendingNextStepCallback) {
-          const cb = pendingNextStepCallback;
-          pendingNextStepCallback = null;
-          cb();
-        }
-      }, 3500);
-
-    } else {
-      selectedBtn.classList.remove('selected');
-      selectedBtn.classList.add('incorrect');
-
-      pendingNextStepCallback = () => {
-        endGame(false);
-      };
-
-      nextStepTimeout = setTimeout(() => {
-        if (pendingNextStepCallback) {
-          const cb = pendingNextStepCallback;
-          pendingNextStepCallback = null;
-          cb();
-        }
-      }, 4000);
+      }, 1200);
     }
-  }, 1200);
-}
+
     function startTimer() {
       stopTimer();
       if (!isTimedMode) return;
@@ -1459,7 +1416,7 @@ async function loadQuestion() {
       const display = document.getElementById("timer-display");
       const bar = document.getElementById("timer-bar-fill");
       if (display) display.innerText = `Time Remaining: ${timeRemaining}s`;
-      
+
       if (bar) {
         const percentage = (timeRemaining / timeLimitPerQuestion) * 100;
         bar.style.width = `${percentage}%`;
@@ -1607,7 +1564,7 @@ async function loadQuestion() {
     function useQuit() {
       if (!canSelect) return;
       stopTimer();
-      
+
       const safeVal = currentIndex > 0 ? prizeLadder[currentIndex - 1] : "0";
       const quitMsg = document.getElementById('quit-modal-msg');
       if (quitMsg) {
@@ -1634,10 +1591,10 @@ async function loadQuestion() {
     function endGame(isVictory, isQuit = false) {
       stopTimer();
       canSelect = false;
-      
+
       const optionButtons = document.querySelectorAll('.option-btn');
       optionButtons.forEach(btn => btn.style.pointerEvents = 'none');
-      
+
       const lifelineButtons = document.querySelectorAll('.lifeline-btn');
       lifelineButtons.forEach(btn => btn.style.pointerEvents = 'none');
 
@@ -1680,7 +1637,7 @@ async function loadQuestion() {
 
       const optionButtons = document.querySelectorAll('.option-btn');
       optionButtons.forEach(btn => btn.style.pointerEvents = 'auto');
-      
+
       const lifelineButtons = document.querySelectorAll('.lifeline-btn');
       lifelineButtons.forEach(btn => btn.style.pointerEvents = 'auto');
 
@@ -1692,6 +1649,6 @@ async function loadQuestion() {
       if (endUi) endUi.style.display = 'none';
       if (setupModal) setupModal.style.display = 'flex';
     }
-</script>
+</script>  
 </body>
 </html>
