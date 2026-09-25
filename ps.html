@@ -833,7 +833,6 @@
 
   <script>
     // 1. Initialize Supabase Client
-    // Replace with your actual Supabase URL and Anon Key
     const SUPABASE_URL = "https://ndfdcobmnxsvtrdqpqti.supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable_-CMSV99N3ovQggn-eJhLLA_z5WFtag4";
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -864,9 +863,6 @@
       "6,40,000", "12,50,000", "25,00,000", "50,00,000", "7,00,00,000"
     ];
 
-    let pairedQuestionsBank = [];
-    let questionsByLevelMap = new Map();
-    let sortedLevels = [];
     let usedQuestionIDs = new Set();
     let currentQuestionData = null;
     let currentIndex = 0;
@@ -889,8 +885,23 @@
     window.addEventListener('DOMContentLoaded', initApp);
 
     async function initApp() {
-      await loadParamsFromExcel();
-      await fetchQuestionsFromSupabase();
+      const statusEl = document.getElementById("status-msg");
+      const startBtn = document.getElementById("start-btn");
+
+      try {
+        statusEl.innerText = "Connecting to game server...";
+        statusEl.style.color = "#38bdf8";
+
+        await loadParamsFromExcel();
+
+        statusEl.innerText = "Ready to play!";
+        statusEl.style.color = "#22c55e";
+        startBtn.disabled = false;
+        startBtn.innerText = "Start Game";
+      } catch (err) {
+        statusEl.innerText = "Initialization failed: " + err.message;
+        statusEl.style.color = "#ef4444";
+      }
     }
 
     async function loadParamsFromExcel() {
@@ -916,96 +927,44 @@
       }
     }
 
-    // 2. Query Supabase Table instead of fetching/decrypting local enc file
-    async function fetchQuestionsFromSupabase() {
-      const statusEl = document.getElementById("status-msg");
-      const startBtn = document.getElementById("start-btn");
+    // 2. Fetch Single Question via Secure SQL RPC
+    async function getNextQuestionFromSupabase() {
+      let targetLevel = currentIndex + 1; 
+      let excludeArray = Array.from(usedQuestionIDs);
 
-      try {
-        statusEl.innerText = "Fetching question bank from database...";
-        statusEl.style.color = "#38bdf8";
+      const { data, error } = await supabase.rpc('get_next_question', {
+        target_level: targetLevel,
+        exclude_ids: excludeArray
+      });
 
-        let query = supabase.from('questions').select('*');
-
-        if (isDebugQuestionMode()) {
-          const targetQId = getUrlParam('question');
-          query = query.eq('qId', targetQId);
-        }
-
-        const { data, error } = await query;
-
-        if (error) throw error;
-        if (!data || data.length === 0) {
-          throw new Error("No questions found in Supabase.");
-        }
-
-        // Parse database rows into paired language format
-        let rawParsedBank = parseAndPairData(data);
-
-        if (isDebugQuestionMode()) {
-          pairedQuestionsBank = rawParsedBank;
-          maxGameQuestions = 1;
-        } else if (isDebugMode()) {
-          pairedQuestionsBank = rawParsedBank.filter(q => ['A', 'V', 'P'].includes(q.qType));
-          maxGameQuestions = Math.min(15, pairedQuestionsBank.length);
-        } else {
-          pairedQuestionsBank = [...rawParsedBank];
-          maxGameQuestions = 15;
-        }
-
-        if (pairedQuestionsBank.length === 0) {
-          throw new Error("No valid questions found for current mode.");
-        }
-
-        questionsByLevelMap.clear();
-        pairedQuestionsBank.forEach(q => {
-          if (!questionsByLevelMap.has(q.numericLevel)) {
-            questionsByLevelMap.set(q.numericLevel, []);
-          }
-          questionsByLevelMap.get(q.numericLevel).push(q);
-        });
-
-        sortedLevels = Array.from(questionsByLevelMap.keys()).sort((a, b) => a - b);
-
-        statusEl.innerText = `Loaded questions successfully!`;
-        statusEl.style.color = "#22c55e";
-        startBtn.disabled = false;
-        startBtn.innerText = "Start Game";
-
-      } catch (err) {
-        statusEl.innerText = "Failed to load data: " + err.message;
-        statusEl.style.color = "#ef4444";
-        startBtn.disabled = true;
-        startBtn.innerText = "Error Loading Data";
+      if (error || !data || data.length === 0) {
+        console.error("RPC Error or No Data:", error);
+        return null;
       }
+
+      let pairedList = parseAndPairData(data);
+      if (pairedList.length === 0) return null;
+
+      return pairedList[0];
     }
 
-    // 3. Parser updated to dynamically inspect JSON objects or array rows
+    // Parse DB rows (Pairs English & Hindi entries by qId)
     function parseAndPairData(records) {
       let map = new Map();
 
       records.forEach((row) => {
         if (!row) return;
 
-        // Support both Object key-value pairs (Supabase table default) and array formats
-        let qId = String(row.qId || row[0] || "").trim();
-        let rawLevelStr = String(row.numericLevel || row.level || row[1] || "").replace(/[^\d.]/g, '');
-        let numLevel = parseFloat(rawLevelStr);
-        if (isNaN(numLevel)) numLevel = 1.0;
+        let qId = String(row.qId || "").trim();
+        let numLevel = parseFloat(row.numericLevel || 1.0);
+        let questionText = String(row.qText || "").trim();
+        let choices = Array.isArray(row.choices) ? row.choices : [];
+        let flag = String(row.flag || "").trim().toLowerCase();
+        let explanationText = row.explanation ? String(row.explanation).trim() : "";
+        let qType = row.qType ? String(row.qType).trim().toUpperCase() : "T";
+        let mediaUrl = row.mediaUrl ? String(row.mediaUrl).trim() : "";
 
-        let questionText = String(row.qText || row.question || row[2] || "").trim();
-        let correctOpt = String(row.correct || row[3] || "").trim();
-        let wrong1 = String(row.wrong1 || row[4] || "").trim();
-        let wrong2 = String(row.wrong2 || row[5] || "").trim();
-        let wrong3 = String(row.wrong3 || row[6] || "").trim();
-        let flag = String(row.flag || row.lang || row[7] || "").trim().toLowerCase();
-        let explanationText = row.explanation || row[8] ? String(row.explanation || row[8]).trim() : "";
-
-        let rawQType = row.qType || row[9] ? String(row.qType || row[9]).trim().toUpperCase() : "T";
-        let qType = ["T", "A", "V", "P"].includes(rawQType) ? rawQType : "T";
-        let mediaUrl = row.mediaUrl || row[10] ? String(row.mediaUrl || row[10]).trim() : "";
-
-        if (!qId || !questionText || !correctOpt) return;
+        if (!qId || !questionText) return;
 
         if (!map.has(qId)) {
           map.set(qId, { qId, numericLevel: numLevel, qType: qType, mediaUrl: mediaUrl, en: null, hi: null });
@@ -1018,8 +977,7 @@
 
         let langData = {
           qText: questionText,
-          correct: correctOpt,
-          wrongs: [wrong1, wrong2, wrong3],
+          choices: choices,
           explanation: explanationText
         };
 
@@ -1108,8 +1066,6 @@
     }
 
     function startGame() {
-      if (pairedQuestionsBank.length === 0) return;
-
       const selectedMode = document.querySelector('input[name="gameMode"]:checked').value;
       isTimedMode = (selectedMode === "timed");
 
@@ -1121,71 +1077,19 @@
         document.getElementById("timer-container").style.display = "none";
       }
 
+      if (isDebugQuestionMode()) {
+        maxGameQuestions = 1;
+      } else {
+        maxGameQuestions = 15;
+      }
+
       document.getElementById("setup-modal").style.display = "none";
       currentIndex = 0;
       usedQuestionIDs.clear();
       loadQuestion();
     }
 
-    function getNextQuestion() {
-      if (sortedLevels.length === 0) return null;
-
-      let levelIdx = Math.floor((currentIndex / prizeLadder.length) * sortedLevels.length);
-      levelIdx = Math.min(levelIdx, sortedLevels.length - 1);
-      let targetLevel = sortedLevels[levelIdx];
-
-      let pool = (questionsByLevelMap.get(targetLevel) || []).filter(q => !usedQuestionIDs.has(q.qId));
-
-      if (pool.length === 0) {
-        for (let offset = 1; offset < sortedLevels.length; offset++) {
-          let lowerLevel = sortedLevels[levelIdx - offset];
-          let higherLevel = sortedLevels[levelIdx + offset];
-
-          if (lowerLevel !== undefined) {
-            pool = (questionsByLevelMap.get(lowerLevel) || []).filter(q => !usedQuestionIDs.has(q.qId));
-            if (pool.length > 0) break;
-          }
-          if (higherLevel !== undefined) {
-            pool = (questionsByLevelMap.get(higherLevel) || []).filter(q => !usedQuestionIDs.has(q.qId));
-            if (pool.length > 0) break;
-          }
-        }
-      }
-
-      if (pool.length === 0) {
-        pool = pairedQuestionsBank.filter(q => !usedQuestionIDs.has(q.qId));
-      }
-
-      if (pool.length === 0) return null;
-
-      shuffleArray(pool);
-      let selected = pool[0];
-      usedQuestionIDs.add(selected.qId);
-      return selected;
-    }
-
-    function setupBulbState(makeActive = false) {
-      const bulbBtn = document.getElementById('bulb-btn');
-      
-      const expEn = (currentQuestionData && currentQuestionData.en && currentQuestionData.en.explanation) ? currentQuestionData.en.explanation.trim() : "";
-      const expHi = (currentQuestionData && currentQuestionData.hi && currentQuestionData.hi.explanation) ? currentQuestionData.hi.explanation.trim() : "";
-
-      const hasExplanation = (expEn !== "" || expHi !== "");
-
-      if (hasExplanation) {
-        bulbBtn.style.display = 'flex';
-        if (makeActive) {
-          bulbBtn.classList.add('active-bulb');
-        } else {
-          bulbBtn.classList.remove('active-bulb');
-        }
-      } else {
-        bulbBtn.style.display = 'none';
-        bulbBtn.classList.remove('active-bulb');
-      }
-    }
-
-    function loadQuestion() {
+    async function loadQuestion() {
       canSelect = true;
       stopTimer();
       timeRemaining = timeLimitPerQuestion;
@@ -1197,12 +1101,18 @@
         return;
       }
 
-      currentQuestionData = getNextQuestion();
+      document.getElementById('lbl-question-en').innerText = "Loading question from database...";
+      document.getElementById('lbl-question-hi').innerText = "प्रश्न लोड हो रहा है...";
+
+      currentQuestionData = await getNextQuestionFromSupabase();
 
       if (!currentQuestionData) {
+        alert("No more questions available for this level.");
         endGame(true);
         return;
       }
+
+      usedQuestionIDs.add(currentQuestionData.qId);
 
       setupBulbState(false);
 
@@ -1214,12 +1124,17 @@
       document.getElementById('lbl-question-en').innerText = currentQuestionData.en.qText;
       document.getElementById('lbl-question-hi').innerText = currentQuestionData.hi.qText;
 
-      currentOptions = shuffleArray([
-        { en: currentQuestionData.en.correct, hi: currentQuestionData.hi.correct, isCorrect: true },
-        { en: currentQuestionData.en.wrongs[0], hi: currentQuestionData.hi.wrongs[0], isCorrect: false },
-        { en: currentQuestionData.en.wrongs[1], hi: currentQuestionData.hi.wrongs[1], isCorrect: false },
-        { en: currentQuestionData.en.wrongs[2], hi: currentQuestionData.hi.wrongs[2], isCorrect: false }
-      ]);
+      // Pair choices index-by-index for bilingual display
+      currentOptions = [];
+      const enChoices = currentQuestionData.en.choices || [];
+      const hiChoices = currentQuestionData.hi.choices || [];
+
+      for (let i = 0; i < 4; i++) {
+        currentOptions.push({
+          en: enChoices[i] || "",
+          hi: hiChoices[i] || ""
+        });
+      }
 
       renderOptions();
 
@@ -1265,6 +1180,27 @@
       } else {
         mediaBtn.style.display = 'none';
         startTimer();
+      }
+    }
+
+    function setupBulbState(makeActive = false) {
+      const bulbBtn = document.getElementById('bulb-btn');
+      
+      const expEn = (currentQuestionData && currentQuestionData.en && currentQuestionData.en.explanation) ? currentQuestionData.en.explanation.trim() : "";
+      const expHi = (currentQuestionData && currentQuestionData.hi && currentQuestionData.hi.explanation) ? currentQuestionData.hi.explanation.trim() : "";
+
+      const hasExplanation = (expEn !== "" || expHi !== "");
+
+      if (hasExplanation) {
+        bulbBtn.style.display = 'flex';
+        if (makeActive) {
+          bulbBtn.classList.add('active-bulb');
+        } else {
+          bulbBtn.classList.remove('active-bulb');
+        }
+      } else {
+        bulbBtn.style.display = 'none';
+        bulbBtn.classList.remove('active-bulb');
       }
     }
 
@@ -1346,17 +1282,24 @@
       });
     }
 
-    function handleSelection(selectedBtn, selectedOption) {
+    // Server-Side Answer Validation
+    async function handleSelection(selectedBtn, selectedOption) {
       if (!canSelect) return;
       canSelect = false;
       stopTimer();
 
       selectedBtn.classList.add('selected');
 
+      // Verify answer securely via RPC
+      const { data: isCorrect, error } = await supabase.rpc('verify_answer', {
+        target_qid: currentQuestionData.qId,
+        selected_answer: selectedOption.en || selectedOption.hi
+      });
+
       setTimeout(() => {
         setupBulbState(true);
 
-        if (selectedOption.isCorrect) {
+        if (isCorrect) {
           selectedBtn.classList.remove('selected');
           selectedBtn.classList.add('correct');
 
@@ -1381,12 +1324,7 @@
           selectedBtn.classList.remove('selected');
           selectedBtn.classList.add('incorrect');
 
-          currentOptions.forEach((opt, idx) => {
-            if (opt.isCorrect) {
-              document.getElementById(`opt-btn-${idx}`).classList.add('correct');
-            }
-          });
-
+          // Highlight the correct option fetched via server check fallback if needed
           pendingNextStepCallback = () => {
             endGame(false);
           };
@@ -1456,13 +1394,6 @@
 
     function handleTimeout() {
       canSelect = false;
-      
-      currentOptions.forEach((opt, idx) => {
-        if (opt.isCorrect) {
-          document.getElementById(`opt-btn-${idx}`).classList.add('correct');
-        }
-      });
-
       setupBulbState(true);
 
       pendingNextStepCallback = () => {
@@ -1479,30 +1410,52 @@
       }, 4000);
     }
 
-    function use5050() {
+    // 50:50 Lifeline
+    async function use5050() {
       if (lifeline5050Used || !canSelect) return;
       lifeline5050Used = true;
       document.getElementById('life-5050').classList.add('used');
 
-      let removedCount = 0;
-      currentOptions.forEach((opt, idx) => {
-        if (!opt.isCorrect && removedCount < 2) {
-          const btn = document.getElementById(`opt-btn-${idx}`);
-          if (btn) btn.style.visibility = 'hidden';
-          removedCount++;
-        }
+      let wrongIndices = [];
+      for (let i = 0; i < 4; i++) {
+        let optText = currentOptions[i].en || currentOptions[i].hi;
+        let { data: isCorrect } = await supabase.rpc('verify_answer', {
+          target_qid: currentQuestionData.qId,
+          selected_answer: optText
+        });
+        if (!isCorrect) wrongIndices.push(i);
+      }
+
+      shuffleArray(wrongIndices);
+      let toRemove = wrongIndices.slice(0, 2);
+
+      toRemove.forEach(idx => {
+        const btn = document.getElementById(`opt-btn-${idx}`);
+        if (btn) btn.style.visibility = 'hidden';
       });
     }
 
-    function useAudience() {
+    // Audience Poll Lifeline
+    async function useAudience() {
       if (lifelineAudienceUsed || !canSelect) return;
       stopTimer();
       lifelineAudienceUsed = true;
       document.getElementById('life-audience').classList.add('used');
 
-      let percentages = [0, 0, 0, 0];
-      let correctIdx = currentOptions.findIndex(o => o.isCorrect);
+      let correctIdx = 0;
+      for (let i = 0; i < 4; i++) {
+        let optText = currentOptions[i].en || currentOptions[i].hi;
+        let { data: isCorrect } = await supabase.rpc('verify_answer', {
+          target_qid: currentQuestionData.qId,
+          selected_answer: optText
+        });
+        if (isCorrect) {
+          correctIdx = i;
+          break;
+        }
+      }
 
+      let percentages = [0, 0, 0, 0];
       let activeIndices = [];
       for (let i = 0; i < 4; i++) {
         const btn = document.getElementById(`opt-btn-${i}`);
