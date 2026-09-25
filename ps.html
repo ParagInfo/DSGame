@@ -952,57 +952,64 @@
     }
 
     // Parse DB rows (Pairs English & Hindi entries by qId)
-    function parseAndPairData(records) {
-      let map = new Map();
+// Parse DB rows (Pairs English & Hindi entries by qId)
+function parseAndPairData(records) {
+  let map = new Map();
 
-      records.forEach((row) => {
-        if (!row) return;
+  records.forEach((row) => {
+    if (!row) return;
 
-        let qId = String(row.qId || "").trim();
-        let numLevel = parseFloat(row.numericLevel || 1.0);
-        let questionText = String(row.qText || "").trim();
-        let choices = Array.isArray(row.choices) ? row.choices : [];
-        let flag = String(row.flag || "").trim().toLowerCase();
-        let explanationText = row.explanation ? String(row.explanation).trim() : "";
-        let qType = row.qType ? String(row.qType).trim().toUpperCase() : "T";
-        let mediaUrl = row.mediaUrl ? String(row.mediaUrl).trim() : "";
+    let qId = String(row.qid || "").trim();
+    let numLevel = parseFloat(row.numericlevel || 1.0);
+    let questionText = String(row.qtext || "").trim();
+    let choices = Array.isArray(row.choices) ? row.choices : [];
+    let flag = String(row.flag || "").trim().toLowerCase();
+    let explanationText = row.explanation ? String(row.explanation).trim() : "";
+    let qType = String(row.qtype || "T").trim().toUpperCase();
+    let mediaUrl = String(row.mediaurl || "").trim();
 
-        if (!qId || !questionText) return;
+    if (!qId || !questionText) return;
 
-        if (!map.has(qId)) {
-          map.set(qId, { qId, numericLevel: numLevel, qType: qType, mediaUrl: mediaUrl, en: null, hi: null });
-        }
-
-        let entry = map.get(qId);
-        entry.numericLevel = numLevel;
-        entry.qType = qType;
-        entry.mediaUrl = mediaUrl;
-
-        let langData = {
-          qText: questionText,
-          choices: choices,
-          explanation: explanationText
-        };
-
-        if (flag.includes("hi") || flag.includes("हिंदी") || flag === "h") {
-          entry.hi = langData;
-        } else {
-          entry.en = langData;
-        }
+    if (!map.has(qId)) {
+      map.set(qId, { 
+        qId: qId, 
+        numericLevel: numLevel, 
+        qType: qType, 
+        mediaUrl: mediaUrl, 
+        en: null, 
+        hi: null 
       });
-
-      let pairedList = [];
-      map.forEach((item) => {
-        if (item.en || item.hi) {
-          if (!item.en) item.en = item.hi;
-          if (!item.hi) item.hi = item.en;
-          pairedList.push(item);
-        }
-      });
-
-      return pairedList;
     }
 
+    let entry = map.get(qId);
+    entry.numericLevel = numLevel;
+    entry.qType = qType;
+    entry.mediaUrl = mediaUrl;
+
+    let langData = {
+      qText: questionText,
+      choices: choices,
+      explanation: explanationText
+    };
+
+    if (flag.includes("hi") || flag.includes("हिंदी") || flag === "h") {
+      entry.hi = langData;
+    } else {
+      entry.en = langData;
+    }
+  });
+
+  let pairedList = [];
+  map.forEach((item) => {
+    if (item.en || item.hi) {
+      if (!item.en) item.en = item.hi;
+      if (!item.hi) item.hi = item.en;
+      pairedList.push(item);
+    }
+  });
+
+  return pairedList;
+}
     function openInstructionsModal() {
       document.getElementById('instructions-title').innerText = customInstructionsTitle;
       document.getElementById('instructions-body').innerHTML = customInstructionsBody;
