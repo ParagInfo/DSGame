@@ -1026,71 +1026,45 @@
     }
 
     // Parses and merges English & Hindi rows into a unified Question Object
-    function parseAndPairData(records) {
-      let map = new Map();
+    function parseAndPairData(rawData) {
+  if (!Array.isArray(rawData) || rawData.length === 0) return null;
 
-      records.forEach((row) => {
-        if (!row) return;
+  const paired = { en: null, hi: null };
 
-        let qId = String(row.Number || row.qid || row.qId || "").trim();
-        let numLevel = parseFloat(row.Level || row.level || 1.0);
-        let questionText = String(row.Question || row.qtext || row.qText || "").trim();
-        
-        let choices = [
-          String(row.A || "").trim(),
-          String(row.B || "").trim(),
-          String(row.C || "").trim(),
-          String(row.D || "").trim()
-        ];
+  rawData.forEach(item => {
+    const flag = (item.HEFlag || '').trim().toUpperCase();
+    if (flag === 'E') paired.en = item;
+    if (flag === 'H') paired.hi = item;
+  });
 
-        let flag = String(row.Flag || row.flag || "").trim().toLowerCase();
-        let explanationText = row.explanation ? String(row.explanation).trim() : "";
-        let qType = String(row.Qtype || row.qtype || row.qType || "T").trim().toUpperCase();
-        let mediaUrl = String(row.MediaUrl || row.mediaurl || row.mediaUrl || "").trim();
+  const enData = paired.en || rawData[0];
+  const hiData = paired.hi || rawData[0];
 
-        if (!qId || !questionText) return;
+  // Map raw options (where 'A' is always correct)
+  const rawOptions = [
+    { key: 'A', en: enData.A, hi: hiData.A },
+    { key: 'B', en: enData.B, hi: hiData.B },
+    { key: 'C', en: enData.C, hi: hiData.C },
+    { key: 'D', en: enData.D, hi: hiData.D }
+  ];
 
-        if (!map.has(qId)) {
-          map.set(qId, { 
-            qId: qId, 
-            numericLevel: numLevel, 
-            qType: qType, 
-            mediaUrl: mediaUrl, 
-            en: null, 
-            hi: null 
-          });
-        }
+  // Fisher-Yates shuffle algorithm to randomize display order on screen
+  const shuffledOptions = [...rawOptions];
+  for (let i = shuffledOptions.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffledOptions[i], shuffledOptions[j]] = [shuffledOptions[j], shuffledOptions[i]];
+  }
 
-        let entry = map.get(qId);
-        entry.numericLevel = numLevel;
-        if (qType && qType !== "T") entry.qType = qType;
-        if (mediaUrl) entry.mediaUrl = mediaUrl;
-
-        let langData = {
-          qText: questionText,
-          choices: choices,
-          explanation: explanationText
-        };
-
-        if (flag.includes("hi") || flag.includes("हिंदी") || flag === "h") {
-          entry.hi = langData;
-        } else {
-          entry.en = langData;
-        }
-      });
-
-      let pairedList = [];
-      map.forEach((item) => {
-        if (item.en || item.hi) {
-          if (!item.en) item.en = item.hi;
-          if (!item.hi) item.hi = item.en;
-          pairedList.push(item);
-        }
-      });
-
-      return pairedList;
-    }
-
+  return {
+    questionId: enData.Number,
+    level: enData.Level,
+    qType: enData.Qtype,
+    url: enData.URL,
+    explanation: { en: enData.Explanation, hi: hiData.Explanation },
+    questionText: { en: enData.Question, hi: hiData.Question },
+    options: shuffledOptions // Array of 4 options in randomized positions
+  };
+}
     function openInstructionsModal() {
       document.getElementById('instructions-title').innerText = customInstructionsTitle;
       document.getElementById('instructions-body').innerHTML = customInstructionsBody;
