@@ -995,10 +995,7 @@
         return null;
       }
 
-      let pairedList = parseAndPairData(data);
-      if (pairedList.length === 0) return null;
-
-      return pairedList[0];
+      return parseAndPairData(data);
     }
 
     // Secure debug question fetching using get_debug_question RPC
@@ -1014,57 +1011,55 @@
         return null;
       }
 
-      let pairedList = parseAndPairData(data);
-
-      if (!targetQId && usedQuestionIDs.size > 0) {
-        pairedList = pairedList.filter(q => !usedQuestionIDs.has(q.qId));
+      let paired = parseAndPairData(data);
+      if (paired && usedQuestionIDs.has(paired.qId) && !targetQId) {
+        return null;
       }
 
-      if (pairedList.length === 0) return null;
-
-      return pairedList[Math.floor(Math.random() * pairedList.length)];
+      return paired;
     }
 
     // Parses and merges English & Hindi rows into a unified Question Object
     function parseAndPairData(rawData) {
-  if (!Array.isArray(rawData) || rawData.length === 0) return null;
+      if (!Array.isArray(rawData) || rawData.length === 0) return null;
 
-  const paired = { en: null, hi: null };
+      const paired = { en: null, hi: null };
 
-  rawData.forEach(item => {
-    const flag = (item.HEFlag || '').trim().toUpperCase();
-    if (flag === 'E') paired.en = item;
-    if (flag === 'H') paired.hi = item;
-  });
+      rawData.forEach(item => {
+        const flag = (item.HEFlag || '').trim().toUpperCase();
+        if (flag === 'E') paired.en = item;
+        if (flag === 'H') paired.hi = item;
+      });
 
-  const enData = paired.en || rawData[0];
-  const hiData = paired.hi || rawData[0];
+      const enData = paired.en || rawData[0];
+      const hiData = paired.hi || rawData[0];
 
-  // Map raw options (where 'A' is always correct)
-  const rawOptions = [
-    { key: 'A', en: enData.A, hi: hiData.A },
-    { key: 'B', en: enData.B, hi: hiData.B },
-    { key: 'C', en: enData.C, hi: hiData.C },
-    { key: 'D', en: enData.D, hi: hiData.D }
-  ];
+      // Map raw options (where 'A' is always correct)
+      const rawOptions = [
+        { key: 'A', en: enData.A, hi: hiData.A },
+        { key: 'B', en: enData.B, hi: hiData.B },
+        { key: 'C', en: enData.C, hi: hiData.C },
+        { key: 'D', en: enData.D, hi: hiData.D }
+      ];
 
-  // Fisher-Yates shuffle algorithm to randomize display order on screen
-  const shuffledOptions = [...rawOptions];
-  for (let i = shuffledOptions.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffledOptions[i], shuffledOptions[j]] = [shuffledOptions[j], shuffledOptions[i]];
-  }
+      // Fisher-Yates shuffle algorithm to randomize display order on screen
+      const shuffledOptions = [...rawOptions];
+      for (let i = shuffledOptions.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffledOptions[i], shuffledOptions[j]] = [shuffledOptions[j], shuffledOptions[i]];
+      }
 
-  return {
-    questionId: enData.Number,
-    level: enData.Level,
-    qType: enData.Qtype,
-    url: enData.URL,
-    explanation: { en: enData.Explanation, hi: hiData.Explanation },
-    questionText: { en: enData.Question, hi: hiData.Question },
-    options: shuffledOptions // Array of 4 options in randomized positions
-  };
-}
+      return {
+        qId: enData.Number,
+        level: enData.Level,
+        qType: (enData.Qtype || 'T').toUpperCase(),
+        mediaUrl: enData.URL,
+        en: enData,
+        hi: hiData,
+        options: shuffledOptions
+      };
+    }
+
     function openInstructionsModal() {
       document.getElementById('instructions-title').innerText = customInstructionsTitle;
       document.getElementById('instructions-body').innerHTML = customInstructionsBody;
@@ -1094,8 +1089,8 @@
         nextStepTimeout = null;
       }
 
-      const expEn = (currentQuestionData.en && currentQuestionData.en.explanation) ? currentQuestionData.en.explanation : "";
-      const expHi = (currentQuestionData.hi && currentQuestionData.hi.explanation) ? currentQuestionData.hi.explanation : "";
+      const expEn = (currentQuestionData.en && currentQuestionData.en.Explanation) ? currentQuestionData.en.Explanation : "";
+      const expHi = (currentQuestionData.hi && currentQuestionData.hi.Explanation) ? currentQuestionData.hi.Explanation : "";
 
       document.getElementById('modal-explanation-en').innerHTML = expEn;
       document.getElementById('modal-explanation-hi').innerHTML = expHi;
@@ -1154,49 +1149,57 @@
       loadQuestion();
     }
 
-async function loadQuestion(level) {
-  // 1. Get your array of already-used question numbers (fallback to empty array if not defined)
-  const usedIds = (typeof usedQuestionIds !== 'undefined' && Array.isArray(usedQuestionIds)) 
-    ? usedQuestionIds 
-    : [];
+    async function loadQuestion() {
+      canSelect = true;
+      stopTimer();
 
-  // 2. Clean the array so it contains ONLY valid numbers (removes null, undefined, NaN)
-  const safeExcludedIds = usedIds.filter(id => id !== null && id !== undefined && !isNaN(id));
+      let qData = null;
+      if (isDebugMode()) {
+        qData = await getDebugQuestionFromSupabase();
+      } else {
+        qData = await getNextQuestionFromSupabase();
+      }
 
-  console.log(`[Quiz] Fetching question for Level: ${level}, Excluded IDs:`, safeExcludedIds);
+      if (!qData) {
+        alert("No suitable questions found or questions exhausted!");
+        endGame(false);
+        return;
+      }
 
-  // 3. Call the Supabase RPC function
-  const { data, error } = await supabase.rpc('get_next_question', {
-    target_level: parseInt(level, 10),
-    excluded_ids: safeExcludedIds
-  });
+      currentQuestionData = qData;
+      usedQuestionIDs.add(qData.qId);
+      currentOptions = qData.options;
 
-  // 4. Handle RPC Errors
-  if (error) {
-    console.error("[Quiz] Supabase RPC Error:", error);
-    alert("Error loading question from database. Check console for details.");
-    return;
-  }
+      // Update question text
+      const qEnEl = document.getElementById('q-text-en');
+      const qHiEl = document.getElementById('q-text-hi');
+      if (qEnEl) qEnEl.innerText = qData.en.Question || '';
+      if (qHiEl) qHiEl.innerText = qData.hi.Question || '';
 
-  console.log("[Quiz] Raw data returned from Supabase:", data);
+      // Set level and prize indicators
+      const levelEl = document.getElementById('current-level-display');
+      if (levelEl) levelEl.innerText = `Question ${currentIndex + 1} of ${maxGameQuestions} (Prize: ${prizeLadder[currentIndex]} Points)`;
 
-  // 5. Handle empty responses
-  if (!data || (Array.isArray(data) && data.length === 0)) {
-    console.warn(`[Quiz] No questions found in QuestionsBank for Level ${level}`);
-    document.getElementById('question-text').innerText = "No matching question available.";
-    return;
-  }
+      setupBulbState(false);
+      renderOptions();
 
-  // 6. Process and render the question data
-  const pairedData = parseAndPairData(data);
-  renderQuestion(pairedData);
-}
+      // Handle Media Types (Picture, Audio, Video)
+      const replayBtn = document.getElementById('replay-media-btn');
+      if (['P', 'A', 'V'].includes(qData.qType)) {
+        if (replayBtn) replayBtn.style.display = 'inline-flex';
+        showMediaModal(qData.qType, qData.mediaUrl);
+      } else {
+        if (replayBtn) replayBtn.style.display = 'none';
+        if (isTimedMode) startTimer();
+      }
+    }
+
     function setupBulbState(makeActive = false) {
       const bulbBtn = document.getElementById('bulb-btn');
       if (!bulbBtn) return;
       
-      const expEn = (currentQuestionData && currentQuestionData.en && currentQuestionData.en.explanation) ? currentQuestionData.en.explanation.trim() : "";
-      const expHi = (currentQuestionData && currentQuestionData.hi && currentQuestionData.hi.explanation) ? currentQuestionData.hi.explanation.trim() : "";
+      const expEn = (currentQuestionData && currentQuestionData.en && currentQuestionData.en.Explanation) ? currentQuestionData.en.Explanation.trim() : "";
+      const expHi = (currentQuestionData && currentQuestionData.hi && currentQuestionData.hi.Explanation) ? currentQuestionData.hi.Explanation.trim() : "";
 
       const hasExplanation = (expEn !== "" || expHi !== "");
 
@@ -1289,9 +1292,10 @@ async function loadQuestion(level) {
         const btn = document.createElement('button');
         btn.className = 'option-btn';
         btn.id = `opt-btn-${idx}`;
+        btn.style.visibility = 'visible';
         btn.innerHTML = `
-          <span class="opt-en"><span class="option-prefix">${prefixes[idx]}</span>${opt.en}</span>
-          <span class="opt-hi">${opt.hi}</span>
+          <span class="opt-en"><span class="option-prefix">${prefixes[idx]}</span>${opt.en || ''}</span>
+          <span class="opt-hi">${opt.hi || ''}</span>
         `;
         
         btn.onclick = () => handleSelection(btn, opt);
@@ -1588,7 +1592,7 @@ async function loadQuestion(level) {
 
       const gameUi = document.getElementById('game-ui');
       const endUi = document.getElementById('end-ui');
-      if (gameUi) gameUi.style.display = 'block';
+      if (gameUi) gameUi.style.display = 'none';
       if (endUi) endUi.style.display = 'block';
 
       const finalVal = currentIndex > 0 ? prizeLadder[Math.min(currentIndex - 1, prizeLadder.length - 1)] : "0";
