@@ -855,8 +855,6 @@
       return urlParams.get(param);
     }
 
-    // Updated Debug Rules:
-    // Rule 1: If file is index.html, ignore debug parameter completely
     function isDebugMode() {
       if (isIndexHtmlPage()) return false;
       return getUrlParam('debug') === 'true';
@@ -903,30 +901,37 @@
       const startBtn = document.getElementById("start-btn");
 
       try {
-        statusEl.innerText = "Connecting to game server...";
-        statusEl.style.color = "#38bdf8";
+        if (statusEl) {
+          statusEl.innerText = "Connecting to game server...";
+          statusEl.style.color = "#38bdf8";
+        }
 
         await fetchAvailableLevels();
         await loadParamsFromExcel();
 
-        statusEl.innerText = "Ready to play!";
-        statusEl.style.color = "#22c55e";
-        startBtn.disabled = false;
-        startBtn.innerText = "Start Game";
+        if (statusEl) {
+          statusEl.innerText = "Ready to play!";
+          statusEl.style.color = "#22c55e";
+        }
+        if (startBtn) {
+          startBtn.disabled = false;
+          startBtn.innerText = "Start Game";
+        }
       } catch (err) {
-        statusEl.innerText = "Initialization failed: " + err.message;
-        statusEl.style.color = "#ef4444";
+        if (statusEl) {
+          statusEl.innerText = "Initialization failed: " + err.message;
+          statusEl.style.color = "#ef4444";
+        }
       }
     }
 
+    // FIXED: Secure level fetching using get_available_levels RPC
     async function fetchAvailableLevels() {
       try {
-        const { data, error } = await supabase
-          .from('QuestionsBank')
-          .select('Level');
+        const { data, error } = await supabase.rpc('get_available_levels');
 
         if (error || !data || data.length === 0) {
-          console.warn("Could not fetch levels from DB, using default level 1:", error);
+          console.warn("Could not fetch levels from DB via RPC, using default level 1:", error);
           return;
         }
 
@@ -975,7 +980,7 @@
       }
     }
 
-    // Standard Question Fetching
+    // FIXED: Secure standard question fetching using get_next_question RPC
     async function getNextQuestionFromSupabase() {
       let targetLevel = getMappedLevel(currentIndex);
       let excludeArray = Array.from(usedQuestionIDs);
@@ -986,7 +991,7 @@
       });
 
       if (error || !data || data.length === 0) {
-        console.error("RPC Error or No Data:", error);
+        console.error("RPC Error or No Data returned from get_next_question:", error);
         return null;
       }
 
@@ -996,52 +1001,51 @@
       return pairedList[0];
     }
 
-// Debug Question Fetching Logic (Fixed Column Casing)
-async function getDebugQuestionFromSupabase() {
-  const targetQId = getDebugQuestionId();
-  let query = supabase.from('QuestionsBank').select('*');
+    // FIXED: Secure debug question fetching using get_debug_question RPC
+    async function getDebugQuestionFromSupabase() {
+      const targetQId = getDebugQuestionId();
 
-  if (targetQId) {
-    // Mode 3: Match on 'qId' (case-sensitive column in Supabase)
-    query = query.eq('qId', targetQId);
-  } else {
-    // Mode 2: Fetch only Audio (A), Video (V), Picture (P) type questions
-    // Checks both 'qtype' and 'qType' column filters
-    query = query.or('qtype.in.(A,V,P,a,v,p),qType.in.(A,V,P,a,v,p)');
-    if (usedQuestionIDs.size > 0) {
-      const formattedIds = Array.from(usedQuestionIDs).map(id => `"${id}"`).join(',');
-      query = query.not('qId', 'in', `(${formattedIds})`);
+      const { data, error } = await supabase.rpc('get_debug_question', {
+        target_qid: targetQId || null
+      });
+
+      if (error || !data || data.length === 0) {
+        console.error("Debug RPC fetch error or no questions found:", error);
+        return null;
+      }
+
+      let pairedList = parseAndPairData(data);
+
+      if (!targetQId && usedQuestionIDs.size > 0) {
+        pairedList = pairedList.filter(q => !usedQuestionIDs.has(q.qId));
+      }
+
+      if (pairedList.length === 0) return null;
+
+      return pairedList[Math.floor(Math.random() * pairedList.length)];
     }
-  }
 
-  const { data, error } = await query;
-
-  if (error || !data || data.length === 0) {
-    console.error("Debug fetch error or no questions found:", error);
-    return null;
-  }
-
-  let pairedList = parseAndPairData(data);
-  if (pairedList.length === 0) return null;
-
-  // Select randomly from matched debug candidates
-  let selected = pairedList[Math.floor(Math.random() * pairedList.length)];
-  return selected;
-}
     function parseAndPairData(records) {
       let map = new Map();
 
       records.forEach((row) => {
         if (!row) return;
 
-        let qId = String(row.qid || "").trim();
-        let numLevel = parseFloat(row.numericlevel || row.Level || 1.0);
-        let questionText = String(row.qtext || "").trim();
-        let choices = Array.isArray(row.choices) ? row.choices : [];
+        let qId = String(row.qId || row.qid || row.Number || "").trim();
+        let numLevel = parseFloat(row.numericlevel || row.numericLevel || row.Level || row.level || 1.0);
+        let questionText = String(row.qtext || row.qText || row.Question || "").trim();
+        
+        let choices = [];
+        if (Array.isArray(row.choices)) {
+          choices = row.choices;
+        } else if (row.A || row.B || row.C || row.D) {
+          choices = [row.A || "", row.B || "", row.C || "", row.D || ""];
+        }
+
         let flag = String(row.flag || "").trim().toLowerCase();
         let explanationText = row.explanation ? String(row.explanation).trim() : "";
-        let qType = String(row.qtype || "T").trim().toUpperCase();
-        let mediaUrl = String(row.mediaurl || "").trim();
+        let qType = String(row.qtype || row.qType || row.Qtype || "T").trim().toUpperCase();
+        let mediaUrl = String(row.mediaurl || row.mediaUrl || row.MediaUrl || "").trim();
 
         if (!qId || !questionText) return;
 
@@ -1190,8 +1194,6 @@ async function getDebugQuestionFromSupabase() {
       document.getElementById('lbl-question-en').innerText = "Loading question from database...";
       document.getElementById('lbl-question-hi').innerText = "प्रश्न लोड हो रहा है...";
 
-      // Routing logic:
-      // If debug=true OR question=<id> (and NOT index.html), route to getDebugQuestionFromSupabase()
       if (isDebugMode() || getDebugQuestionId() !== null) {
         currentQuestionData = await getDebugQuestionFromSupabase();
       } else {
@@ -1208,7 +1210,6 @@ async function getDebugQuestionFromSupabase() {
 
       setupBulbState(false);
 
-      // Questionid9level*10 header format
       document.getElementById('lbl-level').innerText = `${currentQuestionData.qId}9${currentQuestionData.numericLevel * 10}`;
       
       const currentPrize = prizeLadder[Math.min(currentIndex, prizeLadder.length - 1)];
@@ -1267,17 +1268,20 @@ async function getDebugQuestionFromSupabase() {
             </g>
           </svg>`;
         }
-        mediaBtn.innerHTML = mediaIconSvg;
-        mediaBtn.style.display = 'inline-flex';
+        if (mediaBtn) {
+          mediaBtn.innerHTML = mediaIconSvg;
+          mediaBtn.style.display = 'inline-flex';
+        }
         showMediaModal(currentQuestionData.qType, currentQuestionData.mediaUrl);
       } else {
-        mediaBtn.style.display = 'none';
+        if (mediaBtn) mediaBtn.style.display = 'none';
         startTimer();
       }
     }
 
     function setupBulbState(makeActive = false) {
       const bulbBtn = document.getElementById('bulb-btn');
+      if (!bulbBtn) return;
       
       const expEn = (currentQuestionData && currentQuestionData.en && currentQuestionData.en.explanation) ? currentQuestionData.en.explanation.trim() : "";
       const expHi = (currentQuestionData && currentQuestionData.hi && currentQuestionData.hi.explanation) ? currentQuestionData.hi.explanation.trim() : "";
@@ -1307,29 +1311,34 @@ async function getDebugQuestionFromSupabase() {
       const titleEl = document.getElementById('media-title');
       const instructionEl = document.getElementById('media-instruction');
       const containerEl = document.getElementById('media-content');
+      if (!containerEl) return;
       containerEl.innerHTML = '';
 
       document.getElementById('media-modal').style.display = 'flex';
 
       if (type === 'P') {
-        titleEl.innerText = '🖼️ Picture Question / चित्र प्रश्न';
-        instructionEl.style.display = 'none';
+        if (titleEl) titleEl.innerText = '🖼️ Picture Question / चित्र प्रश्न';
+        if (instructionEl) instructionEl.style.display = 'none';
         const img = document.createElement('img');
         img.src = url;
         img.alt = 'Question Image';
         containerEl.appendChild(img);
       } else if (type === 'A') {
-        titleEl.innerText = '🎵 Audio Question / ऑडियो प्रश्न';
-        instructionEl.innerText = 'Please press the Play button to listen / सुनने के लिए प्ले बटन दबाएं';
-        instructionEl.style.display = 'block';
+        if (titleEl) titleEl.innerText = '🎵 Audio Question / ऑडियो प्रश्न';
+        if (instructionEl) {
+          instructionEl.innerText = 'Please press the Play button to listen / सुनने के लिए प्ले बटन दबाएं';
+          instructionEl.style.display = 'block';
+        }
         const audio = document.createElement('audio');
         audio.controls = true;
         audio.src = url;
         containerEl.appendChild(audio);
       } else if (type === 'V') {
-        titleEl.innerText = '🎥 Video Question / वीडियो प्रश्न';
-        instructionEl.innerText = 'Please press the Play button to watch / देखने के लिए प्ले बटन दबाएं';
-        instructionEl.style.display = 'block';
+        if (titleEl) titleEl.innerText = '🎥 Video Question / वीडियो प्रश्न';
+        if (instructionEl) {
+          instructionEl.innerText = 'Please press the Play button to watch / देखने के लिए प्ले बटन दबाएं';
+          instructionEl.style.display = 'block';
+        }
         const video = document.createElement('video');
         video.controls = true;
         video.src = url;
@@ -1339,11 +1348,13 @@ async function getDebugQuestionFromSupabase() {
 
     function closeMediaModal() {
       const containerEl = document.getElementById('media-content');
-      const mediaElements = containerEl.querySelectorAll('audio, video');
-      mediaElements.forEach(el => {
-        el.pause();
-        el.currentTime = 0;
-      });
+      if (containerEl) {
+        const mediaElements = containerEl.querySelectorAll('audio, video');
+        mediaElements.forEach(el => {
+          el.pause();
+          el.currentTime = 0;
+        });
+      }
       
       document.getElementById('media-modal').style.display = 'none';
 
@@ -1358,6 +1369,7 @@ async function getDebugQuestionFromSupabase() {
 
     function renderOptions() {
       const grid = document.getElementById('options-grid');
+      if (!grid) return;
       grid.innerHTML = '';
       const prefixes = ['A:', 'B:', 'C:', 'D:'];
 
@@ -1375,6 +1387,7 @@ async function getDebugQuestionFromSupabase() {
       });
     }
 
+    // FIXED: Secure answer verification using verify_answer RPC
     async function handleSelection(selectedBtn, selectedOption) {
       if (!canSelect) return;
       canSelect = false;
@@ -1472,14 +1485,16 @@ async function getDebugQuestionFromSupabase() {
     function updateTimerUI() {
       const display = document.getElementById("timer-display");
       const bar = document.getElementById("timer-bar-fill");
-      display.innerText = `Time Remaining: ${timeRemaining}s`;
+      if (display) display.innerText = `Time Remaining: ${timeRemaining}s`;
       
-      const percentage = (timeRemaining / timeLimitPerQuestion) * 100;
-      bar.style.width = `${percentage}%`;
+      if (bar) {
+        const percentage = (timeRemaining / timeLimitPerQuestion) * 100;
+        bar.style.width = `${percentage}%`;
 
-      if (percentage > 50) bar.style.backgroundColor = "#22c55e";
-      else if (percentage > 20) bar.style.backgroundColor = "#eab308";
-      else bar.style.backgroundColor = "#ef4444";
+        if (percentage > 50) bar.style.backgroundColor = "#22c55e";
+        else if (percentage > 20) bar.style.backgroundColor = "#eab308";
+        else bar.style.backgroundColor = "#ef4444";
+      }
     }
 
     function handleTimeout() {
@@ -1500,10 +1515,12 @@ async function getDebugQuestionFromSupabase() {
       }, 4000);
     }
 
+    // FIXED: Secure 50:50 Lifeline using verify_answer RPC
     async function use5050() {
       if (lifeline5050Used || !canSelect) return;
       lifeline5050Used = true;
-      document.getElementById('life-5050').classList.add('used');
+      const btn5050 = document.getElementById('life-5050');
+      if (btn5050) btn5050.classList.add('used');
 
       let wrongIndices = [];
       for (let i = 0; i < 4; i++) {
@@ -1524,11 +1541,13 @@ async function getDebugQuestionFromSupabase() {
       });
     }
 
+    // FIXED: Secure Audience Poll Lifeline using verify_answer RPC
     async function useAudience() {
       if (lifelineAudienceUsed || !canSelect) return;
       stopTimer();
       lifelineAudienceUsed = true;
-      document.getElementById('life-audience').classList.add('used');
+      const btnAud = document.getElementById('life-audience');
+      if (btnAud) btnAud.classList.add('used');
 
       let correctIdx = 0;
       for (let i = 0; i < 4; i++) {
@@ -1576,24 +1595,28 @@ async function getDebugQuestionFromSupabase() {
       }
 
       for (let i = 0; i < 4; i++) {
-        document.getElementById(`pval-${i}`).innerText = percentages[i] + "%";
-        document.getElementById(`pbar-${i}`).style.height = "0%";
+        const pvalEl = document.getElementById(`pval-${i}`);
+        const pbarEl = document.getElementById(`pbar-${i}`);
+        if (pvalEl) pvalEl.innerText = percentages[i] + "%";
+        if (pbarEl) pbarEl.style.height = "0%";
       }
 
       const pollModal = document.getElementById("poll-modal");
-      pollModal.style.display = "flex";
+      if (pollModal) pollModal.style.display = "flex";
 
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           for (let i = 0; i < 4; i++) {
-            document.getElementById(`pbar-${i}`).style.height = percentages[i] + "%";
+            const pbarEl = document.getElementById(`pbar-${i}`);
+            if (pbarEl) pbarEl.style.height = percentages[i] + "%";
           }
         });
       });
     }
 
     function closePoll() {
-      document.getElementById("poll-modal").style.display = "none";
+      const pollModal = document.getElementById("poll-modal");
+      if (pollModal) pollModal.style.display = "none";
       if (canSelect && isTimedMode && timeRemaining > 0) {
         resumeTimer();
       }
@@ -1602,7 +1625,8 @@ async function getDebugQuestionFromSupabase() {
     function useFlip() {
       if (lifelineFlipUsed || !canSelect) return;
       lifelineFlipUsed = true;
-      document.getElementById('life-flip').classList.add('used');
+      const btnFlip = document.getElementById('life-flip');
+      if (btnFlip) btnFlip.classList.add('used');
 
       loadQuestion();
     }
@@ -1612,19 +1636,25 @@ async function getDebugQuestionFromSupabase() {
       stopTimer();
       
       const safeVal = currentIndex > 0 ? prizeLadder[currentIndex - 1] : "0";
-      document.getElementById('quit-modal-msg').innerText = `Are you sure you want to quit? You will leave with ${safeVal} Points. / क्या आप खेल छोड़ना चाहते हैं? आप ${safeVal} पॉइंट्स लेकर जाएंगे।`;
-      document.getElementById('quit-modal').style.display = 'flex';
+      const quitMsg = document.getElementById('quit-modal-msg');
+      if (quitMsg) {
+        quitMsg.innerText = `Are you sure you want to quit? You will leave with ${safeVal} Points. / क्या आप खेल छोड़ना चाहते हैं? आप ${safeVal} पॉइंट्स लेकर जाएंगे।`;
+      }
+      const quitModal = document.getElementById('quit-modal');
+      if (quitModal) quitModal.style.display = 'flex';
     }
 
     function closeQuitModal() {
-      document.getElementById('quit-modal').style.display = 'none';
+      const quitModal = document.getElementById('quit-modal');
+      if (quitModal) quitModal.style.display = 'none';
       if (canSelect && isTimedMode && timeRemaining > 0) {
         resumeTimer();
       }
     }
 
     function confirmQuit() {
-      document.getElementById('quit-modal').style.display = 'none';
+      const quitModal = document.getElementById('quit-modal');
+      if (quitModal) quitModal.style.display = 'none';
       endGame(false, true);
     }
 
@@ -1638,20 +1668,24 @@ async function getDebugQuestionFromSupabase() {
       const lifelineButtons = document.querySelectorAll('.lifeline-btn');
       lifelineButtons.forEach(btn => btn.style.pointerEvents = 'none');
 
-      document.getElementById('game-ui').style.display = 'block';
-      document.getElementById('end-ui').style.display = 'block';
+      const gameUi = document.getElementById('game-ui');
+      const endUi = document.getElementById('end-ui');
+      if (gameUi) gameUi.style.display = 'block';
+      if (endUi) endUi.style.display = 'block';
 
       const finalVal = currentIndex > 0 ? prizeLadder[Math.min(currentIndex - 1, prizeLadder.length - 1)] : "0";
+      const statusTitle = document.getElementById('end-status-title');
+      const finalPrize = document.getElementById('final-prize-val');
 
       if (isVictory) {
-        document.getElementById('end-status-title').innerText = "Shubhkamnayein! Master of Dharm";
-        document.getElementById('final-prize-val').innerText = `${prizeLadder[Math.min(currentIndex, prizeLadder.length - 1)]} Points`;
+        if (statusTitle) statusTitle.innerText = "Shubhkamnayein! Master of Dharm";
+        if (finalPrize) finalPrize.innerText = `${prizeLadder[Math.min(currentIndex, prizeLadder.length - 1)]} Points`;
       } else if (isQuit) {
-        document.getElementById('end-status-title').innerText = "You Chose to Quit / आपने खेल छोड़ दिया";
-        document.getElementById('final-prize-val').innerText = `${finalVal} Points`;
+        if (statusTitle) statusTitle.innerText = "You Chose to Quit / आपने खेल छोड़ दिया";
+        if (finalPrize) finalPrize.innerText = `${finalVal} Points`;
       } else {
-        document.getElementById('end-status-title').innerText = "Game Over";
-        document.getElementById('final-prize-val').innerText = `${finalVal} Points`;
+        if (statusTitle) statusTitle.innerText = "Game Over";
+        if (finalPrize) finalPrize.innerText = `${finalVal} Points`;
       }
     }
 
@@ -1664,9 +1698,12 @@ async function getDebugQuestionFromSupabase() {
       lifelineAudienceUsed = false;
       lifelineFlipUsed = false;
 
-      document.getElementById('life-5050').classList.remove('used');
-      document.getElementById('life-audience').classList.remove('used');
-      document.getElementById('life-flip').classList.remove('used');
+      const btn5050 = document.getElementById('life-5050');
+      const btnAud = document.getElementById('life-audience');
+      const btnFlip = document.getElementById('life-flip');
+      if (btn5050) btn5050.classList.remove('used');
+      if (btnAud) btnAud.classList.remove('used');
+      if (btnFlip) btnFlip.classList.remove('used');
 
       const optionButtons = document.querySelectorAll('.option-btn');
       optionButtons.forEach(btn => btn.style.pointerEvents = 'auto');
@@ -1674,9 +1711,13 @@ async function getDebugQuestionFromSupabase() {
       const lifelineButtons = document.querySelectorAll('.lifeline-btn');
       lifelineButtons.forEach(btn => btn.style.pointerEvents = 'auto');
 
-      document.getElementById('game-ui').style.display = 'block';
-      document.getElementById('end-ui').style.display = 'none';
-      document.getElementById('setup-modal').style.display = 'flex';
+      const gameUi = document.getElementById('game-ui');
+      const endUi = document.getElementById('end-ui');
+      const setupModal = document.getElementById('setup-modal');
+
+      if (gameUi) gameUi.style.display = 'block';
+      if (endUi) endUi.style.display = 'none';
+      if (setupModal) setupModal.style.display = 'flex';
     }
 </script>
 </body>
