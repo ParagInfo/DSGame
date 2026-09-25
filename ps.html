@@ -1303,68 +1303,67 @@
       });
     }
 
-    // Secure answer verification using verify_answer RPC
     async function handleSelection(selectedBtn, selectedOption) {
-      if (!canSelect) return;
-      canSelect = false;
-      stopTimer();
+  if (!canSelect) return;
+  canSelect = false;
+  stopTimer();
 
-      selectedBtn.classList.add('selected');
+  selectedBtn.classList.add('selected');
 
-      const chosenText = selectedOption.en || selectedOption.hi;
+  // Extracts English or Hindi text from the selected shuffled option
+  const chosenText = selectedOption.en || selectedOption.hi;
 
-      const { data: isCorrect, error } = await supabase.rpc('verify_answer', {
-        target_qid: String(currentQuestionData.qId),
-        selected_answer: String(chosenText)
-      });
+  const { data: isCorrect, error } = await supabase.rpc('verify_answer', {
+    target_qid: String(currentQuestionData.qId),
+    selected_answer: String(chosenText)
+  });
 
-      if (error) {
-        console.error("Answer verification error:", error);
-      }
+  if (error) {
+    console.error("Answer verification error:", error);
+  }
 
-      setTimeout(() => {
-        setupBulbState(true);
+  setTimeout(() => {
+    setupBulbState(true);
 
-        if (isCorrect) {
-          selectedBtn.classList.remove('selected');
-          selectedBtn.classList.add('correct');
+    if (isCorrect) {
+      selectedBtn.classList.remove('selected');
+      selectedBtn.classList.add('correct');
 
-          pendingNextStepCallback = () => {
-            currentIndex++;
-            if (currentIndex < maxGameQuestions) {
-              loadQuestion();
-            } else {
-              endGame(true);
-            }
-          };
-
-          nextStepTimeout = setTimeout(() => {
-            if (pendingNextStepCallback) {
-              const cb = pendingNextStepCallback;
-              pendingNextStepCallback = null;
-              cb();
-            }
-          }, 3500);
-
+      pendingNextStepCallback = () => {
+        currentIndex++;
+        if (currentIndex < maxGameQuestions) {
+          loadQuestion();
         } else {
-          selectedBtn.classList.remove('selected');
-          selectedBtn.classList.add('incorrect');
-
-          pendingNextStepCallback = () => {
-            endGame(false);
-          };
-
-          nextStepTimeout = setTimeout(() => {
-            if (pendingNextStepCallback) {
-              const cb = pendingNextStepCallback;
-              pendingNextStepCallback = null;
-              cb();
-            }
-          }, 4000);
+          endGame(true);
         }
-      }, 1200);
-    }
+      };
 
+      nextStepTimeout = setTimeout(() => {
+        if (pendingNextStepCallback) {
+          const cb = pendingNextStepCallback;
+          pendingNextStepCallback = null;
+          cb();
+        }
+      }, 3500);
+
+    } else {
+      selectedBtn.classList.remove('selected');
+      selectedBtn.classList.add('incorrect');
+
+      pendingNextStepCallback = () => {
+        endGame(false);
+      };
+
+      nextStepTimeout = setTimeout(() => {
+        if (pendingNextStepCallback) {
+          const cb = pendingNextStepCallback;
+          pendingNextStepCallback = null;
+          cb();
+        }
+      }, 4000);
+    }
+  }, 1200);
+}
     function startTimer() {
       stopTimer();
       if (!isTimedMode) return;
