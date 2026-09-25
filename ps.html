@@ -844,13 +844,11 @@
     // Dynamic level mapping storage
     let availableDbLevels = [1];
 
-    // Helper: Check if running index.html
     function isIndexHtmlPage() {
       const path = window.location.pathname.toLowerCase();
       return path.endsWith('/index.html') || path === '/index.html';
     }
 
-    // Helper: Get URL Parameter
     function getUrlParam(param) {
       const urlParams = new URLSearchParams(window.location.search);
       return urlParams.get(param);
@@ -919,6 +917,7 @@
           startBtn.innerText = "Start Game";
         }
       } catch (err) {
+        console.error("Initialization error:", err);
         if (statusEl) {
           statusEl.innerText = "Initialization failed: " + err.message;
           statusEl.style.color = "#ef4444";
@@ -926,25 +925,29 @@
       }
     }
 
-    // Secure level fetching using get_available_levels RPC
     async function fetchAvailableLevels() {
       try {
         const { data, error } = await supabase.rpc('get_available_levels');
 
-        if (error || !data || data.length === 0) {
-          console.warn("Could not fetch levels from DB via RPC, using default level 1:", error);
+        if (error) {
+          console.error("RPC Error fetching levels:", error);
           return;
         }
 
-        const uniqueLevels = Array.from(new Set(data.map(row => Number(row.Level))))
-                                  .filter(lvl => !isNaN(lvl))
+        if (!data || data.length === 0) {
+          console.warn("No data returned for levels, staying with default level [1]");
+          return;
+        }
+
+        const uniqueLevels = Array.from(new Set(data.map(row => Number(row.Level || row.level))))
+                                  .filter(lvl => !isNaN(lvl) && lvl > 0)
                                   .sort((a, b) => a - b);
 
         if (uniqueLevels.length > 0) {
           availableDbLevels = uniqueLevels;
         }
       } catch (e) {
-        console.warn("Error fetching available levels:", e);
+        console.warn("Error in fetchAvailableLevels:", e);
       }
     }
 
@@ -981,25 +984,30 @@
       }
     }
 
-    // Secure standard question fetching using get_next_question RPC
     async function getNextQuestionFromSupabase() {
       let targetLevel = getMappedLevel(currentIndex);
       let excludeArray = Array.from(usedQuestionIDs).map(id => String(id));
+
+      console.log(`Fetching level ${targetLevel}, excluding IDs:`, excludeArray);
 
       const { data, error } = await supabase.rpc('get_next_question', {
         target_level: targetLevel,
         exclude_ids: excludeArray
       });
 
-      if (error || !data || data.length === 0) {
-        console.error("RPC Error or No Data returned from get_next_question:", error);
+      if (error) {
+        console.error("RPC Error in get_next_question:", error);
+        return null;
+      }
+
+      if (!data || data.length === 0) {
+        console.warn("No questions returned from get_next_question");
         return null;
       }
 
       return parseAndPairData(data);
     }
 
-    // Secure debug question fetching using get_debug_question RPC
     async function getDebugQuestionFromSupabase() {
       const targetQId = getDebugQuestionId();
 
@@ -1020,14 +1028,13 @@
       return paired;
     }
 
-    // Parses and merges English & Hindi rows into a unified Question Object
     function parseAndPairData(rawData) {
       if (!Array.isArray(rawData) || rawData.length === 0) return null;
 
       const paired = { en: null, hi: null };
 
       rawData.forEach(item => {
-        const flag = String(item.HEFlag || item.heflag || '').trim().toUpperCase();
+        const flag = String(item.HEFlag || item.heflag || item.he_flag || '').trim().toUpperCase();
         if (flag === 'E') paired.en = item;
         if (flag === 'H') paired.hi = item;
       });
@@ -1035,11 +1042,9 @@
       const enData = paired.en || rawData[0];
       const hiData = paired.hi || rawData[0];
 
-      // Extract Question text safely checking every possible casing variant
       const qEnText = enData.Question || enData.question || enData.Q || enData.q || '';
       const qHiText = hiData.Question || hiData.question || hiData.Q || hiData.q || '';
 
-      // Map raw options
       const rawOptions = [
         { key: 'A', en: enData.A || enData.a, hi: hiData.A || hiData.a },
         { key: 'B', en: enData.B || enData.b, hi: hiData.B || hiData.b },
@@ -1047,7 +1052,6 @@
         { key: 'D', en: enData.D || enData.d, hi: hiData.D || hiData.d }
       ];
 
-      // Fisher-Yates shuffle algorithm to randomize display order on screen
       const shuffledOptions = [...rawOptions];
       for (let i = shuffledOptions.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -1088,21 +1092,18 @@
       usedQuestionIDs.add(qData.qId);
       currentOptions = qData.options;
 
-      // Set English and Hindi question text directly into DOM
       const qEnEl = document.getElementById('q-text-en');
       const qHiEl = document.getElementById('q-text-hi');
 
       if (qEnEl) qEnEl.innerText = qData.questionTextEn;
       if (qHiEl) qHiEl.innerText = qData.questionTextHi;
 
-      // Set level and prize indicators
       const levelEl = document.getElementById('current-level-display');
       if (levelEl) levelEl.innerText = `Question ${currentIndex + 1} of ${maxGameQuestions} (Prize: ${prizeLadder[currentIndex]} Points)`;
 
       setupBulbState(false);
       renderOptions();
 
-      // Handle Media Types (Picture, Audio, Video)
       const replayBtn = document.getElementById('replay-media-btn');
       if (['P', 'A', 'V'].includes(qData.qType)) {
         if (replayBtn) replayBtn.style.display = 'inline-flex';
@@ -1142,8 +1143,8 @@
         nextStepTimeout = null;
       }
 
-      const expEn = (currentQuestionData.en && currentQuestionData.en.Explanation) ? currentQuestionData.en.Explanation : "";
-      const expHi = (currentQuestionData.hi && currentQuestionData.hi.Explanation) ? currentQuestionData.hi.Explanation : "";
+      const expEn = (currentQuestionData.en && (currentQuestionData.en.Explanation || currentQuestionData.en.explanation)) ? (currentQuestionData.en.Explanation || currentQuestionData.en.explanation) : "";
+      const expHi = (currentQuestionData.hi && (currentQuestionData.hi.Explanation || currentQuestionData.hi.explanation)) ? (currentQuestionData.hi.Explanation || currentQuestionData.hi.explanation) : "";
 
       document.getElementById('modal-explanation-en').innerHTML = expEn;
       document.getElementById('modal-explanation-hi').innerHTML = expHi;
@@ -1206,8 +1207,8 @@
       const bulbBtn = document.getElementById('bulb-btn');
       if (!bulbBtn) return;
 
-      const expEn = (currentQuestionData && currentQuestionData.en && currentQuestionData.en.Explanation) ? currentQuestionData.en.Explanation.trim() : "";
-      const expHi = (currentQuestionData && currentQuestionData.hi && currentQuestionData.hi.Explanation) ? currentQuestionData.hi.Explanation.trim() : "";
+      const expEn = (currentQuestionData && currentQuestionData.en) ? (currentQuestionData.en.Explanation || currentQuestionData.en.explanation || "").trim() : "";
+      const expHi = (currentQuestionData && currentQuestionData.hi) ? (currentQuestionData.hi.Explanation || currentQuestionData.hi.explanation || "").trim() : "";
 
       const hasExplanation = (expEn !== "" || expHi !== "");
 
@@ -1318,7 +1319,6 @@
 
       selectedBtn.classList.add('selected');
 
-      // Extracts English or Hindi text from the selected shuffled option
       const chosenText = selectedOption.en || selectedOption.hi;
 
       const { data: isCorrect, error } = await supabase.rpc('verify_answer', {
@@ -1445,7 +1445,6 @@
       }, 4000);
     }
 
-    // Secure 50:50 Lifeline using verify_answer RPC
     async function use5050() {
       if (lifeline5050Used || !canSelect) return;
       lifeline5050Used = true;
@@ -1471,7 +1470,6 @@
       });
     }
 
-    // Secure Audience Poll Lifeline using verify_answer RPC
     async function useAudience() {
       if (lifelineAudienceUsed || !canSelect) return;
       stopTimer();
@@ -1649,6 +1647,6 @@
       if (endUi) endUi.style.display = 'none';
       if (setupModal) setupModal.style.display = 'flex';
     }
-</script>  
+</script>
 </body>
 </html>
