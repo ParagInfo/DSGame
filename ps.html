@@ -830,12 +830,15 @@
       <button class="thanks-btn" onclick="openThanksModal()">Acknowledgement / Thanks</button>
     </div>
   </div>
+<script>
+    // 1. Initialize Supabase Client (Safe global declaration pattern)
+    window.SUPABASE_URL = "https://ndfdcobmnxsvtrdqpqti.supabase.co";
+    window.SUPABASE_ANON_KEY = "sb_publishable_-CMSV99N3ovQggn-eJhLLA_z5WFtag4";
 
-  <script>
-    // 1. Initialize Supabase Client
-    const SUPABASE_URL = "https://ndfdcobmnxsvtrdqpqti.supabase.co";
-    const SUPABASE_ANON_KEY = "sb_publishable_-CMSV99N3ovQggn-eJhLLA_z5WFtag4";
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    if (!window.supabaseClient) {
+      window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+    }
+    var supabase = window.supabaseClient;
 
     // URL Parameter Helpers
     function getUrlParam(param) {
@@ -1324,7 +1327,6 @@
           selectedBtn.classList.remove('selected');
           selectedBtn.classList.add('incorrect');
 
-          // Highlight the correct option fetched via server check fallback if needed
           pendingNextStepCallback = () => {
             endGame(false);
           };
