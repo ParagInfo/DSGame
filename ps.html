@@ -996,37 +996,38 @@
       return pairedList[0];
     }
 
-    // Debug Question Fetching Logic
-    async function getDebugQuestionFromSupabase() {
-      const targetQId = getDebugQuestionId();
-      let query = supabase.from('QuestionsBank').select('*');
+// Debug Question Fetching Logic (Fixed Column Casing)
+async function getDebugQuestionFromSupabase() {
+  const targetQId = getDebugQuestionId();
+  let query = supabase.from('QuestionsBank').select('*');
 
-      if (targetQId) {
-        // Mode 3: Fetch specific question ID
-        query = query.eq('qid', targetQId);
-      } else {
-        // Mode 2: Fetch only Audio (A), Video (V), Picture (P) type questions
-        query = query.in('qtype', ['A', 'V', 'P', 'a', 'v', 'p']);
-        if (usedQuestionIDs.size > 0) {
-          query = query.not('qid', 'in', `(${Array.from(usedQuestionIDs).map(id => `"${id}"`).join(',')})`);
-        }
-      }
-
-      const { data, error } = await query;
-
-      if (error || !data || data.length === 0) {
-        console.error("Debug fetch error or no questions found:", error);
-        return null;
-      }
-
-      let pairedList = parseAndPairData(data);
-      if (pairedList.length === 0) return null;
-
-      // Select randomly from matched debug candidates
-      let selected = pairedList[Math.floor(Math.random() * pairedList.length)];
-      return selected;
+  if (targetQId) {
+    // Mode 3: Match on 'qId' (case-sensitive column in Supabase)
+    query = query.eq('qId', targetQId);
+  } else {
+    // Mode 2: Fetch only Audio (A), Video (V), Picture (P) type questions
+    // Checks both 'qtype' and 'qType' column filters
+    query = query.or('qtype.in.(A,V,P,a,v,p),qType.in.(A,V,P,a,v,p)');
+    if (usedQuestionIDs.size > 0) {
+      const formattedIds = Array.from(usedQuestionIDs).map(id => `"${id}"`).join(',');
+      query = query.not('qId', 'in', `(${formattedIds})`);
     }
+  }
 
+  const { data, error } = await query;
+
+  if (error || !data || data.length === 0) {
+    console.error("Debug fetch error or no questions found:", error);
+    return null;
+  }
+
+  let pairedList = parseAndPairData(data);
+  if (pairedList.length === 0) return null;
+
+  // Select randomly from matched debug candidates
+  let selected = pairedList[Math.floor(Math.random() * pairedList.length)];
+  return selected;
+}
     function parseAndPairData(records) {
       let map = new Map();
 
