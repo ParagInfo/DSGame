@@ -1020,46 +1020,98 @@
     }
 
     // Parses and merges English & Hindi rows into a unified Question Object
-    function parseAndPairData(rawData) {
-      if (!Array.isArray(rawData) || rawData.length === 0) return null;
+    // Parses and merges English & Hindi rows into a unified Question Object
+function parseAndPairData(rawData) {
+  if (!Array.isArray(rawData) || rawData.length === 0) return null;
 
-      const paired = { en: null, hi: null };
+  const paired = { en: null, hi: null };
 
-      rawData.forEach(item => {
-        const flag = (item.HEFlag || '').trim().toUpperCase();
-        if (flag === 'E') paired.en = item;
-        if (flag === 'H') paired.hi = item;
-      });
+  rawData.forEach(item => {
+    const flag = String(item.HEFlag || item.heflag || '').trim().toUpperCase();
+    if (flag === 'E') paired.en = item;
+    if (flag === 'H') paired.hi = item;
+  });
 
-      const enData = paired.en || rawData[0];
-      const hiData = paired.hi || rawData[0];
+  const enData = paired.en || rawData[0];
+  const hiData = paired.hi || rawData[0];
 
-      // Map raw options (where 'A' is always correct)
-      const rawOptions = [
-        { key: 'A', en: enData.A, hi: hiData.A },
-        { key: 'B', en: enData.B, hi: hiData.B },
-        { key: 'C', en: enData.C, hi: hiData.C },
-        { key: 'D', en: enData.D, hi: hiData.D }
-      ];
+  // Extract Question text safely checking every possible casing variant
+  const qEnText = enData.Question || enData.question || enData.Q || enData.q || '';
+  const qHiText = hiData.Question || hiData.question || hiData.Q || hiData.q || '';
 
-      // Fisher-Yates shuffle algorithm to randomize display order on screen
-      const shuffledOptions = [...rawOptions];
-      for (let i = shuffledOptions.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffledOptions[i], shuffledOptions[j]] = [shuffledOptions[j], shuffledOptions[i]];
-      }
+  // Map raw options (Option 'A' represents the correct answer in raw data)
+  const rawOptions = [
+    { key: 'A', en: enData.A || enData.a, hi: hiData.A || hiData.a },
+    { key: 'B', en: enData.B || enData.b, hi: hiData.B || hiData.b },
+    { key: 'C', en: enData.C || enData.c, hi: hiData.C || hiData.c },
+    { key: 'D', en: enData.D || enData.d, hi: hiData.D || hiData.d }
+  ];
 
-      return {
-        qId: enData.Number,
-        level: enData.Level,
-        qType: (enData.Qtype || 'T').toUpperCase(),
-        mediaUrl: enData.URL,
-        en: enData,
-        hi: hiData,
-        options: shuffledOptions
-      };
-    }
+  // Fisher-Yates shuffle algorithm to randomize display order on screen
+  const shuffledOptions = [...rawOptions];
+  for (let i = shuffledOptions.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffledOptions[i], shuffledOptions[j]] = [shuffledOptions[j], shuffledOptions[i]];
+  }
 
+  return {
+    qId: enData.Number || enData.number || enData.id || enData.ID,
+    level: enData.Level || enData.level,
+    qType: String(enData.Qtype || enData.qtype || 'T').toUpperCase(),
+    mediaUrl: enData.URL || enData.url,
+    questionTextEn: qEnText,
+    questionTextHi: qHiText,
+    en: enData,
+    hi: hiData,
+    options: shuffledOptions
+  };
+}
+
+async function loadQuestion() {
+  canSelect = true;
+  stopTimer();
+
+  let qData = null;
+  if (isDebugMode()) {
+    qData = await getDebugQuestionFromSupabase();
+  } else {
+    qData = await getNextQuestionFromSupabase();
+  }
+
+  if (!qData) {
+    alert("No suitable questions found or questions exhausted!");
+    endGame(false);
+    return;
+  }
+
+  currentQuestionData = qData;
+  usedQuestionIDs.add(qData.qId);
+  currentOptions = qData.options;
+
+  // Set English and Hindi question text directly into DOM
+  const qEnEl = document.getElementById('q-text-en');
+  const qHiEl = document.getElementById('q-text-hi');
+
+  if (qEnEl) qEnEl.innerText = qData.questionTextEn;
+  if (qHiEl) qHiEl.innerText = qData.questionTextHi;
+
+  // Set level and prize indicators
+  const levelEl = document.getElementById('current-level-display');
+  if (levelEl) levelEl.innerText = `Question ${currentIndex + 1} of ${maxGameQuestions} (Prize: ${prizeLadder[currentIndex]} Points)`;
+
+  setupBulbState(false);
+  renderOptions();
+
+  // Handle Media Types (Picture, Audio, Video)
+  const replayBtn = document.getElementById('replay-media-btn');
+  if (['P', 'A', 'V'].includes(qData.qType)) {
+    if (replayBtn) replayBtn.style.display = 'inline-flex';
+    showMediaModal(qData.qType, qData.mediaUrl);
+  } else {
+    if (replayBtn) replayBtn.style.display = 'none';
+    if (isTimedMode) startTimer();
+  }
+}
     function openInstructionsModal() {
       document.getElementById('instructions-title').innerText = customInstructionsTitle;
       document.getElementById('instructions-body').innerHTML = customInstructionsBody;
