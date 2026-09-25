@@ -831,7 +831,7 @@
     </div>
   </div>
 <script>
-    // 1. Initialize Supabase Client (Safe global declaration pattern)
+    // 1. Initialize Supabase Client
     window.SUPABASE_URL = "https://ndfdcobmnxsvtrdqpqti.supabase.co";
     window.SUPABASE_ANON_KEY = "sb_publishable_-CMSV99N3ovQggn-eJhLLA_z5WFtag4";
 
@@ -843,18 +843,28 @@
     // Dynamic level mapping storage
     let availableDbLevels = [1];
 
-    // URL Parameter Helpers
+    // Helper: Check if running index.html
+    function isIndexHtmlPage() {
+      const path = window.location.pathname.toLowerCase();
+      return path.endsWith('/index.html') || path === '/index.html';
+    }
+
+    // Helper: Get URL Parameter
     function getUrlParam(param) {
       const urlParams = new URLSearchParams(window.location.search);
       return urlParams.get(param);
     }
 
+    // Updated Debug Rules:
+    // Rule 1: If file is index.html, ignore debug parameter completely
     function isDebugMode() {
+      if (isIndexHtmlPage()) return false;
       return getUrlParam('debug') === 'true';
     }
 
-    function isDebugQuestionMode() {
-      return isDebugMode() && getUrlParam('question') !== null;
+    function getDebugQuestionId() {
+      if (isIndexHtmlPage()) return null;
+      return getUrlParam('question');
     }
 
     let customThanksMessage = "Thank you for playing Kaun Banega Dharm Shiromani!";
@@ -909,7 +919,6 @@
       }
     }
 
-    // Fetch distinct numeric levels available in QuestionsBank
     async function fetchAvailableLevels() {
       try {
         const { data, error } = await supabase
@@ -933,7 +942,6 @@
       }
     }
 
-    // Map current game question index (0 to 14) onto distinct DB levels
     function getMappedLevel(gameStep) {
       const totalDbLevels = availableDbLevels.length;
       if (totalDbLevels === 0) return 1;
@@ -967,7 +975,7 @@
       }
     }
 
-    // Fetch Single Question via Secure SQL RPC using mapped levels
+    // Standard Question Fetching
     async function getNextQuestionFromSupabase() {
       let targetLevel = getMappedLevel(currentIndex);
       let excludeArray = Array.from(usedQuestionIDs);
@@ -988,13 +996,16 @@
       return pairedList[0];
     }
 
-    // Debug Mode Fetch Helper: Fetches a specific question or any unshown A, V, P media question
-    async function getDebugMediaQuestionFromSupabase(specificQId = null) {
+    // Debug Question Fetching Logic
+    async function getDebugQuestionFromSupabase() {
+      const targetQId = getDebugQuestionId();
       let query = supabase.from('QuestionsBank').select('*');
 
-      if (specificQId) {
-        query = query.eq('qid', specificQId);
+      if (targetQId) {
+        // Mode 3: Fetch specific question ID
+        query = query.eq('qid', targetQId);
       } else {
+        // Mode 2: Fetch only Audio (A), Video (V), Picture (P) type questions
         query = query.in('qtype', ['A', 'V', 'P', 'a', 'v', 'p']);
         if (usedQuestionIDs.size > 0) {
           query = query.not('qid', 'in', `(${Array.from(usedQuestionIDs).map(id => `"${id}"`).join(',')})`);
@@ -1004,19 +1015,18 @@
       const { data, error } = await query;
 
       if (error || !data || data.length === 0) {
-        console.error("Debug fetch error or no media questions available:", error);
+        console.error("Debug fetch error or no questions found:", error);
         return null;
       }
 
       let pairedList = parseAndPairData(data);
       if (pairedList.length === 0) return null;
 
-      // Select randomly among matched available debug entries
+      // Select randomly from matched debug candidates
       let selected = pairedList[Math.floor(Math.random() * pairedList.length)];
       return selected;
     }
 
-    // Parse DB rows (Pairs English & Hindi entries by qId)
     function parseAndPairData(records) {
       let map = new Map();
 
@@ -1152,10 +1162,8 @@
         document.getElementById("timer-container").style.display = "none";
       }
 
-      if (isDebugQuestionMode()) {
+      if (getDebugQuestionId() !== null) {
         maxGameQuestions = 1;
-      } else if (isDebugMode()) {
-        maxGameQuestions = 15;
       } else {
         maxGameQuestions = 15;
       }
@@ -1181,18 +1189,16 @@
       document.getElementById('lbl-question-en').innerText = "Loading question from database...";
       document.getElementById('lbl-question-hi').innerText = "प्रश्न लोड हो रहा है...";
 
-      // Check debug query parameters
-      if (isDebugQuestionMode()) {
-        const specificQId = getUrlParam('question');
-        currentQuestionData = await getDebugMediaQuestionFromSupabase(specificQId);
-      } else if (isDebugMode()) {
-        currentQuestionData = await getDebugMediaQuestionFromSupabase(null);
+      // Routing logic:
+      // If debug=true OR question=<id> (and NOT index.html), route to getDebugQuestionFromSupabase()
+      if (isDebugMode() || getDebugQuestionId() !== null) {
+        currentQuestionData = await getDebugQuestionFromSupabase();
       } else {
         currentQuestionData = await getNextQuestionFromSupabase();
       }
 
       if (!currentQuestionData) {
-        alert("No more matching questions available.");
+        alert("No matching question available.");
         endGame(true);
         return;
       }
@@ -1201,7 +1207,7 @@
 
       setupBulbState(false);
 
-      // Reverted to requested Questionid9level*10 format
+      // Questionid9level*10 header format
       document.getElementById('lbl-level').innerText = `${currentQuestionData.qId}9${currentQuestionData.numericLevel * 10}`;
       
       const currentPrize = prizeLadder[Math.min(currentIndex, prizeLadder.length - 1)];
@@ -1221,9 +1227,7 @@
         });
       }
 
-      // Randomly shuffle options for display
       currentOptions = shuffleArray(rawOptions);
-
       renderOptions();
 
       const mediaBtn = document.getElementById('life-media-replay');
@@ -1370,7 +1374,6 @@
       });
     }
 
-    // Server-Side Answer Validation
     async function handleSelection(selectedBtn, selectedOption) {
       if (!canSelect) return;
       canSelect = false;
@@ -1378,7 +1381,6 @@
 
       selectedBtn.classList.add('selected');
 
-      // Verify answer securely via RPC using option text
       const { data: isCorrect, error } = await supabase.rpc('verify_answer', {
         target_qid: currentQuestionData.qId,
         selected_answer: selectedOption.en || selectedOption.hi
@@ -1497,7 +1499,6 @@
       }, 4000);
     }
 
-    // 50:50 Lifeline
     async function use5050() {
       if (lifeline5050Used || !canSelect) return;
       lifeline5050Used = true;
@@ -1522,7 +1523,6 @@
       });
     }
 
-    // Audience Poll Lifeline
     async function useAudience() {
       if (lifelineAudienceUsed || !canSelect) return;
       stopTimer();
