@@ -931,26 +931,25 @@
     }
 
     // 2. Fetch Single Question via Secure SQL RPC
-    async function getNextQuestionFromSupabase() {
-      let targetLevel = currentIndex + 1; 
-      let excludeArray = Array.from(usedQuestionIDs);
+async function getNextQuestionFromSupabase() {
+  let targetLevel = parseInt(currentIndex + 1, 10); 
+  let excludeArray = Array.from(usedQuestionIDs);
 
-      const { data, error } = await supabase.rpc('get_next_question', {
-        target_level: targetLevel,
-        exclude_ids: excludeArray
-      });
+  const { data, error } = await supabase.rpc('get_next_question', {
+    target_level: targetLevel,
+    exclude_ids: excludeArray
+  });
 
-      if (error || !data || data.length === 0) {
-        console.error("RPC Error or No Data:", error);
-        return null;
-      }
+  if (error || !data || data.length === 0) {
+    console.error("RPC Error or No Data:", error);
+    return null;
+  }
 
-      let pairedList = parseAndPairData(data);
-      if (pairedList.length === 0) return null;
+  let pairedList = parseAndPairData(data);
+  if (pairedList.length === 0) return null;
 
-      return pairedList[0];
-    }
-
+  return pairedList[0];
+}
     // Parse DB rows (Pairs English & Hindi entries by qId)
 // Parse DB rows (Pairs English & Hindi entries by qId)
 function parseAndPairData(records) {
