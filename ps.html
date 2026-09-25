@@ -935,7 +935,6 @@
         }
 
         if (!data || data.length === 0) {
-          console.warn("No data returned for levels, staying with default level [1]");
           return;
         }
 
@@ -988,8 +987,6 @@
       let targetLevel = getMappedLevel(currentIndex);
       let excludeArray = Array.from(usedQuestionIDs).map(id => String(id));
 
-      console.log(`Fetching level ${targetLevel}, excluding IDs:`, excludeArray);
-
       const { data, error } = await supabase.rpc('get_next_question', {
         target_level: targetLevel,
         exclude_ids: excludeArray
@@ -1034,7 +1031,7 @@
       const paired = { en: null, hi: null };
 
       rawData.forEach(item => {
-        const flag = String(item.HEFlag || item.heflag || item.he_flag || '').trim().toUpperCase();
+        const flag = String(item.HEFlag || item.heflag || item.HE_FLAG || item.he_flag || '').trim().toUpperCase();
         if (flag === 'E') paired.en = item;
         if (flag === 'H') paired.hi = item;
       });
@@ -1046,10 +1043,10 @@
       const qHiText = hiData.Question || hiData.question || hiData.Q || hiData.q || '';
 
       const rawOptions = [
-        { key: 'A', en: enData.A || enData.a, hi: hiData.A || hiData.a },
-        { key: 'B', en: enData.B || enData.b, hi: hiData.B || hiData.b },
-        { key: 'C', en: enData.C || enData.c, hi: hiData.C || hiData.c },
-        { key: 'D', en: enData.D || enData.d, hi: hiData.D || hiData.d }
+        { key: 'A', en: enData.A || enData.a || enData.OptionA || enData.optiona, hi: hiData.A || hiData.a || hiData.OptionA || hiData.optiona },
+        { key: 'B', en: enData.B || enData.b || enData.OptionB || enData.optionb, hi: hiData.B || hiData.b || hiData.OptionB || hiData.optionb },
+        { key: 'C', en: enData.C || enData.c || enData.OptionC || enData.optionc, hi: hiData.C || hiData.c || hiData.OptionC || hiData.optionc },
+        { key: 'D', en: enData.D || enData.d || enData.OptionD || enData.optiond, hi: hiData.D || hiData.d || hiData.OptionD || hiData.optiond }
       ];
 
       const shuffledOptions = [...rawOptions];
@@ -1061,8 +1058,8 @@
       return {
         qId: enData.Number || enData.number || enData.id || enData.ID,
         level: enData.Level || enData.level,
-        qType: String(enData.Qtype || enData.qtype || 'T').toUpperCase(),
-        mediaUrl: enData.URL || enData.url,
+        qType: String(enData.Qtype || enData.qtype || enData.QType || 'T').toUpperCase(),
+        mediaUrl: enData.URL || enData.url || enData.Url,
         questionTextEn: qEnText,
         questionTextHi: qHiText,
         en: enData,
