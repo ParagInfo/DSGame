@@ -1,5 +1,3 @@
-<script>
-
     const SUPABASE_URL = "https://ndfdcobmnxsvtrdqpqti.supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable_-CMSV99N3ovQggn-eJhLLA_z5WFtag4";
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -757,5 +755,3 @@
       document.getElementById('end-ui').style.display = 'none';
       document.getElementById('setup-modal').style.display = 'flex';
     }
-
-</script>
