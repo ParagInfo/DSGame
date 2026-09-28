@@ -522,6 +522,10 @@
       color: #a855f7;
     }
 
+    .poll-modal {
+      box-sizing: border-box;
+    }
+
     .poll-bars {
       display: flex;
       justify-content: space-around;
