@@ -524,6 +524,7 @@
 
     .poll-modal {
       box-sizing: border-box;
+      padding: 16px;
     }
 
     .poll-bars {
