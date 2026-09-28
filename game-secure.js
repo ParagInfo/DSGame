@@ -1,19 +1,5 @@
 <script>
-// ============================================================
-// SETUP REQUIRED before this script will run:
-// 1. Add the Supabase JS library BEFORE this file/block, either as
-//      <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"><\/script>
-//    (note: if you're pasting this whole thing inline into an HTML
-//    page, do NOT write a literal closing script tag anywhere in
-//    here, even inside a comment or string — the HTML parser ends
-//    the enclosing script block at the first closing script tag
-//    text it finds, no matter where it appears, which breaks
-//    everything after it. That's why the line above has a
-//    backslash in the middle of that tag.)
-// 2. Remove the old CryptoJS script include — it's no longer used.
-// 3. Run supabase_schema.sql once in your Supabase project's SQL editor.
-// 4. Fill in your project's URL + anon key below.
-// ============================================================
+
     const SUPABASE_URL = "https://ndfdcobmnxsvtrdqpqti.supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable_-CMSV99N3ovQggn-eJhLLA_z5WFtag4";
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
