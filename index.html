@@ -186,6 +186,19 @@
     </div>
   </div>
 
+  <!-- End Screen Modal -->
+  <div class="modal" id="end-ui" style="display: none;">
+    <div class="modal-content" style="text-align: center;">
+      <h2 style="color: #ffd700; margin-bottom: 5px;" id="end-status-title">Pranam!</h2>
+      <p style="font-size: 1.1rem; color: #fef08a; margin-bottom: 10px;">प्रणाम!</p>
+      <p style="font-size: 1rem; color: #ccc;">Final Points Achieved:</p>
+      <div style="font-size: 2rem; color: #00ff66; margin: 15px 0; text-shadow: 0 0 10px #00ff66;" id="final-prize-val">0 Points</div>
+      <button class="start-btn" onclick="resetToSetup()" style="width: 100%; margin-bottom: 10px;">Play Again</button>
+      <button class="instructions-btn" onclick="openInstructionsModal()" style="width: 100%; margin-bottom: 10px;">Help & Support</button>
+      <button class="thanks-btn" onclick="openThanksModal()" style="width: 100%;">Acknowledgement / Thanks</button>
+    </div>
+  </div>
+  
   <!-- Main Game Layout -->
   <div id="app-container">
     <div class="app-bg-watermark"></div>
@@ -278,16 +291,6 @@
       </div>
 
       <div class="options-container" id="options-grid"></div>
-    </div>
-
-    <div id="end-ui" class="end-screen" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(11, 1, 24, 0.95); z-index: 10; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 20px; box-sizing: border-box; overflow-y: auto;">
-      <h2 style="color: #ffd700; margin-bottom: 5px;" id="end-status-title">Pranam!</h2>
-      <p style="font-size: 1.1rem; color: #fef08a; margin-bottom: 10px;">प्रणाम!</p>
-      <p style="font-size: 1rem; color: #ccc;">Final Points Achieved:</p>
-      <div style="font-size: 2rem; color: #00ff66; margin: 15px 0; text-shadow: 0 0 10px #00ff66;" id="final-prize-val">0 Points</div>
-      <button class="start-btn" onclick="resetToSetup()">Play Again</button>
-      <button class="instructions-btn" onclick="openInstructionsModal()">Help & Support</button>
-      <button class="thanks-btn" onclick="openThanksModal()">Acknowledgement / Thanks</button>
     </div>
   </div>
 
