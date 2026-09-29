@@ -22,82 +22,52 @@
 </head>
 
 <body>
+
+  <template id="dharm-logo-template">
+  <svg viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg" style="width: 100%; height: auto; display: block; margin: 0 auto;">
+    <defs>
+      <linearGradient id="grandGold" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#FFFFFF"/>
+        <stop offset="20%" stop-color="#FCEE8B"/>
+        <stop offset="40%" stop-color="#D4AF37"/>
+        <stop offset="60%" stop-color="#AA771C"/>
+        <stop offset="80%" stop-color="#FCEE8B"/>
+        <stop offset="100%" stop-color="#8B5A00"/>
+      </linearGradient>
+      <linearGradient id="deepPurple" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#4c1d95"/>
+        <stop offset="40%" stop-color="#2e1065"/>
+        <stop offset="100%" stop-color="#0f051d"/>
+      </linearGradient>
+      <filter id="royalGlow" x="-30%" y="-30%" width="160%" height="160%">
+        <feGaussianBlur stdDeviation="4" result="blur"/>
+        <feComponentTransfer in="blur" result="glow1">
+          <feFuncA type="linear" slope="1.5"/>
+        </feComponentTransfer>
+        <feMerge>
+          <feMergeNode in="glow1"/>
+          <feMergeNode in="SourceGraphic"/>
+        </feMerge>
+      </filter>
+    </defs>
+    <circle cx="150" cy="150" r="135" fill="url(#deepPurple)" stroke="url(#grandGold)" stroke-width="5" filter="url(#royalGlow)"/>
+    <circle cx="150" cy="150" r="122" fill="none" stroke="url(#grandGold)" stroke-width="2" stroke-dasharray="6,4"/>
+    <circle cx="150" cy="150" r="110" fill="none" stroke="url(#grandGold)" stroke-width="1" stroke-dasharray="2,6"/>
+    <g transform="translate(150, 150)">
+      <path d="M 0,-95 L 20,-20 L 95,0 L 20,20 L 0,95 L -20,20 L -95,0 L -20,-20 Z" fill="url(#grandGold)" stroke="#2e1065" stroke-width="1.5" opacity="0.9"/>
+      <path d="M 0,-72 L 14,-14 L 72,0 L 14,14 L 0,72 L -14,14 L -72,0 L -14,-14 Z" fill="#FFFFFF" opacity="0.6" transform="rotate(22.5)"/>
+      <circle cx="0" cy="0" r="52" fill="none" stroke="url(#grandGold)" stroke-width="2" stroke-dasharray="4,2"/>
+    </g>
+    <g transform="translate(150, 150)">
+      <circle cx="0" cy="0" r="34" fill="#2e1065" stroke="url(#grandGold)" stroke-width="3"/>
+      <text x="0" y="12" font-family="'Georgia', 'Times New Roman', serif" font-weight="bold" font-size="44" fill="url(#grandGold)" text-anchor="middle" filter="drop-shadow(0px 3px 4px rgba(0,0,0,0.9))">ॐ</text>
+    </g>
+  </svg>
+</template>
   <!-- Setup Screen Modal -->
   <div class="setup-modal" id="setup-modal">
     <div class="setup-card">
-
-    <svg viewBox="0 0 400 240" xmlns="http://www.w3.org/2000/svg" style="width: 100%; max-width: 160px; height: auto; display: block; margin: 0 auto;">
-    <defs>
-    <!-- Premium Multi-Stop Metallic Gold Gradient -->
-    <linearGradient id="grandGold" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#FFFFFF"/>
-      <stop offset="20%" stop-color="#FCEE8B"/>
-      <stop offset="40%" stop-color="#D4AF37"/>
-      <stop offset="60%" stop-color="#AA771C"/>
-      <stop offset="80%" stop-color="#FCEE8B"/>
-      <stop offset="100%" stop-color="#8B5A00"/>
-    </linearGradient>
-
-    <!-- Deep Royal Violet Gradient -->
-    <linearGradient id="deepPurple" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#4c1d95"/>
-      <stop offset="40%" stop-color="#2e1065"/>
-      <stop offset="100%" stop-color="#0f051d"/>
-    </linearGradient>
-
-    <!-- Intense Glow Filter -->
-    <filter id="royalGlow" x="-30%" y="-30%" width="160%" height="160%">
-      <feGaussianBlur stdDeviation="4" result="blur"/>
-      <feComponentTransfer in="blur" result="glow1">
-        <feFuncA type="linear" slope="1.5"/>
-      </feComponentTransfer>
-      <feMerge>
-        <feMergeNode in="glow1"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
-    </filter>
-  </defs>
-
-  <!-- ORNATE OUTER SHIELD / CREST BASE -->
-  <path d="M 200,15 C 290,15 380,35 385,95 C 390,155 290,215 200,225 C 110,215 10,155 15,95 C 20,35 110,15 200,15 Z" 
-        fill="url(#deepPurple)" stroke="url(#grandGold)" stroke-width="4" filter="url(#royalGlow)"/>
-
-  <!-- SECONDARY INNER ENGRAVED FRAME -->
-  <path d="M 200,25 C 275,25 365,42 370,95 C 375,148 275,200 200,208 C 125,200 25,148 30,95 C 35,42 125,25 200,25 Z" 
-        fill="none" stroke="url(#grandGold)" stroke-width="1.5" stroke-dasharray="6,3"/>
-
-  <!-- TRADITIONAL FILIGREE CORNER / SIDE SCROLLS -->
-  <g fill="none" stroke="url(#grandGold)" stroke-width="2" stroke-linecap="round">
-    <path d="M 45,95 C 45,75 65,75 70,88 C 75,100 60,115 52,108 C 45,100 55,85 62,88"/>
-    <path d="M 355,95 C 355,75 335,75 330,88 C 325,100 340,115 348,108 C 355,100 345,85 338,88"/>
-  </g>
-
-  <!-- CLEARLY VISIBLE MULTI-LAYERED GEOMETRIC STAR BURST -->
-  <g transform="translate(200, 120)">
-    <!-- Outer Star Beams (8-Point Primary Star) -->
-    <path d="M 0,-85 L 18,-18 L 85,0 L 18,18 L 0,85 L -18,18 L -85,0 L -18,-18 Z" 
-          fill="url(#grandGold)" stroke="#2e1065" stroke-width="1.5" opacity="0.9"/>
-          
-    <!-- Secondary Diagonal Star Beams for Extra Definition -->
-    <path d="M 0,-65 L 12,-12 L 65,0 L 12,12 L 0,65 L -12,12 L -65,0 L -12,-12 Z" 
-          fill="#FFFFFF" opacity="0.6" transform="rotate(22.5)"/>
-
-    <!-- Concentric Ring Framing the Star Center -->
-    <circle cx="0" cy="0" r="48" fill="none" stroke="url(#grandGold)" stroke-width="2" stroke-dasharray="4,2"/>
-  </g>
-
-  <!-- PROMINENT ORNATE OM (ॐ) SYMBOL (CENTERED ON TOP OF THE STAR) -->
-  <g transform="translate(200, 120)">
-    <!-- Central Glowing Circle Base for Om -->
-    <circle cx="0" cy="0" r="30" fill="#2e1065" stroke="url(#grandGold)" stroke-width="3"/>
-
-    <!-- Sacred Om Symbol (ॐ) -->
-    <text x="0" y="11" font-family="'Georgia', 'Times New Roman', serif" font-weight="bold" font-size="40" fill="url(#grandGold)" text-anchor="middle" filter="drop-shadow(0px 3px 4px rgba(0,0,0,0.9))">
-      ॐ
-    </text>
-  </g>
-</svg>
-
+    <div class="logo-slot" style="max-width: 180px;"></div>    
       <h1>Kaun Banega Dharm Shiromani</h1>
       <h2>कौन बनेगा धर्म शिरोमणि</h2>
       
@@ -309,6 +279,13 @@
     </div>
   </div>
 
+<script>
+  document.querySelectorAll('.logo-slot').forEach(container => {
+  const template = document.getElementById('dharm-logo-template');
+  container.appendChild(template.content.cloneNode(true));
+  });
+</script>
+  
 <script src="src/params.js"></script>
 <script src="src/game-secure.js"></script>
 
