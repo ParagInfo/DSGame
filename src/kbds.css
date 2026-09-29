@@ -193,12 +193,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  opacity: 0.10;        /* Adjust watermark transparency here */
+  opacity: 0.10;        /* Watermark transparency */
 }
 
 .app-bg-watermark svg {
-  width: min(85vw, 85vh); /* Scales nicely to fill the screen while staying circular */
-  height: auto;
+  width: min(85vw, 85vh); /* Scales to fill screen nicely while staying circular */
+  height: min(85vw, 85vh);
   display: block;
 }
 
