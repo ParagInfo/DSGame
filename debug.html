@@ -180,18 +180,24 @@
   <!-- Main Game Layout -->
   <div id="app-container">
     <div id="game-ui">
-      <div class="header-bar">
-      <!-- The logo slot (small size for headers) -->
-        <div class="logo-slot" style="max-width: 60px; flex-shrink: 0;"></div>
-        <div class="title-banner">
-          <span class="title-en">Kaun Banega Dharm Shiromani</span>
-          <span class="title-hi">कौन बनेगा धर्म शिरोमणि</span>
-        </div>
-        <div class="meta-badges">
-          <span class="badge badge-level" id="lbl-level">1</span>
-        </div>
-      </div>
-
+      <div class="header-bar" style="display: flex; align-items: center; justify-content: flex-start; gap: 15px; width: 100%;">
+  
+  <!-- The logo slot (left-aligned) -->
+  <div class="logo-slot" style="max-width: 60px; flex-shrink: 0;"></div>
+  
+  <!-- The title text (left-aligned next to the logo) -->
+  <div class="title-banner" style="display: flex; flex-direction: column; text-align: left;">
+    <span class="title-en" style="font-weight: bold; font-size: 1.1rem;">Kaun Banega Dharm Shiromani</span>
+    <span class="title-hi" style="font-size: 0.9rem; opacity: 0.85;">कौन बनेगा धर्म शिरोमणि</span>
+  </div>
+  
+  <!-- The level badge (pushed automatically to the far right edge) -->
+  <div class="meta-badges" style="margin-left: auto;">
+    <span class="badge badge-level" id="lbl-level">1</span>
+  </div>
+  
+</div>
+      
       <div class="lifelines-container">
         <!-- 50:50 Lifeline Icon -->
         <button class="lifeline-btn" id="life-5050" onclick="use5050()" title="50:50">
