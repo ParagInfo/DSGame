@@ -205,7 +205,7 @@
 /* Ensure all flex children of app-container sit cleanly above the watermark */
 #app-container > *:not(.app-bg-watermark) {
   position: relative;
-  z-index: 2;
+  z-index: 1;
 }
 
     .header-bar {
