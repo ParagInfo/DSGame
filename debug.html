@@ -295,21 +295,17 @@
 
 <script>
   document.addEventListener("DOMContentLoaded", () => {
-    const appContainer = document.getElementById('app-container');
     const template = document.getElementById('dharm-logo-template');
+    if (!template) return;
 
-    if (appContainer && template) {
-      // Create the background watermark container dynamically
-      const bgWatermark = document.createElement('div');
-      bgWatermark.className = 'app-bg-watermark';
+    // 1. Populate the background watermark container
+    const bgWatermark = document.querySelector('.app-bg-watermark');
+    if (bgWatermark) {
       bgWatermark.appendChild(template.content.cloneNode(true));
-      
-      // Insert it as the very first child so it sits behind the flex items
-      appContainer.insertBefore(bgWatermark, appContainer.firstChild);
     }
 
-    // Handle normal header/setup logo slots as before
-    document.querySelectorAll('.logo-slot:not(.app-bg-watermark)').forEach(container => {
+    // 2. Populate normal header/setup logo slots
+    document.querySelectorAll('.logo-slot').forEach(container => {
       container.appendChild(template.content.cloneNode(true));
     });
   });
