@@ -188,6 +188,7 @@
 
   <!-- Main Game Layout -->
   <div id="app-container">
+    <div class="app-bg-watermark"></div>
     <div id="game-ui">
       <div class="header-bar">
         <div class="title-banner">
@@ -290,13 +291,6 @@
     </div>
   </div>
 
-<script>
-  document.querySelectorAll('.logo-slot').forEach(container => {
-  const template = document.getElementById('dharm-logo-template');
-  container.appendChild(template.content.cloneNode(true));
-  });
-</script>
-  
 <script src="src/params.js"></script>
 <script src="src/game-secure.js"></script>
 
