@@ -182,27 +182,32 @@
     }
 
 /* Watermark Background Styling */
+#app-container {
+  position: relative;
+  overflow: hidden;
+}
+
 .app-bg-watermark {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  pointer-events: none; /* Lets clicks pass through to buttons */
-  z-index: 1;           /* Sits in the back */
+  pointer-events: none;
+  z-index: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  opacity: 0.10;        /* Watermark transparency */
+  opacity: 0.10;
 }
 
 .app-bg-watermark svg {
-  width: min(85vw, 85vh); /* Scales to fill screen nicely while staying circular */
+  width: min(85vw, 85vh);
   height: min(85vw, 85vh);
   display: block;
 }
 
-/* Ensure all flex children of app-container sit cleanly above the watermark */
+/* Ensure all other children sit above the watermark */
 #app-container > *:not(.app-bg-watermark) {
   position: relative;
   z-index: 1;
