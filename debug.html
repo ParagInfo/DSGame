@@ -23,8 +23,10 @@
 
 <body>
 
-  <template id="dharm-logo-template">
-  <svg viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg" style="width: 100%; height: auto; display: block; margin: 0 auto;">
+  <!-- Defined once at the top of your body -->
+<template id="dharm-logo-template">
+  <!-- ADDED: width: 100%; display: block; so it scales to its container -->
+  <svg viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg" style="display: block; width: 100%; height: auto;">
     <defs>
       <linearGradient id="grandGold" x1="0%" y1="0%" x2="100%" y2="100%">
         <stop offset="0%" stop-color="#FFFFFF"/>
@@ -64,7 +66,7 @@
     </g>
   </svg>
 </template>
-  <!-- Setup Screen Modal -->
+<!-- Setup Screen Modal -->
   <div class="setup-modal" id="setup-modal">
       <div class="setup-card">
       
@@ -180,21 +182,19 @@
   <!-- Main Game Layout -->
   <div id="app-container">
     <div id="game-ui">
-  <!-- The logo slot (left-aligned) -->
-  <div class="logo-slot" style="max-width: 90px; flex-shrink: 0;"></div>
-  <div class="header-bar" style="display: flex; align-items: center; justify-content: flex-start; gap: 15px; width: 100%;">
-  <!-- The title text (left-aligned next to the logo) -->
-  <div class="title-banner" style="display: flex; flex-direction: column; text-align: left;">
-    <span class="title-en" style="font-weight: bold; font-size: 1.1rem;">Kaun Banega Dharm Shiromani</span>
-    <span class="title-hi" style="font-size: 0.9rem; opacity: 0.85;">कौन बनेगा धर्म शिरोमणि</span>
-  </div>
-  
-  <!-- The level badge (pushed automatically to the far right edge) -->
-  <div class="meta-badges" style="margin-left: auto;">
-    <span class="badge badge-level" id="lbl-level">1</span>
-  </div>
-  
-</div>
+    <!-- The logo slot (left-aligned) -->
+    <div class="logo-slot" style="max-width: 90px; flex-shrink: 0;"></div>
+    <div class="header-bar" style="display: flex; align-items: center; justify-content: flex-start; gap: 15px; width: 100%;">
+    <!-- The title text (left-aligned next to the logo) -->
+    <div class="title-banner" style="display: flex; flex-direction: column; text-align: left;">
+      <span class="title-en" style="font-weight: bold; font-size: 1.1rem;">Kaun Banega Dharm Shiromani</span>
+      <span class="title-hi" style="font-size: 0.9rem; opacity: 0.85;">कौन बनेगा धर्म शिरोमणि</span>
+    </div>
+    <!-- The level badge (pushed automatically to the far right edge) -->
+    <div class="meta-badges" style="margin-left: auto;">
+      <span class="badge badge-level" id="lbl-level">1</span>
+    </div>
+    </div>
       
       <div class="lifelines-container">
         <!-- 50:50 Lifeline Icon -->
