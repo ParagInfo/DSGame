@@ -22,6 +22,53 @@
 </head>
 
 <body>
+
+  <template id="dharm-logo-template">
+  <!-- ADDED: width: 100%; display: block; so it scales to its container -->
+  <svg viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg" style="display: block; width: 100%; height: auto;">
+    <defs>
+      <linearGradient id="grandGold" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#FFFFFF"/>
+        <stop offset="20%" stop-color="#FCEE8B"/>
+        <stop offset="40%" stop-color="#D4AF37"/>
+        <stop offset="60%" stop-color="#AA771C"/>
+        <stop offset="80%" stop-color="#FCEE8B"/>
+        <stop offset="100%" stop-color="#8B5A00"/>
+      </linearGradient>
+      <linearGradient id="deepPurple" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#4c1d95"/>
+        <stop offset="40%" stop-color="#2e1065"/>
+        <stop offset="100%" stop-color="#0f051d"/>
+      </linearGradient>
+      <filter id="royalGlow" x="-30%" y="-30%" width="160%" height="160%">
+        <feGaussianBlur stdDeviation="4" result="blur"/>
+        <feComponentTransfer in="blur" result="glow1">
+          <feFuncA type="linear" slope="1.5"/>
+        </feComponentTransfer>
+        <feMerge>
+          <feMergeNode in="glow1"/>
+          <feMergeNode in="SourceGraphic"/>
+        </feMerge>
+      </filter>
+    </defs>
+    <circle cx="150" cy="150" r="135" fill="url(#deepPurple)" stroke="url(#grandGold)" stroke-width="5" filter="url(#royalGlow)"/>
+    <circle cx="150" cy="150" r="122" fill="none" stroke="url(#grandGold)" stroke-width="2" stroke-dasharray="6,4"/>
+    <circle cx="150" cy="150" r="110" fill="none" stroke="url(#grandGold)" stroke-width="1" stroke-dasharray="2,6"/>
+    
+    <!-- 5-Pointed Starburst Motif -->
+    <g transform="translate(150, 150)">
+      <path d="M 0,-95 L 22,-30 L 90,-30 L 35,10 L 55,75 L 0,35 L -55,75 L -35,10 L -90,-30 L -22,-30 Z" fill="url(#grandGold)" stroke="#2e1065" stroke-width="1.5" opacity="0.9"/>
+      <path d="M 0,-72 L 16,-22 L 68,-22 L 26,8 L 42,56 L 0,26 L -42,56 L -26,8 L -68,-22 L -16,-22 Z" fill="#FFFFFF" opacity="0.6" transform="rotate(36)"/>
+      <circle cx="0" cy="0" r="52" fill="none" stroke="url(#grandGold)" stroke-width="2" stroke-dasharray="4,2"/>
+    </g>
+    
+    <g transform="translate(150, 150)">
+      <circle cx="0" cy="0" r="34" fill="#2e1065" stroke="url(#grandGold)" stroke-width="3"/>
+      <text x="0" y="12" font-family="'Georgia', 'Times New Roman', serif" font-weight="bold" font-size="44" fill="url(#grandGold)" text-anchor="middle" filter="drop-shadow(0px 3px 4px rgba(0,0,0,0.9))">ॐ</text>
+    </g>
+  </svg>
+</template>
+
   <!-- Setup Screen Modal -->
   <div class="setup-modal" id="setup-modal">
     <div class="setup-card">
