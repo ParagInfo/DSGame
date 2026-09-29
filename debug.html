@@ -295,53 +295,19 @@
 
 <script>
   document.addEventListener("DOMContentLoaded", () => {
-    const template = document.getElementById('dharm-logo-template');
-    const bgWatermark = document.querySelector('.app-bg-watermark');
-    
-    if (!template) {
-      console.error("Template #dharm-logo-template not found!");
-      return;
-    }
+    const tpl = document.getElementById('dharm-logo-template')?.innerHTML;
+    if (!tpl) return;
 
-    // Helper function to clone template and make internal IDs unique per instance
-    function cloneUniqueLogo() {
-      const clone = template.content.cloneNode(true);
-      const uniqueSuffix = '-' + Math.random().toString(36).substring(2, 9);
-
-      // Map old IDs to new unique IDs
-      const idMap = new Map();
-      clone.querySelectorAll('[id]').forEach(el => {
-        const oldId = el.id;
-        const newId = oldId + uniqueSuffix;
-        el.id = newId;
-        idMap.set(oldId, newId);
+    const render = (sel) => {
+      document.querySelectorAll(sel).forEach(el => {
+        const id = Math.random().toString(36).substr(2, 5);
+        el.innerHTML = tpl.replace(/id="([^"]+)"/g, `id="$1-${id}"`)
+                          .replace(/url\(#([^)]+)\)/g, `url(#$1-${id})`);
       });
+    };
 
-      // Update references (fill, stroke, filter url(#...)) to use the new unique IDs
-      clone.querySelectorAll('*').forEach(el => {
-        ['fill', 'stroke', 'filter', 'clip-path'].forEach(attr => {
-          const val = el.getAttribute(attr);
-          if (val && val.startsWith('url(#')) {
-            const oldId = val.substring(5, val.length - 1);
-            if (idMap.has(oldId)) {
-              el.setAttribute(attr, `url(#${idMap.get(oldId)})`);
-            }
-          }
-        });
-      });
-
-      return clone;
-    }
-
-    // 1. Inject unique clone into background watermark
-    if (bgWatermark) {
-      bgWatermark.appendChild(cloneUniqueLogo());
-    }
-
-    // 2. Inject unique clone into normal logo slots
-    document.querySelectorAll('.logo-slot').forEach(container => {
-      container.appendChild(cloneUniqueLogo());
-    });
+    render('.app-bg-watermark');
+    render('.logo-slot');
   });
 </script>
   
