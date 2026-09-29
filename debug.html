@@ -23,8 +23,7 @@
 
 <body>
 
-  <!-- Defined once at the top of your body -->
-<template id="dharm-logo-template">
+  <template id="dharm-logo-template">
   <!-- ADDED: width: 100%; display: block; so it scales to its container -->
   <svg viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg" style="display: block; width: 100%; height: auto;">
     <defs>
@@ -69,12 +68,11 @@
     </g>
   </svg>
 </template>
+
   <!-- Setup Screen Modal -->
   <div class="setup-modal" id="setup-modal">
       <div class="setup-card">
-      
-      <div class="logo-slot" style="max-width: 90px; display: flex; justify-content: center; align-items: center; margin: 0 auto;"></div>
-        
+      <div class="logo-slot" style="max-width: 90px; display: flex; justify-content: center; align-items: center; margin: 0 auto;"></div>  
       <h1>Kaun Banega Dharm Shiromani</h1>
       <h2>कौन बनेगा धर्म शिरोमणि</h2>
       
@@ -185,23 +183,16 @@
   <!-- Main Game Layout -->
   <div id="app-container">
     <div id="game-ui">
-  <div class="header-bar" style="display: flex; align-items: center; justify-content: flex-start; gap: 15px; width: 100%;">
-    
-    <!-- The logo slot: explicitly sized width controls how large the logo appears -->
-    <div class="logo-slot" style="flex-shrink: 0; width: 90px; max-width: 90px;"></div>
-    
-    <!-- The title text -->
-    <div class="title-banner" style="display: flex; flex-direction: column; text-align: left;">
-      <span class="title-en" style="font-weight: bold; font-size: 1.1rem;">Kaun Banega Dharm Shiromani</span>
-      <span class="title-hi" style="font-size: 0.9rem; opacity: 0.85;">कौन बनेगा धर्म शिरोमणि</span>
-    </div>
+      <div class="header-bar">
+        <div class="title-banner">
+          <span class="title-en">Kaun Banega Dharm Shiromani</span>
+          <span class="title-hi">कौन बनेगा धर्म शिरोमणि</span>
+        </div>
+        <div class="meta-badges">
+          <span class="badge badge-level" id="lbl-level">1</span>
+        </div>
+      </div>
 
-    <!-- The level badge -->
-    <div class="meta-badges" style="margin-left: auto;">
-      <span class="badge badge-level" id="lbl-level">1</span>
-    </div>
-  </div>
-</div>      
       <div class="lifelines-container">
         <!-- 50:50 Lifeline Icon -->
         <button class="lifeline-btn" id="life-5050" onclick="use5050()" title="50:50">
