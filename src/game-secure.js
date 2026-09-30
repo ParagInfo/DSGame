@@ -716,7 +716,7 @@
       lifelineButtons.forEach(btn => btn.style.pointerEvents = 'none');
 
       document.getElementById('game-ui').style.display = 'block';
-      document.getElementById('end-ui').style.display = 'block';
+      document.getElementById('end-ui').style.display = 'flex';
 
       const finalVal = currentIndex > 0 ? prizeLadder[Math.min(currentIndex - 1, prizeLadder.length - 1)] : "0";
 
