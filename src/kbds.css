@@ -175,18 +175,18 @@
       justify-content: space-between;
       width: 100%;
       max-width: 800px;
-      height: 98vh;
+      min-height: 98vh;
       margin: 0 auto;
       padding: 8px;
       position: relative;
-      overflow: hidden;
+      overflow-y: auto;
     }
 
-/* Watermark Background Styling */
-#app-container {
+/* Watermark Background Styling 
+ #app-container {
   position: relative;
   overflow: hidden;
-}
+}*/
 
 .app-bg-watermark {
   position: absolute;
