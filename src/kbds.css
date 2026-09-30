@@ -630,4 +630,26 @@
       font-weight: bold;
       cursor: pointer;
     }
+
+/* Dedicated styling for the End Game modal to guarantee absolute centering and top layer priority */
+#end-ui.end-modal {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background: rgba(0, 0, 0, 0.88) !important;
+  z-index: 9999 !important;
+  display: none; /* Controlled by JS */
+  align-items: center !important;
+  justify-content: center !important;
+  overflow-y: auto !important;
+}
+
+/* When JavaScript sets style.display = "flex", ensure it renders as a centered flexbox */
+#end-ui.end-modal[style*="display: flex"],
+#end-ui.end-modal[style*="display:BLOCK"],
+#end-ui.end-modal[style*="display: block"] {
+  display: flex !important;
+}
   
