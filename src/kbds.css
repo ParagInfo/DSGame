@@ -175,7 +175,7 @@
       justify-content: space-between;
       width: 100%;
       max-width: 800px;
-      min-height: 98vh;
+      min-height: 100%;
       margin: 0 auto;
       padding: 8px;
       position: relative;
