@@ -73,7 +73,6 @@
     <text x="0" y="14" font-family="'Georgia', 'Times New Roman', serif" font-weight="bold" font-size="50" fill="url(#grandGold)" text-anchor="middle" filter="drop-shadow(0px 2px 3px rgba(0,0,0,0.8))">ॐ</text>
   </g>
 </svg>
-
 </template>
 
   <!-- Setup Screen Modal -->
@@ -109,6 +108,19 @@
     </div>
   </div>
 
+  <!-- End Screen Modal -->
+  <div class="modal" id="end-ui" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.85); align-items: center; justify-content: center;">
+    <div class="setup-card" style="max-width: 400px; width: 90%; text-align: center; margin: auto; box-sizing: border-box;">
+      <h2 style="color: #ffd700; margin-bottom: 5px;" id="end-status-title">Pranam!</h2>
+      <p style="font-size: 1.1rem; color: #fef08a; margin-bottom: 10px;">प्रणाम!</p>
+      <p style="font-size: 1rem; color: #ccc;">Final Points Achieved:</p>
+      <div style="font-size: 2rem; color: #00ff66; margin: 15px 0; text-shadow: 0 0 10px #00ff66;" id="final-prize-val">0 Points</div>
+      <button class="start-btn" onclick="resetToSetup()" style="width: 100%; margin-bottom: 10px;">Play Again</button>
+      <button class="instructions-btn" onclick="openInstructionsModal()" style="width: 100%; margin-bottom: 10px;">Help & Support</button>
+      <button class="thanks-btn" onclick="openThanksModal()" style="width: 100%;">Acknowledgement / Thanks</button>
+    </div>
+  </div>
+  
   <!-- Instructions Modal -->
   <div class="modal" id="instructions-modal">
     <div class="modal-content">
@@ -186,7 +198,7 @@
       </div>
     </div>
   </div>
-
+  
   <!-- Main Game Layout -->
   <div id="app-container">
     <div class="app-bg-watermark"></div>
@@ -279,16 +291,6 @@
       </div>
 
       <div class="options-container" id="options-grid"></div>
-    </div>
-
-    <div id="end-ui" class="end-screen" style="display: none;">
-      <h2 style="color: #ffd700; margin-bottom: 5px;" id="end-status-title">Pranam!</h2>
-      <p style="font-size: 1.1rem; color: #fef08a; margin-bottom: 10px;">प्रणाम!</p>
-      <p style="font-size: 1rem; color: #ccc;">Final Points Achieved:</p>
-      <div style="font-size: 2rem; color: #00ff66; margin: 15px 0; text-shadow: 0 0 10px #00ff66;" id="final-prize-val">0 Points</div>
-      <button class="start-btn" onclick="resetToSetup()">Play Again</button>
-      <button class="instructions-btn" onclick="openInstructionsModal()">Help & Support</button>
-      <button class="thanks-btn" onclick="openThanksModal()">Acknowledgement / Thanks</button>
     </div>
   </div>
 
