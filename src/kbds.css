@@ -216,8 +216,8 @@
 
     .header-bar {
       display: flex;
-      /*justify-content: space-between;*/
-      /*align-items: center;*/
+      justify-content: space-between;
+      align-items: center;
       background: rgba(30, 10, 60, 0.8);
       border: 2px solid #d4af37;
       border-radius: 12px;
