@@ -217,7 +217,7 @@
     .header-bar {
       display: flex;
       justify-content: space-between;
-      align-items: center;
+      /*align-items: center;*/
       background: rgba(30, 10, 60, 0.8);
       border: 2px solid #d4af37;
       border-radius: 12px;
@@ -233,7 +233,6 @@
       font-weight: bold;
       color: #ffd700;
       font-size: 0.75rem;
-      align-items: left;
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
