@@ -233,6 +233,7 @@
       font-weight: bold;
       color: #ffd700;
       font-size: 0.75rem;
+      align-items: left;
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
@@ -240,6 +241,7 @@
     .title-hi {
       font-weight: 600;
       color: #fef08a;
+      align-items: left;
       font-size: 0.65rem;
     }
 
