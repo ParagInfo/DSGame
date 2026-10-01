@@ -216,7 +216,7 @@
 
     .header-bar {
       display: flex;
-      justify-content: space-between;
+      /*justify-content: space-between;*/
       /*align-items: center;*/
       background: rgba(30, 10, 60, 0.8);
       border: 2px solid #d4af37;
@@ -240,7 +240,6 @@
     .title-hi {
       font-weight: 600;
       color: #fef08a;
-      align-items: left;
       font-size: 0.65rem;
     }
 
