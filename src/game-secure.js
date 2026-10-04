@@ -242,6 +242,7 @@
       }
     }
 
+/*
     function setupBulbState(makeActive = false, explanation = null) {
       const bulbBtn = document.getElementById('bulb-btn');
 
@@ -264,6 +265,42 @@
       } else {
         bulbBtn.style.display = 'none';
         bulbBtn.classList.remove('active-bulb');
+      }
+    }
+*/
+
+function setupBulbState(makeActive = false, explanation = null) {
+      const bulbBtn = document.getElementById('bulb-btn');
+      const questionContainer = document.getElementById('question-box'); // Assuming your question text wrapper has this ID, or wrap it accordingly
+
+      const expEn = (explanation && explanation.en) ? explanation.en.trim() : "";
+      const expHi = (explanation && explanation.hi) ? explanation.hi.trim() : "";
+      const hasExplanation = (expEn !== "" || expHi !== "");
+
+      currentExplanation = hasExplanation ? { en: expEn, hi: expHi } : null;
+
+      if (hasExplanation) {
+        bulbBtn.style.display = 'flex';
+        if (makeActive) {
+          bulbBtn.classList.add('active-bulb');
+          if (questionContainer) {
+            questionContainer.classList.add('clickable-explanation');
+            questionContainer.onclick = openExplanationModal;
+          }
+        } else {
+          bulbBtn.classList.remove('active-bulb');
+          if (questionContainer) {
+            questionContainer.classList.remove('clickable-explanation');
+            questionContainer.onclick = null;
+          }
+        }
+      } else {
+        bulbBtn.style.display = 'none';
+        bulbBtn.classList.remove('active-bulb');
+        if (questionContainer) {
+          questionContainer.classList.remove('clickable-explanation');
+          questionContainer.onclick = null;
+        }
       }
     }
 
