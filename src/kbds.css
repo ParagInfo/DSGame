@@ -661,4 +661,14 @@
 #end-ui.end-modal[style*="display: block"] {
   display: flex !important;
 }
-  
+
+.clickable-explanation {
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  border-radius: 8px;
+  padding: 5px;
+}
+
+.clickable-explanation:hover {
+  background-color: rgba(56, 189, 248, 0.1); /* Subtle highlight matching your blue accent theme */
+}
