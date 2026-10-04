@@ -30,10 +30,6 @@ window.faqData = {
         a: "If the timer hits zero before you select an answer, it counts as an incorrect response and ends the active game session."
       },
       {
-        q: "How are points and safe havens handled?",
-        a: "As you progress through the 15-tier prize ladder, your points increase. If you choose to quit, you walk away with the points secured at your last safe milestone."
-      },
-      {
         q: "I found an error in a question. How do I report it?",
         a: "Please reference the unique question number shown in the top-right blue box of that screen when submitting feedback through our contact form."
       }
@@ -64,10 +60,6 @@ window.faqData = {
       {
         q: "प्रश्न: यदि टाइमड मोड में समय समाप्त हो जाए तो क्या होगा?",
         a: "उत्तर: यदि आपके उत्तर चुनने से पहले टाइमर शून्य पर पहुँच जाता है, तो इसे गलत उत्तर माना जाएगा और खेल समाप्त हो जाएगा।"
-      },
-      {
-        q: "प्रश्न: पॉइंट्स और सेफ हेवन कैसे काम करते हैं?",
-        a: "उत्तर: जैसे-जैसे आप 15-चरणीय सीढ़ी पर आगे बढ़ते हैं, आपके पॉइंट्स बढ़ते जाते हैं। यदि आप खेल छोड़ना चुनते हैं, तो आप अपने अंतिम सुरक्षित मील के पत्थर पर सुरक्षित पॉइंट्स लेकर जाएंगे।"
       },
       {
         q: "प्रश्न: मुझे एक प्रश्न में त्रुटि मिली। मैं इसकी रिपोर्ट कैसे करूं?",
