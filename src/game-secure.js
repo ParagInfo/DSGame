@@ -510,7 +510,7 @@
               pendingNextStepCallback = null;
               cb();
             }
-          }, 4000);
+          }, 6000);
         }
       }, 1200);
     }
