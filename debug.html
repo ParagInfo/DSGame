@@ -54,6 +54,7 @@
         .dharm-dashed-ring,
         .dharm-core {
           transform-origin: 150px 150px;
+          animation: none;
         }
 
         /* ----------------------------------------------------
@@ -67,9 +68,11 @@
           animation: dharm-spin-reverse 30s linear infinite;
         }
 
+        /*
         .is-animated .dharm-core {
           animation: dharm-pulse 3s ease-in-out infinite alternate;
         }
+        */
 
         @keyframes dharm-spin {
           from { transform: rotate(0deg); }
@@ -81,10 +84,12 @@
           to   { transform: rotate(0deg); }
         }
 
+        /*
         @keyframes dharm-pulse {
           0%   { transform: scale(1); }
           100% { transform: scale(1.05); }
         }
+        */
       </style>
     </defs>
 
