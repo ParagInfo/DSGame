@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FAQ & Instructions - Kaun Banega Dharm Shiromani</title>
+  <style>
+    body {
+      background-color: #032b43;
+      color: #f8fafc;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+    }
+    .container {
+      background: #0f172a;
+      border: 1px solid #38bdf8;
+      border-radius: 12px;
+      max-width: 800px;
+      width: 100%;
+      padding: 30px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    }
+    h1 {
+      color: #38bdf8;
+      text-align: center;
+      margin-top: 0;
+      font-size: 24px;
+    }
+    .lang-selector {
+      text-align: center;
+      margin-bottom: 25px;
+      background: #1e293b;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #334155;
+    }
+    .lang-selector label {
+      margin: 0 15px;
+      cursor: pointer;
+      font-weight: bold;
+      color: #f8fafc;
+    }
+    .lang-selector input {
+      margin-right: 5px;
+      accent-color: #38bdf8;
+    }
+    .content-section {
+      display: none;
+    }
+    .content-section.active {
+      display: block;
+    }
+    h2 {
+      color: #facc15;
+      border-bottom: 1px solid #334155;
+      padding-bottom: 8px;
+      margin-top: 25px;
+      font-size: 18px;
+    }
+    p, li {
+      font-size: 15px;
+      line-height: 1.6;
+      color: #cbd5e1;
+    }
+    ul {
+      padding-left: 20px;
+    }
+    .faq-item {
+      margin-bottom: 20px;
+      background: #1e293b;
+      padding: 15px;
+      border-radius: 8px;
+      border-left: 4px solid #38bdf8;
+    }
+    .faq-question {
+      font-weight: bold;
+      color: #38bdf8;
+      margin-bottom: 5px;
+    }
+    .back-btn-container {
+      text-align: center;
+      margin-top: 30px;
+    }
+    .back-btn {
+      background: #38bdf8;
+      color: #032b43;
+      border: none;
+      padding: 10px 25px;
+      font-weight: bold;
+      font-size: 15px;
+      border-radius: 6px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      transition: background 0.2s;
+    }
+    .back-btn:hover {
+      background: #0ea5e9;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>Kaun Banega Dharm Shiromani - FAQ & Instructions</h1>
+    
+    <!-- Language Toggle Radio Buttons -->
+    <div class="lang-selector">
+      <label>
+        <input type="radio" name="lang" value="en" checked onclick="switchLanguage('en')"> English
+      </label>
+      <label>
+        <input type="radio" name="lang" value="hi" onclick="switchLanguage('hi')"> हिंदी (Hindi)
+      </label>
+    </div>
+
+    <!-- ENGLISH CONTENT -->
+    <div id="content-en" class="content-section active">
+      <h2>📖 How to Play</h2>
+      <p>Welcome to Kaun Banega Dharm Shiromani! You will navigate through a series of 15 questions of increasing difficulty. Read the question carefully, review the options, and click your final choice before time runs out (if playing in Timed Mode).</p>
+      
+      <h2>🛠️ Lifelines</h2>
+      <ul>
+        <li><strong>50:50:</strong> Removes two incorrect options from the board.</li>
+        <li><strong>Audience Poll:</strong> Displays estimated crowd percentage choices to help guide your decision.</li>
+        <li><strong>Flip:</strong> Discards the current question and brings up a fresh replacement question.</li>
+      </ul>
+
+      <h2>❓ Frequently Asked Questions</h2>
+      
+      <div class="faq-item">
+        <div class="faq-question">Q: Can I change my answer after clicking it?</div>
+        <div class="faq-answer">A: No. Once an option is selected, it locks in immediately as your final answer for that question.</div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question">Q: What happens if time runs out in Timed Mode?</div>
+        <div class="faq-answer">A: If the timer hits zero before you select an answer, it counts as an incorrect response and ends the active game session.</div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question">Q: How are points and safe havens handled?</div>
+        <div class="faq-answer">A: As you progress through the 15-tier prize ladder, your points increase. If you choose to quit, you walk away with the points secured at your last safe milestone.</div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question">Q: I found an error in a question. How do I report it?</div>
+        <div class="faq-answer">A: Please reference the unique question number shown in the top-right blue box of that screen when submitting feedback through our contact form.</div>
+      </div>
+    </div>
+
+    <!-- HINDI CONTENT -->
+    <div id="content-hi" class="content-section">
+      <h2>📖 कैसे खेलें (How to Play)</h2>
+      <p>कौन बनेगा धर्म शिरोमणि में आपका स्वागत है! आपको बढ़ती हुई कठिनाई के 15 प्रश्नों का सामना करना होगा। प्रश्न को ध्यान से पढ़ें, विकल्पों की समीक्षा करें, और समय समाप्त होने से पहले (यदि टाइमड मोड में खेल रहे हैं) अपने उत्तर पर क्लिक करें।</p>
+      
+      <h2>🛠️ लाइफलाइन (Lifelines)</h2>
+      <ul>
+        <li><strong>50:50:</strong> बोर्ड से दो गलत विकल्पों को हटा देता है।</li>
+        <li><strong>ऑडियंस पोल (Audience Poll):</strong> सही निर्णय लेने में मदद करने के लिए अनुमानित दर्शक प्रतिशत दिखाता है।</li>
+        <li><strong>फ्लिप (Flip):</strong> वर्तमान प्रश्न को हटाकर एक नया प्रश्न ले आता है।</li>
+      </ul>
+
+      <h2>❓ अक्सर पूछे जाने वाले प्रश्न (FAQ)</h2>
+      
+      <div class="faq-item">
+        <div class="faq-question">प्रश्্ন: क्या मैं उत्तर पर क्लिक करने के बाद उसे बदल सकता हूँ?</div>
+        <div class="faq-answer">उत्तर: नहीं। एक बार विकल्प चुन लेने के बाद, वह उस प्रश्न के लिए आपका अंतिम उत्तर माना जाता है।</div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question">प्रश्न: यदि टाइमड मोड में समय समाप्त हो जाए तो क्या होगा?</div>
+        <div class="faq-answer">उत्तर: यदि आपके उत्तर चुनने से पहले टाइमर शून्य पर पहुँच जाता है, तो इसे गलत उत्तर माना जाएगा और खेल समाप्त हो जाएगा।</div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question">प्रश्न: पॉइंट्स और सेफ हेवन कैसे काम करते हैं?</div>
+        <div class="faq-answer">उत्तर: जैसे-जैसे आप 15-चरणीय सीढ़ी पर आगे बढ़ते हैं, आपके पॉइंट्स बढ़ते जाते हैं। यदि आप खेल छोड़ना चुनते हैं, तो आप अपने अंतिम सुरक्षित मील के पत्थर पर सुरक्षित पॉइंट्स लेकर जाएंगे।</div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question">प्रश्न: मुझे एक प्रश्न में त्रुटि मिली। मैं इसकी रिपोर्ट कैसे करूं?</div>
+        <div class="faq-answer">उत्तर: हमारे संपर्क फॉर्म के माध्यम से प्रतिक्रिया भेजते समय कृपया उस स्क्रीन के शीर्ष-दाहिनी ओर (top-right) नीले बॉक्स में दिखाए गए विशिष्ट प्रश्न संख्या का उल्लेख करें।</div>
+      </div>
+    </div>
+
+    <!-- Back Button -->
+    <div class="back-btn-container">
+      <button class="back-btn" onclick="window.close()">Close / बंद करें</button>
+    </div>
+  </div>
+
+  <script>
+    function switchLanguage(lang) {
+      document.getElementById('content-en').classList.remove('active');
+      document.getElementById('content-hi').classList.remove('active');
+      
+      if (lang === 'hi') {
+        document.getElementById('content-hi').classList.add('active');
+      } else {
+        document.getElementById('content-en').classList.add('active');
+      }
+    }
+  </script>
+
+</body>
+</html>
