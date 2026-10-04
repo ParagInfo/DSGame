@@ -47,12 +47,6 @@
       margin-right: 5px;
       accent-color: #38bdf8;
     }
-    .content-section {
-      display: none;
-    }
-    .content-section.active {
-      display: block;
-    }
     h2 {
       color: #facc15;
       border-bottom: 1px solid #334155;
@@ -110,81 +104,16 @@
     <!-- Language Toggle Radio Buttons -->
     <div class="lang-selector">
       <label>
-        <input type="radio" name="lang" value="en" checked onclick="switchLanguage('en')"> English
+        <input type="radio" name="lang" value="en" checked onclick="renderContent('en')"> English
       </label>
       <label>
-        <input type="radio" name="lang" value="hi" onclick="switchLanguage('hi')"> हिंदी (Hindi)
+        <input type="radio" name="lang" value="hi" onclick="renderContent('hi')"> हिंदी (Hindi)
       </label>
     </div>
 
-    <!-- ENGLISH CONTENT -->
-    <div id="content-en" class="content-section active">
-      <h2>📖 How to Play</h2>
-      <p>Welcome to Kaun Banega Dharm Shiromani! You will navigate through a series of 15 questions of increasing difficulty. Read the question carefully, review the options, and click your final choice before time runs out (if playing in Timed Mode).</p>
-      
-      <h2>🛠️ Lifelines</h2>
-      <ul>
-        <li><strong>50:50:</strong> Removes two incorrect options from the board.</li>
-        <li><strong>Audience Poll:</strong> Displays estimated crowd percentage choices to help guide your decision.</li>
-        <li><strong>Flip:</strong> Discards the current question and brings up a fresh replacement question.</li>
-      </ul>
-
-      <h2>❓ Frequently Asked Questions</h2>
-
-      <div class="faq-item">
-        <div class="faq-question">Q: What is the light bulb icon that appears on some questions?</div>
-        <div class="faq-answer">A: The light bulb icon appears after an answer is submitted when an explanation is available. Clicking it opens a popup window providing deeper background context and details for that question in both English and Hindi.</div>
-      </div>
-      
-      <div class="faq-item">
-        <div class="faq-question">Q: Can I change my answer after clicking it?</div>
-        <div class="faq-answer">A: No. Once an option is selected, it locks in immediately as your final answer for that question.</div>
-      </div>
-
-      <div class="faq-item">
-        <div class="faq-question">Q: What happens if time runs out in Timed Mode?</div>
-        <div class="faq-answer">A: If the timer hits zero before you select an answer, it counts as an incorrect response and ends the active game session.</div>
-      </div>
-
-      <div class="faq-item">
-        <div class="faq-question">Q: I found an error in a question. How do I report it?</div>
-        <div class="faq-answer">A: Please reference the unique question number shown in the top-right blue box of that screen when submitting feedback through our contact form.</div>
-      </div>
-    </div>
-
-    <!-- HINDI CONTENT -->
-    <div id="content-hi" class="content-section">
-      <h2>📖 कैसे खेलें (How to Play)</h2>
-      <p>कौन बनेगा धर्म शिरोमणि में आपका स्वागत है! आपको बढ़ती हुई कठिनाई के 15 प्रश्नों का सामना करना होगा। प्रश्न को ध्यान से पढ़ें, विकल्पों की समीक्षा करें, और समय समाप्त होने से पहले (यदि टाइमड मोड में खेल रहे हैं) अपने उत्तर पर क्लिक करें।</p>
-      
-      <h2>🛠️ लाइफलाइन (Lifelines)</h2>
-      <ul>
-        <li><strong>50:50:</strong> बोर्ड से दो गलत विकल्पों को हटा देता है।</li>
-        <li><strong>ऑडियंस पोल (Audience Poll):</strong> सही निर्णय लेने में मदद करने के लिए अनुमानित दर्शक प्रतिशत दिखाता है।</li>
-        <li><strong>फ्लिप (Flip):</strong> वर्तमान प्रश्न को हटाकर एक नया प्रश्न ले आता है।</li>
-      </ul>
-
-      <h2>❓ अक्सर पूछे जाने वाले प्रश्न (FAQ)</h2>
-
-      <div class="faq-item">
-        <div class="faq-question">प्रश्न: कुछ प्रश्नों पर दिखाई देने वाला लाइट बल्ब (Light Bulb) आइकन क्या है?</div>
-        <div class="faq-answer">उत्तर: उत्तर सबमिट होने के बाद जब स्पष्टीकरण (explanation) उपलब्ध होता है, तब लाइट बल्ब आइकन दिखाई देता है। इस पर क्लिक करने से एक पॉपअप विंडो खुलती है जो अंग्रेजी और हिंदी दोनों में उस प्रश्न से जुड़ी विस्तृत पृष्ठभूमि और विवरण प्रदान करती है।</div>
-      </div>
-      
-      <div class="faq-item">
-        <div class="faq-question">प्रश्न: क्या मैं उत्तर पर क्लिक करने के बाद उसे बदल सकता हूँ?</div>
-        <div class="faq-answer">उत्तर: नहीं। एक बार विकल्प चुन लेने के बाद, वह उस प्रश्न के लिए आपका अंतिम उत्तर माना जाता है।</div>
-      </div>
-
-      <div class="faq-item">
-        <div class="faq-question">प्रश्न: यदि टाइमड मोड में समय समाप्त हो जाए तो क्या होगा?</div>
-        <div class="faq-answer">उत्तर: यदि आपके उत्तर चुनने से पहले टाइमर शून्य पर पहुँच जाता है, तो इसे गलत उत्तर माना जाएगा और खेल समाप्त हो जाएगा।</div>
-      </div>
-
-      <div class="faq-item">
-        <div class="faq-question">प्रश्न: मुझे एक प्रश्न में त्रुटि मिली। मैं इसकी रिपोर्ट कैसे करूं?</div>
-        <div class="faq-answer">उत्तर: हमारे संपर्क फॉर्म के माध्यम से प्रतिक्रिया भेजते समय कृपया उस स्क्रीन के शीर्ष-दाहिनी ओर (top-right) नीले बॉक्स में दिखाए गए विशिष्ट प्रश्न संख्या का उल्लेख करें।</div>
-      </div>
+    <!-- DYNAMIC CONTENT CONTAINER -->
+    <div id="dynamic-content">
+      <!-- Injected via JavaScript -->
     </div>
 
     <!-- Back Button -->
@@ -193,17 +122,42 @@
     </div>
   </div>
 
+  <!-- Load the external FAQ data file -->
+  <script src="faq-data.js"></script>
+  
   <script>
-    function switchLanguage(lang) {
-      document.getElementById('content-en').classList.remove('active');
-      document.getElementById('content-hi').classList.remove('active');
-      
-      if (lang === 'hi') {
-        document.getElementById('content-hi').classList.add('active');
-      } else {
-        document.getElementById('content-en').classList.add('active');
-      }
+    function renderContent(lang) {
+      const data = window.faqData[lang];
+      if (!data) return;
+
+      let html = `
+        <h2>${data.howToPlayTitle}</h2>
+        <p>${data.howToPlayText}</p>
+        
+        <h2>${data.lifelinesTitle}</h2>
+        <ul>
+          ${data.lifelines.map(item => `<li>${item}</li>`).join('')}
+        </ul>
+
+        <h2>${data.faqsTitle}</h2>
+      `;
+
+      data.items.forEach(faq => {
+        html += `
+          <div class="faq-item">
+            <div class="faq-question">${faq.q}</div>
+            <div class="faq-answer">${faq.a}</div>
+          </div>
+        `;
+      });
+
+      document.getElementById('dynamic-content').innerHTML = html;
     }
+
+    // Render English by default when page loads
+    window.addEventListener('DOMContentLoaded', () => {
+      renderContent('en');
+    });
   </script>
 
 </body>
