@@ -491,7 +491,7 @@
               pendingNextStepCallback = null;
               cb();
             }
-          }, 3500);
+          }, 5000);
 
         } else {
           selectedBtn.classList.remove('selected');
