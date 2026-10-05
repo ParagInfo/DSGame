@@ -19,7 +19,7 @@ window.faqData = {
     items: [
       {
         q: "What is the light bulb icon that appears on some questions?",
-        a: "The light bulb icon appears after an answer is submitted when an explanation is available. Clicking it opens a popup window providing deeper background context and details for that question in both English and Hindi."
+        a: "The light bulb icon appears after an answer is submitted when an explanation is available. Clicking it (or on the question itself) opens a popup window providing deeper background context and details for that question in both English and Hindi."
       },
       {
         q: "Can I change my answer after clicking it?",
@@ -55,7 +55,7 @@ window.faqData = {
     items: [
       {
         q: "प्रश्न: कुछ प्रश्नों पर दिखाई देने वाला लाइट बल्ब (Light Bulb) आइकन क्या है?",
-        a: "उत्तर: उत्तर सबमिट होने के बाद जब स्पष्टीकरण (explanation) उपलब्ध होता है, तब लाइट बल्ब आइकन दिखाई देता है। इस पर क्लिक करने से एक पॉपअप विंडो खुलती है जो अंग्रेजी और हिंदी दोनों में उस प्रश्न से जुड़ी विस्तृत पृष्ठभूमि और विवरण प्रदान करती है।"
+        a: "उत्तर: उत्तर सबमिट होने के बाद जब स्पष्टीकरण (explanation) उपलब्ध होता है, तब लाइट बल्ब आइकन दिखाई देता है। इस पर या स्वयं प्रश्न पर क्लिक करने से एक पॉपअप विंडो खुलती है जो अंग्रेजी और हिंदी दोनों में उस प्रश्न से जुड़ी विस्तृत पृष्ठभूमि और विवरण प्रदान करती है।"
       },
       {
         q: "प्रश्न: क्या मैं उत्तर पर क्लिक करने के बाद उसे बदल सकता हूँ?",
