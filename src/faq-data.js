@@ -18,6 +18,10 @@ window.faqData = {
     faqsTitle: "❓ Frequently Asked Questions",
     items: [
       {
+        q: "What game modes are available?",
+        a: "You can choose from three different modes: (1) No Timer: Play at your own pace with no time limits on any question. (2) Timed Mode: A countdown timer applies to every single question. (3) KBDS Mode: Questions 1 through 10 are timed (up to 3,20,000 points), while questions 11 through 15 have no time limit (6,40,000 points and above)."
+      },
+      {
         q: "What is the light bulb icon that appears on some questions?",
         a: "The light bulb icon appears after an answer is submitted when an explanation is available. Clicking it (or on the question itself) opens a popup window providing deeper background context and details for that question in both English and Hindi."
       },
@@ -53,6 +57,10 @@ window.faqData = {
 
     faqsTitle: "❓ अक्सर पूछे जाने वाले प्रश्न",
     items: [
+      {
+        q: "प्रश्न: कौन से गेम मोड उपलब्ध हैं?",
+        a: "उत्तर: आप तीन गेम मोड में से चुन सकते हैं: (1) कोई टाइमर नहीं (No Timer): किसी भी प्रश्न पर कोई समय सीमा नहीं है। (2) टाइम्ड मोड (Timed): हर एक प्रश्न पर एक काउंटडाउन टाइमर लागू होता है। (3) केबीडीएस मोड (KBDS Mode): प्रश्न 1 से 10 के लिए टाइमर है (3,20,000 अंक), उसके बाद प्रश्न 11 से 15 के लिए कोई समय सीमा नहीं है (6,40,000 अंक और उससे अधिक)।"
+      },
       {
         q: "प्रश्न: कुछ प्रश्नों पर दिखाई देने वाला लाइट बल्ब (Light Bulb) आइकन क्या है?",
         a: "उत्तर: उत्तर सबमिट होने के बाद जब स्पष्टीकरण (explanation) उपलब्ध होता है, तब लाइट बल्ब आइकन दिखाई देता है। इस पर या स्वयं प्रश्न पर क्लिक करने से एक पॉपअप विंडो खुलती है जो अंग्रेजी और हिंदी दोनों में उस प्रश्न से जुड़ी विस्तृत पृष्ठभूमि और विवरण प्रदान करती है।"
