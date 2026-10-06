@@ -130,15 +130,18 @@
       
       <div class="status-msg" id="status-msg">Decrypting question bank...</div>
 
-      <!-- Timer Option -->
+<!-- Timer Option -->
       <div class="form-group">
-        <label class="title">Timer Mode:</label>
-        <div class="radio-group">
+        <label class="title">Game Mode / Timer:</label>
+        <div class="radio-group" style="flex-direction: row; align-items: flex-start; gap: 8px;">
           <label class="radio-label">
             <input type="radio" name="gameMode" value="untimed" checked onclick="toggleTimerInput(false)"> No Timer
           </label>
           <label class="radio-label">
             <input type="radio" name="gameMode" value="timed" onclick="toggleTimerInput(true)"> Timed
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="gameMode" value="kbds" onclick="toggleTimerInput(true)"> KBDS Mode
           </label>
         </div>
 
