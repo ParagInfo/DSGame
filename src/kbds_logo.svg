@@ -1,0 +1,95 @@
+  <svg viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg" style="display: block; width: 100%; height: 100%;">
+    <defs>
+      <linearGradient id="grandGold" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#FFFFFF"/>
+        <stop offset="25%" stop-color="#FCEE8B"/>
+        <stop offset="50%" stop-color="#D4AF37"/>
+        <stop offset="75%" stop-color="#AA771C"/>
+        <stop offset="100%" stop-color="#8B5A00"/>
+      </linearGradient>
+
+      <linearGradient id="deepPurple" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#2e1065"/>
+        <stop offset="100%" stop-color="#0f051d"/>
+      </linearGradient>
+
+      <filter id="royalGlow" x="-20%" y="-20%" width="140%" height="140%">
+        <feGaussianBlur stdDeviation="3" result="blur"/>
+        <feMerge>
+          <feMergeNode in="blur"/>
+          <feMergeNode in="SourceGraphic"/>
+        </feMerge>
+      </filter>
+
+      <!-- CSS Keyframes & Conditional Rules -->
+      <style>
+        /* Base transform origins centered on (150, 150) */
+        .dharm-petals,
+        .dharm-dashed-ring,
+        .dharm-core {
+          transform-origin: 150px 150px;
+          animation: none;
+        }
+
+        /* ----------------------------------------------------
+           ANIMATIONS: Active ONLY when container or SVG has .is-animated
+        ---------------------------------------------------- */
+        .is-animated .dharm-petals {
+          animation: dharm-spin 20s linear infinite;
+        }
+
+        .is-animated .dharm-dashed-ring {
+          animation: dharm-spin-reverse 30s linear infinite;
+        }
+
+        /*
+        .is-animated .dharm-core {
+          animation: dharm-pulse 3s ease-in-out infinite alternate;
+        }
+        */
+
+        @keyframes dharm-spin {
+          from { transform: rotate(0deg); }
+          to   { transform: rotate(360deg); }
+        }
+
+        @keyframes dharm-spin-reverse {
+          from { transform: rotate(360deg); }
+          to   { transform: rotate(0deg); }
+        }
+
+        /*
+        @keyframes dharm-pulse {
+          0%   { transform: scale(1); }
+          100% { transform: scale(1.05); }
+        }
+        */
+      </style>
+    </defs>
+
+    <!-- Outer Ring Base -->
+    <circle cx="150" cy="150" r="140" fill="url(#deepPurple)" stroke="url(#grandGold)" stroke-width="4" filter="url(#royalGlow)"/>
+    
+    <!-- Decorative Boundary Rings -->
+    <circle class="dharm-dashed-ring" cx="150" cy="150" r="128" fill="none" stroke="url(#grandGold)" stroke-width="1.5" stroke-dasharray="4,4" opacity="0.8"/>
+    <circle cx="150" cy="150" r="120" fill="none" stroke="url(#grandGold)" stroke-width="2"/>
+    
+    <!-- Mandala Petals -->
+    <g class="dharm-petals" fill="none" stroke="url(#grandGold)" stroke-width="1.5" opacity="0.85">
+      <path d="M 150 150 C 180 85, 230 85, 260 150 C 230 215, 180 215, 150 150 Z" transform="rotate(0, 150, 150)" />
+      <path d="M 150 150 C 180 85, 230 85, 260 150 C 230 215, 180 215, 150 150 Z" transform="rotate(45, 150, 150)" />
+      <path d="M 150 150 C 180 85, 230 85, 260 150 C 230 215, 180 215, 150 150 Z" transform="rotate(90, 150, 150)" />
+      <path d="M 150 150 C 180 85, 230 85, 260 150 C 230 215, 180 215, 150 150 Z" transform="rotate(135, 150, 150)" />
+      <path d="M 150 150 C 180 85, 230 85, 260 150 C 230 215, 180 215, 150 150 Z" transform="rotate(180, 150, 150)" />
+      <path d="M 150 150 C 180 85, 230 85, 260 150 C 230 215, 180 215, 150 150 Z" transform="rotate(225, 150, 150)" />
+      <path d="M 150 150 C 180 85, 230 85, 260 150 C 230 215, 180 215, 150 150 Z" transform="rotate(270, 150, 150)" />
+      <path d="M 150 150 C 180 85, 230 85, 260 150 C 230 215, 180 215, 150 150 Z" transform="rotate(315, 150, 150)" />
+    </g>
+
+    <!-- Inner Core & Sacred Symbol -->
+    <g class="dharm-core">
+      <circle cx="150" cy="150" r="42" fill="url(#deepPurple)" stroke="url(#grandGold)" stroke-width="3"/>
+      <circle cx="150" cy="150" r="35" fill="none" stroke="url(#grandGold)" stroke-width="1" stroke-dasharray="2,2"/>
+      <text x="150" y="164" font-family="'Georgia', 'Times New Roman', serif" font-weight="bold" font-size="50" fill="url(#grandGold)" text-anchor="middle" filter="drop-shadow(0px 2px 3px rgba(0,0,0,0.8))">ॐ</text>
+    </g>
+  </svg>
