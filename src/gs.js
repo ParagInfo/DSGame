@@ -1,4 +1,4 @@
-    const SUPABASE_URL = "https://ndfdcobmnxsvtrdqpqti.supabase.co";
+   const SUPABASE_URL = "https://ndfdcobmnxsvtrdqpqti.supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable_-CMSV99N3ovQggn-eJhLLA_z5WFtag4";
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -303,11 +303,18 @@ function setupBulbState(makeActive = false, explanation = null) {
     }
   }
 }
-    async function startGame() {
-      const selectedMode = document.querySelector('input[name="gameMode"]:checked').value;
-      isTimedMode = (selectedMode === "timed");
 
-      if (isTimedMode) {
+  async function startGame() {
+      const selectedMode = document.querySelector('input[name="gameMode"]:checked').value;
+      gameModeSetting = selectedMode;
+
+      // ---> ADD GA4 TRACKING HERE <---
+      gtag('event', 'game_start', {
+        'game_mode': gameModeSetting
+      });
+      // --------------------------------
+
+      if (selectedMode === "timed" || selectedMode === "kbds") {
         const inputVal = parseInt(document.getElementById("seconds-input").value, 10);
         timeLimitPerQuestion = (isNaN(inputVal) || inputVal < 5) ? 30 : inputVal;
         document.getElementById("timer-container").style.display = "block";
@@ -324,7 +331,7 @@ function setupBulbState(makeActive = false, explanation = null) {
     async function loadQuestion() {
       canSelect = true;
       stopTimer();
-      timeRemaining = timeLimitPerQuestion; // Reset remaining time for the new question
+      timeRemaining = timeLimitPerQuestion; 
       if (nextStepTimeout) { clearTimeout(nextStepTimeout); nextStepTimeout = null; }
       pendingNextStepCallback = null;
 
@@ -333,6 +340,19 @@ function setupBulbState(makeActive = false, explanation = null) {
         return;
       }
 
+      // Determine timer status based on mode and current question index
+      if (gameModeSetting === "timed") {
+        isTimedMode = true;
+        document.getElementById("timer-container").style.display = "block";
+      } else if (gameModeSetting === "untimed") {
+        isTimedMode = false;
+        document.getElementById("timer-container").style.display = "none";
+      } else if (gameModeSetting === "kbds") {
+        // Timed for questions 1-10 (indices 0-9). From index 10 (6,40,000 points) onwards, untimed.
+        isTimedMode = currentIndex < 10;
+        document.getElementById("timer-container").style.display = isTimedMode ? "block" : "none";
+      }
+      
       currentQuestionData = await fetchNextQuestion();
 
       if (!currentQuestionData) {
@@ -529,9 +549,18 @@ function setupBulbState(makeActive = false, explanation = null) {
             }
           }, 5000);
 
-        } else {
+       } else {
           selectedBtn.classList.remove('selected');
           selectedBtn.classList.add('incorrect');
+
+          // ---> ADD GA4 TRACKING HERE <---
+          gtag('event', 'question_failed', {
+            'game_mode': gameModeSetting,
+            'question_level': currentQuestionData.numericLevel,
+            'question_index': currentIndex + 1,
+            'fail_reason': 'incorrect_selection'
+          });
+          // --------------------------------
 
           const correctBtn = document.getElementById(`opt-btn-${result.correctIndex}`);
           if (correctBtn) correctBtn.classList.add('correct');
@@ -606,8 +635,17 @@ function setupBulbState(makeActive = false, explanation = null) {
     // Timeout now also asks the server for the correct answer
     // (via the same submit_answer RPC, with selectedIndex -1),
     // since the client has no way to know it on its own.
-    async function handleTimeout() {
+async function handleTimeout() {
       canSelect = false;
+
+      // ---> ADD GA4 TRACKING HERE <---
+      gtag('event', 'question_failed', {
+        'game_mode': gameModeSetting,
+        'question_level': currentQuestionData ? currentQuestionData.numericLevel : 'unknown',
+        'question_index': currentIndex + 1,
+        'fail_reason': 'timeout'
+      });
+      // --------------------------------
 
       try {
         const { data, error } = await supabaseClient.rpc('submit_answer', {
@@ -741,9 +779,35 @@ function setupBulbState(makeActive = false, explanation = null) {
       endGame(false, true);
     }
 
-    function endGame(isVictory, isQuit = false) {
+function endGame(isVictory, isQuit = false) {
       stopTimer();
       canSelect = false;
+
+      // ---> ADD GA4 TRACKING HERE <---
+      const finalPoints = currentIndex > 0 ? prizeLadder[Math.min(currentIndex - 1, prizeLadder.length - 1)] : "0";
+      
+      if (isVictory) {
+        gtag('event', 'game_end', {
+          'game_mode': gameModeSetting,
+          'outcome': 'victory',
+          'questions_answered': currentIndex
+        });
+      } else if (isQuit) {
+        gtag('event', 'game_end', {
+          'game_mode': gameModeSetting,
+          'outcome': 'quit',
+          'questions_answered': currentIndex
+        });
+      } else {
+        gtag('event', 'game_end', {
+          'game_mode': gameModeSetting,
+          'outcome': 'lost_wrong_answer',
+          'questions_answered': currentIndex
+        });
+      }
+      // --------------------------------
+
+      const optionButtons = document.querySelectorAll('.option-btn');
 
       const optionButtons = document.querySelectorAll('.option-btn');
       optionButtons.forEach(btn => btn.style.pointerEvents = 'none');
@@ -791,4 +855,3 @@ function setupBulbState(makeActive = false, explanation = null) {
       document.getElementById('end-ui').style.display = 'none';
       document.getElementById('setup-modal').style.display = 'flex';
     }
-
