@@ -808,8 +808,6 @@ function endGame(isVictory, isQuit = false) {
       // --------------------------------
 
       const optionButtons = document.querySelectorAll('.option-btn');
-
-      const optionButtons = document.querySelectorAll('.option-btn');
       optionButtons.forEach(btn => btn.style.pointerEvents = 'none');
 
       const lifelineButtons = document.querySelectorAll('.lifeline-btn');
