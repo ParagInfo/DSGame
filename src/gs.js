@@ -783,7 +783,7 @@ function endGame(isVictory, isQuit = false) {
       stopTimer();
       canSelect = false;
 
-      // ---> ADD GA4 TRACKING HERE <---
+      // ---> GA4 TRACKING <---
       const finalPoints = currentIndex > 0 ? prizeLadder[Math.min(currentIndex - 1, prizeLadder.length - 1)] : "0";
       
       if (isVictory) {
@@ -805,13 +805,13 @@ function endGame(isVictory, isQuit = false) {
           'questions_answered': currentIndex
         });
       }
-      // --------------------------------
+      // ----------------------
 
-      const optionButtons = document.querySelectorAll('.option-btn');
-      optionButtons.forEach(btn => btn.style.pointerEvents = 'none');
+      const endOptionButtons = document.querySelectorAll('.option-btn');
+      endOptionButtons.forEach(btn => btn.style.pointerEvents = 'none');
 
-      const lifelineButtons = document.querySelectorAll('.lifeline-btn');
-      lifelineButtons.forEach(btn => btn.style.pointerEvents = 'none');
+      const endLifelineButtons = document.querySelectorAll('.lifeline-btn');
+      endLifelineButtons.forEach(btn => btn.style.pointerEvents = 'none');
 
       document.getElementById('game-ui').style.display = 'block';
       document.getElementById('end-ui').style.display = 'flex';
@@ -843,11 +843,11 @@ function endGame(isVictory, isQuit = false) {
       document.getElementById('life-audience').classList.remove('used');
       document.getElementById('life-flip').classList.remove('used');
 
-      optionButtons = document.querySelectorAll('.option-btn');
-      optionButtons.forEach(btn => btn.style.pointerEvents = 'auto');
+      const resetOptionButtons = document.querySelectorAll('.option-btn');
+      resetOptionButtons.forEach(btn => btn.style.pointerEvents = 'auto');
 
-      const lifelineButtons = document.querySelectorAll('.lifeline-btn');
-      lifelineButtons.forEach(btn => btn.style.pointerEvents = 'auto');
+      const resetLifelineButtons = document.querySelectorAll('.lifeline-btn');
+      resetLifelineButtons.forEach(btn => btn.style.pointerEvents = 'auto');
 
       document.getElementById('game-ui').style.display = 'block';
       document.getElementById('end-ui').style.display = 'none';
