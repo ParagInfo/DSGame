@@ -843,7 +843,7 @@ function endGame(isVictory, isQuit = false) {
       document.getElementById('life-audience').classList.remove('used');
       document.getElementById('life-flip').classList.remove('used');
 
-      const optionButtons = document.querySelectorAll('.option-btn');
+      optionButtons = document.querySelectorAll('.option-btn');
       optionButtons.forEach(btn => btn.style.pointerEvents = 'auto');
 
       const lifelineButtons = document.querySelectorAll('.lifeline-btn');
