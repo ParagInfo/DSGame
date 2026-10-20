@@ -155,6 +155,12 @@ function updateAudioToggleUI() {
 // SESSION PERSISTENCE (Session Storage)
 // ==========================================
 
+// ==========================================
+// SESSION PERSISTENCE (Safe Storage)
+// ==========================================
+
+let fallbackSessionStore = null; // Memory fallback for strict incognito environments
+
 function saveGameSession() {
   if (!gameSessionId) return;
   const sessionData = {
@@ -172,29 +178,39 @@ function saveGameSession() {
   try {
     sessionStorage.setItem('kbds_active_session', JSON.stringify(sessionData));
   } catch (e) {
-    // Gracefully handle Incognito mode blocking sessionStorage writes
-    console.warn('sessionStorage setItem restricted:', e);
+    // Fallback to memory if sessionStorage is blocked in Incognito
+    fallbackSessionStore = sessionData;
   }
 }
 
 function checkSavedSession() {
   try {
-    const saved = sessionStorage.getItem('kbds_active_session');
+    const saved = sessionStorage.getItem('kbds_active_session') || fallbackSessionStore;
     const resumeContainer = document.getElementById('resume-container');
     if (saved && resumeContainer) {
       resumeContainer.style.display = 'block';
     }
   } catch (e) {
-    // Gracefully handle Incognito mode blocking sessionStorage
     console.warn('sessionStorage access restricted:', e);
   }
 }
 
 async function resumeGameSession() {
-  const saved = sessionStorage.getItem('kbds_active_session');
-  if (!saved) return;
   try {
-    const data = JSON.parse(saved);
+    let saved = null;
+    try {
+      saved = sessionStorage.getItem('kbds_active_session');
+    } catch (err) {
+      saved = null;
+    }
+    
+    const data = saved ? JSON.parse(saved) : fallbackSessionStore;
+    if (!data) {
+      alert("No saved session found.");
+      clearSavedSession();
+      return;
+    }
+
     gameSessionId = data.gameSessionId;
     currentIndex = data.currentIndex;
     usedQuestionIDs = new Set(data.usedQuestionIDs);
@@ -220,6 +236,7 @@ async function resumeGameSession() {
   } catch (e) {
     console.error("Failed to resume session:", e);
     clearSavedSession();
+    alert("Could not resume the saved game session.");
   }
 }
 
@@ -227,10 +244,16 @@ function clearSavedSession() {
   try {
     sessionStorage.removeItem('kbds_active_session');
   } catch (e) {
-    console.warn('sessionStorage removeItem restricted:', e);
+    // Ignore storage restriction errors
+  }
+  fallbackSessionStore = null;
+  
+  // Hide the resume container immediately upon clearing
+  const resumeContainer = document.getElementById('resume-container');
+  if (resumeContainer) {
+    resumeContainer.style.display = 'none';
   }
 }
-
 
 // ==========================================
 // HIGH SCORES & LEADERBOARD (Local Storage)
@@ -244,17 +267,21 @@ function getNumericScoreVal(prizeStr) {
 function saveHighScore(pointsStr, mode) {
   const scoreVal = getNumericScoreVal(pointsStr);
   const key = `kbds_highscore_${mode}`;
-  const existing = parseInt(localStorage.getItem(key) || '0', 10);
-  
-  if (scoreVal > existing) {
-    localStorage.setItem(key, scoreVal);
-    document.getElementById('new-highscore-badge').style.display = 'block';
-    return true;
+  try {
+    const existing = parseInt(localStorage.getItem(key) || '0', 10);
+    if (scoreVal > existing) {
+      localStorage.setItem(key, scoreVal);
+      document.getElementById('new-highscore-badge').style.display = 'block';
+      return true;
+    }
+  } catch (e) {
+    console.warn('localStorage restricted:', e);
   }
   document.getElementById('new-highscore-badge').style.display = 'none';
   return false;
 }
 
+/*
 function saveHighScore(score) {
   try {
     const currentHigh = parseInt(localStorage.getItem('kbds_high_score') || '0', 10);
@@ -266,6 +293,7 @@ function saveHighScore(score) {
     console.warn('localStorage setItem restricted:', e);
   }
 }
+*/
 
 function openLeaderboardModal() {
   const modes = ['untimed', 'timed', 'kbds'];
