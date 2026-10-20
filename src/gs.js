@@ -221,7 +221,7 @@ async function resumeGameSession() {
     lifelineFlipUsed = data.lifelineFlipUsed;
     timeLimitPerQuestion = data.timeLimitPerQuestion;
     distinctLevels = data.distinctLevels || [];
-    currentQuestionData = data.currentQuestionData || null; // Restore exact question data
+    currentQuestionData = data.currentQuestionData || null;
 
     if (lifeline5050Used) document.getElementById('life-5050').classList.add('used');
     if (lifelineAudienceUsed) document.getElementById('life-audience').classList.add('used');
@@ -234,7 +234,7 @@ async function resumeGameSession() {
     document.getElementById("setup-modal").style.display = "none";
     playSound('click');
 
-    // If we have the exact active question saved, render it directly! Otherwise fetch next.
+    // If we have the exact active question saved, restore it directly!
     if (currentQuestionData) {
       canSelect = true;
       stopTimer();
