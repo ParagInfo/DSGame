@@ -372,12 +372,17 @@
     render('.app-bg-watermark');
     render('.logo-slot');
 
-    // Register Service Worker for PWA
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js').catch(err => console.warn('SW registration failed:', err));
+    // Safe Service Worker Registration for Incognito
+    if ('serviceWorker' in navigator && window.isSecureContext) {
+      try {
+        navigator.serviceWorker.register('sw.js').catch(err => console.warn('SW ignored in private mode:', err));
+      } catch (e) {
+        // Suppress restricted environment errors
+      }
     }
   });
 </script>
+  
   
 <script src="src/params.js"></script>
 <script src="src/gs.js"></script>
