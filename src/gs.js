@@ -1156,3 +1156,15 @@ function resetToSetup() {
   document.getElementById('end-ui').style.display = 'none';
   document.getElementById('setup-modal').style.display = 'flex';
 }
+
+function updateHighScoreDisplay() {
+  try {
+    const highScore = localStorage.getItem('kbds_high_score') || 0;
+    const highScoreEl = document.getElementById('lbl-high-score');
+    if (highScoreEl) {
+      highScoreEl.innerText = Number(highScore).toLocaleString();
+    }
+  } catch (e) {
+    console.warn('localStorage getItem restricted:', e);
+  }
+}
