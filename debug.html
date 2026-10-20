@@ -252,6 +252,7 @@
   <div id="app-container">
     <div class="app-bg-watermark"></div>
     <div id="game-ui">
+    
       <div class="header-bar">
         <div class="header-sub-bar">
           <div class="logo-slot" style="max-width: 45px; display: flex;"></div>  
@@ -260,13 +261,11 @@
             <span class="title-hi">कौन बनेगा धर्म शिरोमणि</span>
           </div>
         </div>  
-        <div class="meta-badges" style="display: flex; align-items: center; gap: 6px;">
-          <!-- Audio Toggle Button -->
-          <button id="audio-toggle-btn" onclick="toggleAudioMute()" title="Toggle Sound" style="background: rgba(255,215,0,0.2); border: 1px solid #ffd700; border-radius: 50%; width: 30px; height: 30px; color: #ffd700; font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; justify-content: center;">🔊</button>
+        <div class="meta-badges">
           <span class="badge badge-level" id="lbl-level">1</span>
         </div>
       </div>
-
+      
       <div class="lifelines-container">
         <!-- 50:50 Lifeline Icon -->
         <button class="lifeline-btn" id="life-5050" onclick="use5050()" title="50:50 (Key: 5)">
@@ -333,10 +332,12 @@
         </div>
       </div>
 
+      <!-- Prize Display & Audio Button on the same line -->
       <div class="prize-display" id="lbl-prize">
-        Question 1 • Points: 1,000
+        <span id="prize-text">Question 1 • Points: 1,000</span>
+        <button id="audio-toggle-btn" onclick="toggleAudioMute()" title="Toggle Sound">🔊</button>
       </div>
-
+      
       <div class="question-box">
         <button class="bulb-btn" id="bulb-btn" onclick="openExplanationModal()" title="View Explanation">💡</button>
 
