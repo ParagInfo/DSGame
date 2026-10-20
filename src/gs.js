@@ -54,12 +54,20 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 async function initApp() {
-  loadGameParams();
-  checkSavedSession();
-  updateHighScoreDisplay();
-  await loadQuestionBankMeta();
+  const loader = document.getElementById('loading-overlay') || document.querySelector('.loader-screen');
+  try {
+    loadGameParams();
+    checkSavedSession();
+    updateHighScoreDisplay();
+    await loadQuestionBankMeta();
+  } catch (err) {
+    console.warn("App initialization error (likely network/incognito restriction):", err);
+  } finally {
+    if (loader) {
+      loader.style.display = 'none';
+    }
+  }
 }
-
 // ==========================================
 // AUDIO MANAGER (Web Audio API)
 // ==========================================
@@ -155,14 +163,24 @@ function saveGameSession() {
     timeLimitPerQuestion,
     distinctLevels
   };
-  sessionStorage.setItem('kbds_active_session', JSON.stringify(sessionData));
+  try {
+    sessionStorage.setItem('kbds_active_session', JSON.stringify(sessionData));
+  } catch (e) {
+    // Gracefully handle Incognito mode blocking sessionStorage writes
+    console.warn('sessionStorage setItem restricted:', e);
+  }
 }
 
 function checkSavedSession() {
-  const saved = sessionStorage.getItem('kbds_active_session');
-  const resumeContainer = document.getElementById('resume-container');
-  if (saved && resumeContainer) {
-    resumeContainer.style.display = 'block';
+  try {
+    const saved = sessionStorage.getItem('kbds_active_session');
+    const resumeContainer = document.getElementById('resume-container');
+    if (saved && resumeContainer) {
+      resumeContainer.style.display = 'block';
+    }
+  } catch (e) {
+    // Gracefully handle Incognito mode blocking sessionStorage
+    console.warn('sessionStorage access restricted:', e);
   }
 }
 
@@ -200,9 +218,11 @@ async function resumeGameSession() {
 }
 
 function clearSavedSession() {
-  sessionStorage.removeItem('kbds_active_session');
-  const resumeContainer = document.getElementById('resume-container');
-  if (resumeContainer) resumeContainer.style.display = 'none';
+  try {
+    sessionStorage.removeItem('kbds_active_session');
+  } catch (e) {
+    console.warn('sessionStorage removeItem restricted:', e);
+  }
 }
 
 
@@ -229,11 +249,16 @@ function saveHighScore(pointsStr, mode) {
   return false;
 }
 
-function updateHighScoreDisplay() {
-  const key = `kbds_highscore_untimed`;
-  const val = parseInt(localStorage.getItem(key) || '0', 10);
-  const el = document.getElementById('setup-highscore-val');
-  if (el) el.innerText = val.toLocaleString() + ' Points';
+function saveHighScore(score) {
+  try {
+    const currentHigh = parseInt(localStorage.getItem('kbds_high_score') || '0', 10);
+    if (score > currentHigh) {
+      localStorage.setItem('kbds_high_score', score);
+      updateHighScoreDisplay();
+    }
+  } catch (e) {
+    console.warn('localStorage setItem restricted:', e);
+  }
 }
 
 function openLeaderboardModal() {
