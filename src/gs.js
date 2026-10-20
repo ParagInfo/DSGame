@@ -173,12 +173,12 @@ function saveGameSession() {
     lifelineAudienceUsed,
     lifelineFlipUsed,
     timeLimitPerQuestion,
-    distinctLevels
+    distinctLevels,
+    currentQuestionData // Save the active question state
   };
   try {
     sessionStorage.setItem('kbds_active_session', JSON.stringify(sessionData));
   } catch (e) {
-    // Fallback to memory if sessionStorage is blocked in Incognito
     fallbackSessionStore = sessionData;
   }
 }
@@ -213,11 +213,7 @@ async function resumeGameSession() {
 
     gameSessionId = data.gameSessionId;
     currentIndex = data.currentIndex;
-    
-    // CRITICAL FIX: Ensure usedQuestionIDs is explicitly reconstructed as a Set 
-    // containing all previously tracked question IDs from the saved session
     usedQuestionIDs = new Set(data.usedQuestionIDs || []);
-    
     maxGameQuestions = data.maxGameQuestions;
     gameModeSetting = data.gameModeSetting;
     lifeline5050Used = data.lifeline5050Used;
@@ -225,6 +221,7 @@ async function resumeGameSession() {
     lifelineFlipUsed = data.lifelineFlipUsed;
     timeLimitPerQuestion = data.timeLimitPerQuestion;
     distinctLevels = data.distinctLevels || [];
+    currentQuestionData = data.currentQuestionData || null; // Restore exact question data
 
     if (lifeline5050Used) document.getElementById('life-5050').classList.add('used');
     if (lifelineAudienceUsed) document.getElementById('life-audience').classList.add('used');
@@ -236,17 +233,42 @@ async function resumeGameSession() {
 
     document.getElementById("setup-modal").style.display = "none";
     playSound('click');
-    
-    // Optional: If you want to fetch the exact same active question record 
-    // instead of advancing to a new one on resume, ensure your backend RPC 
-    // handles the session state, or let loadQuestion pull the next valid un-asked question.
-    await loadQuestion();
+
+    // If we have the exact active question saved, render it directly! Otherwise fetch next.
+    if (currentQuestionData) {
+      canSelect = true;
+      stopTimer();
+      timeRemaining = timeLimitPerQuestion;
+
+      document.getElementById('lbl-level').innerText = `${currentQuestionData.qId}9${currentQuestionData.numericLevel * 10}`;
+      const currentPrize = prizeLadder[Math.min(currentIndex, prizeLadder.length - 1)];
+      document.getElementById('lbl-prize').innerText = `Question ${currentIndex + 1} • Points: ${currentPrize}`;
+
+      document.getElementById('lbl-question-en').innerText = currentQuestionData.en.qText;
+      document.getElementById('lbl-question-hi').innerText = currentQuestionData.hi.qText;
+
+      currentOptions = currentQuestionData.options;
+      renderOptions();
+      setupBulbState(false, null);
+
+      if (gameModeSetting === "timed" || (gameModeSetting === "kbds" && currentIndex < 10)) {
+        isTimedMode = true;
+        document.getElementById("timer-container").style.display = "block";
+        startTimer();
+      } else {
+        isTimedMode = false;
+        document.getElementById("timer-container").style.display = "none";
+      }
+    } else {
+      await loadQuestion();
+    }
   } catch (e) {
     console.error("Failed to resume session:", e);
     clearSavedSession();
     alert("Could not resume the saved game session.");
   }
 }
+
 function clearSavedSession() {
   try {
     sessionStorage.removeItem('kbds_active_session');
