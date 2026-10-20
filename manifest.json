@@ -1,0 +1,15 @@
+{
+  "name": "Kaun Banega Dharm Shiromani",
+  "short_name": "KBDS",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#1b023a",
+  "theme_color": "#1b023a",
+  "icons": [
+    {
+      "src": "src/kbds.css",
+      "sizes": "192x192",
+      "type": "text/css"
+    }
+  ]
+}
