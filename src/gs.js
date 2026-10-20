@@ -80,19 +80,49 @@ window.addEventListener('DOMContentLoaded', () => {
 
 async function initApp() {
   const loader = document.getElementById('loading-overlay') || document.querySelector('.loader-screen');
+  
+  // Create an absolute fail-safe timer so Incognito never gets stuck forever
+  const safetyTimeout = setTimeout(() => {
+    console.warn("Initialization timed out, forcing UI unlock for Incognito.");
+    const statusEl = document.getElementById("status-msg");
+    const startBtn = document.getElementById("start-btn");
+    if (statusEl) {
+      statusEl.innerText = "Ready to play (Offline/Restricted Mode)";
+      statusEl.style.color = "#38bdf8";
+    }
+    if (startBtn) {
+      startBtn.disabled = false;
+      startBtn.innerText = "Start Game";
+    }
+    if (loader) loader.style.display = 'none';
+  }, 4000);
+
   try {
     loadGameParams();
     checkSavedSession();
     updateHighScoreDisplay();
     await loadQuestionBankMeta();
+    clearTimeout(safetyTimeout); // Clear timeout if successful
   } catch (err) {
-    console.warn("App initialization error (likely network/incognito restriction):", err);
+    console.warn("App initialization error (incognito restriction):", err);
+    clearTimeout(safetyTimeout);
+    const statusEl = document.getElementById("status-msg");
+    const startBtn = document.getElementById("start-btn");
+    if (statusEl) {
+      statusEl.innerText = "Running in Restricted Mode";
+      statusEl.style.color = "#eab308";
+    }
+    if (startBtn) {
+      startBtn.disabled = false;
+      startBtn.innerText = "Start Game";
+    }
   } finally {
     if (loader) {
       loader.style.display = 'none';
     }
   }
 }
+
 // ==========================================
 // AUDIO MANAGER (Web Audio API)
 // ==========================================
