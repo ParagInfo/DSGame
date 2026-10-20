@@ -450,8 +450,11 @@ function closeLeaderboardModal() {
 
 function initKeyboardListeners() {
   document.addEventListener('keydown', (e) => {
-    // Ignore shortcuts if user is typing inside an input field (like the timer seconds input)
+    console.log("Key pressed:", e.key, "| Active element:", document.activeElement.tagName);
+
+    // Ignore shortcuts if user is typing inside an input field
     if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) {
+      console.log("Ignored: Focus is in an input field.");
       return;
     }
 
@@ -459,6 +462,8 @@ function initKeyboardListeners() {
     const explanationModalOpen = document.getElementById('explanation-modal').style.display !== 'none';
     const quitModalOpen = document.getElementById('quit-modal').style.display !== 'none';
     const pollModalOpen = document.getElementById('poll-modal').style.display !== 'none';
+
+    console.log("Modal states — Setup:", setupModalOpen, "| Explanation:", explanationModalOpen, "| Quit:", quitModalOpen, "| Poll:", pollModalOpen);
 
     if (explanationModalOpen) {
       if (e.key === 'Enter' || e.key === ' ') {
@@ -487,9 +492,13 @@ function initKeyboardListeners() {
       return;
     }
 
-    if (setupModalOpen) return;
+    if (setupModalOpen) {
+      console.log("Ignored: Setup modal is still open.");
+      return;
+    }
 
     // During active gameplay
+    console.log("Can select status:", canSelect);
     if (canSelect) {
       if (['1', 'a', 'A'].includes(e.key)) {
         e.preventDefault();
@@ -513,6 +522,8 @@ function initKeyboardListeners() {
         e.preventDefault();
         useQuit();
       }
+    } else {
+      console.log("Ignored: canSelect is false (waiting for answer animation/result).");
     }
   });
 }
