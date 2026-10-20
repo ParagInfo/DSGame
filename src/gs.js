@@ -2,10 +2,29 @@
 // CONFIGURATION & INITIALIZATION
 // ==========================================
 
+// ==========================================
+// CONFIGURATION & INITIALIZATION (Incognito-Safe)
+// ==========================================
+
 const SUPABASE_URL = "https://ndfdcobmnxsvtrdqpqti.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_-CMSV99N3ovQggn-eJhLLA_z5WFtag4";
+
+// Create a safe in-memory storage fallback for strict Incognito environments
+const memoryStorageAdapter = {
+  getItem: (key) => {
+    try { return sessionStorage.getItem(key); } catch (e) { return null; }
+  },
+  setItem: (key, value) => {
+    try { sessionStorage.setItem(key, value); } catch (e) {}
+  },
+  removeItem: (key) => {
+    try { sessionStorage.removeItem(key); } catch (e) {}
+  }
+};
+
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {
+    storage: memoryStorageAdapter,
     persistSession: false,
     autoRefreshToken: false,
     detectSessionInUrl: false
