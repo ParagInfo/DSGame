@@ -333,9 +333,9 @@
       </div>
 
       <!-- Prize Display & Audio Button on the same line -->
-      <div class="prize-display" id="lbl-prize">
-        <span id="prize-text">Question 1 • Points: 1,000</span>
-        <button id="audio-toggle-btn" onclick="toggleAudioMute()" title="Toggle Sound">🔊</button>
+      <div class="prize-display" id="lbl-prize" style="display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 4px 12px;">
+        <span id="prize-text" style="flex-grow: 1; text-align: center;">Question 1 • Points: 1,000</span>
+        <button id="audio-toggle-btn" onclick="toggleAudioMute()" title="Toggle Sound" style="background: rgba(255,215,0,0.2); border: 1px solid #ffd700; border-radius: 50%; width: 28px; height: 28px; color: #ffd700; font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; justify-content: center;">🔊</button>
       </div>
       
       <div class="question-box">
