@@ -450,20 +450,22 @@ function closeLeaderboardModal() {
 
 function initKeyboardListeners() {
   document.addEventListener('keydown', (e) => {
-    console.log("Key pressed:", e.key, "| Active element:", document.activeElement.tagName);
-
     // Ignore shortcuts if user is typing inside an input field
     if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) {
-      console.log("Ignored: Focus is in an input field.");
       return;
     }
 
-    const setupModalOpen = document.getElementById('setup-modal').style.display !== 'none';
-    const explanationModalOpen = document.getElementById('explanation-modal').style.display !== 'none';
-    const quitModalOpen = document.getElementById('quit-modal').style.display !== 'none';
-    const pollModalOpen = document.getElementById('poll-modal').style.display !== 'none';
+    // Helper to accurately check computed CSS visibility
+    const isVisible = (id) => {
+      const el = document.getElementById(id);
+      if (!el) return false;
+      return window.getComputedStyle(el).display !== 'none';
+    };
 
-    console.log("Modal states — Setup:", setupModalOpen, "| Explanation:", explanationModalOpen, "| Quit:", quitModalOpen, "| Poll:", pollModalOpen);
+    const setupModalOpen = isVisible('setup-modal');
+    const explanationModalOpen = isVisible('explanation-modal');
+    const quitModalOpen = isVisible('quit-modal');
+    const pollModalOpen = isVisible('poll-modal');
 
     if (explanationModalOpen) {
       if (e.key === 'Enter' || e.key === ' ') {
@@ -492,13 +494,9 @@ function initKeyboardListeners() {
       return;
     }
 
-    if (setupModalOpen) {
-      console.log("Ignored: Setup modal is still open.");
-      return;
-    }
+    if (setupModalOpen) return;
 
     // During active gameplay
-    console.log("Can select status:", canSelect);
     if (canSelect) {
       if (['1', 'a', 'A'].includes(e.key)) {
         e.preventDefault();
@@ -522,8 +520,6 @@ function initKeyboardListeners() {
         e.preventDefault();
         useQuit();
       }
-    } else {
-      console.log("Ignored: canSelect is false (waiting for answer animation/result).");
     }
   });
 }
