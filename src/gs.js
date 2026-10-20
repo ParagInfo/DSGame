@@ -213,7 +213,11 @@ async function resumeGameSession() {
 
     gameSessionId = data.gameSessionId;
     currentIndex = data.currentIndex;
-    usedQuestionIDs = new Set(data.usedQuestionIDs);
+    
+    // CRITICAL FIX: Ensure usedQuestionIDs is explicitly reconstructed as a Set 
+    // containing all previously tracked question IDs from the saved session
+    usedQuestionIDs = new Set(data.usedQuestionIDs || []);
+    
     maxGameQuestions = data.maxGameQuestions;
     gameModeSetting = data.gameModeSetting;
     lifeline5050Used = data.lifeline5050Used;
@@ -232,6 +236,10 @@ async function resumeGameSession() {
 
     document.getElementById("setup-modal").style.display = "none";
     playSound('click');
+    
+    // Optional: If you want to fetch the exact same active question record 
+    // instead of advancing to a new one on resume, ensure your backend RPC 
+    // handles the session state, or let loadQuestion pull the next valid un-asked question.
     await loadQuestion();
   } catch (e) {
     console.error("Failed to resume session:", e);
@@ -239,7 +247,6 @@ async function resumeGameSession() {
     alert("Could not resume the saved game session.");
   }
 }
-
 function clearSavedSession() {
   try {
     sessionStorage.removeItem('kbds_active_session');
