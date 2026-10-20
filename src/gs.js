@@ -516,6 +516,9 @@ function initKeyboardListeners() {
       } else if (['f', 'F'].includes(e.key)) {
         e.preventDefault();
         useFlip();
+      } else if (['p', 'P'].includes(e.key)) { 
+        e.preventDefault();
+        useAudience();
       } else if (['q', 'Q'].includes(e.key)) {
         e.preventDefault();
         useQuit();
