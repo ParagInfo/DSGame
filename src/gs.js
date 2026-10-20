@@ -253,7 +253,7 @@ async function resumeGameSession() {
 
       // Render the media replay icon if the restored question is Picture, Audio, or Video
       const mediaBtn = document.getElementById('life-media-replay');
-      if (['P', 'A', 'V'].includes(currentQuestionData.qType)) {
+      if (mediaBtn && ['P', 'A', 'V'].includes(currentQuestionData.qType)) {
         let mediaIconSvg = '';
         if (currentQuestionData.qType === 'P') {
           mediaIconSvg = `<svg viewBox="0 0 160 100" xmlns="http://www.w3.org/2000/svg">
@@ -290,7 +290,9 @@ async function resumeGameSession() {
         }
         mediaBtn.innerHTML = mediaIconSvg;
         mediaBtn.style.display = 'inline-flex';
-      } else {
+        // Force browser layout reflow to make the icon appear instantly
+        void mediaBtn.offsetWidth;
+      } else if (mediaBtn) {
         mediaBtn.style.display = 'none';
       }
 
