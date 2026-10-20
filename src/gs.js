@@ -174,7 +174,7 @@ function saveGameSession() {
     lifelineFlipUsed,
     timeLimitPerQuestion,
     distinctLevels,
-    currentQuestionData // Save the active question state
+    currentQuestionData // Include the active question object
   };
   try {
     sessionStorage.setItem('kbds_active_session', JSON.stringify(sessionData));
@@ -698,6 +698,9 @@ async function loadQuestion() {
     return;
   }
 
+  // SAVE HERE so the active question state is captured immediately
+  saveGameSession();
+  
   setupBulbState(false, null);
 
   document.getElementById('lbl-level').innerText = `${currentQuestionData.qId}9${currentQuestionData.numericLevel * 10}`;
