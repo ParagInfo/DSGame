@@ -343,13 +343,16 @@ body {
 }
 
 .prize-display {
-  text-align: center;
-  background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.2), transparent);
-  padding: 4px;
-  font-size: 1.1rem;
-  font-weight: bold;
-  color: #ffd700;
-}
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      text-align: center;
+      background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.2), transparent);
+      padding: 4px 12px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: #ffd700;
+    }
 
 .question-box {
   background: linear-gradient(180deg, #1f0842 0%, #0b0118 100%);
@@ -617,3 +620,24 @@ body {
 .clickable-explanation:hover {
   background-color: rgba(56, 189, 248, 0.1);
 }
+
+/* Style for the sound button when it's next to the prize text */
+    #audio-toggle-btn {
+      background: rgba(255, 215, 0, 0.15);
+      border: 1px solid #ffd700;
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      color: #ffd700;
+      font-size: 0.75rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.2s, background 0.2s;
+    }
+
+    #audio-toggle-btn:hover {
+      transform: scale(1.1);
+      background: rgba(255, 215, 0, 0.3);
+    }
