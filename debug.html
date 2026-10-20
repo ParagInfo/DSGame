@@ -5,9 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Kaun Banega Dharm Shiromani | कौन बनेगा धर्म शिरोमणि</title>
   
-  <!-- SheetJS & CryptoJS Libraries -->
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1b023a">
+
+  <!-- SheetJS & Supabase Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <!-- script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js" --><!-- /script -->
 
   <link rel="stylesheet" href="src/kbds.css">
   
@@ -47,9 +50,7 @@
         </feMerge>
       </filter>
 
-      <!-- CSS Keyframes & Conditional Rules -->
       <style>
-        /* Base transform origins centered on (150, 150) */
         .dharm-petals,
         .dharm-dashed-ring,
         .dharm-core {
@@ -57,9 +58,6 @@
           animation: none;
         }
 
-        /* ----------------------------------------------------
-           ANIMATIONS: Active ONLY when container or SVG has .is-animated
-        ---------------------------------------------------- */
         .is-animated .dharm-petals {
           animation: dharm-spin 20s linear infinite;
         }
@@ -67,12 +65,6 @@
         .is-animated .dharm-dashed-ring {
           animation: dharm-spin-reverse 30s linear infinite;
         }
-
-        /*
-        .is-animated .dharm-core {
-          animation: dharm-pulse 3s ease-in-out infinite alternate;
-        }
-        */
 
         @keyframes dharm-spin {
           from { transform: rotate(0deg); }
@@ -83,24 +75,13 @@
           from { transform: rotate(360deg); }
           to   { transform: rotate(0deg); }
         }
-
-        /*
-        @keyframes dharm-pulse {
-          0%   { transform: scale(1); }
-          100% { transform: scale(1.05); }
-        }
-        */
       </style>
     </defs>
 
-    <!-- Outer Ring Base -->
     <circle cx="150" cy="150" r="140" fill="url(#deepPurple)" stroke="url(#grandGold)" stroke-width="4" filter="url(#royalGlow)"/>
-    
-    <!-- Decorative Boundary Rings -->
     <circle class="dharm-dashed-ring" cx="150" cy="150" r="128" fill="none" stroke="url(#grandGold)" stroke-width="1.5" stroke-dasharray="4,4" opacity="0.8"/>
     <circle cx="150" cy="150" r="120" fill="none" stroke="url(#grandGold)" stroke-width="2"/>
     
-    <!-- Mandala Petals -->
     <g class="dharm-petals" fill="none" stroke="url(#grandGold)" stroke-width="1.5" opacity="0.85">
       <path d="M 150 150 C 180 85, 230 85, 260 150 C 230 215, 180 215, 150 150 Z" transform="rotate(0, 150, 150)" />
       <path d="M 150 150 C 180 85, 230 85, 260 150 C 230 215, 180 215, 150 150 Z" transform="rotate(45, 150, 150)" />
@@ -112,7 +93,6 @@
       <path d="M 150 150 C 180 85, 230 85, 260 150 C 230 215, 180 215, 150 150 Z" transform="rotate(315, 150, 150)" />
     </g>
 
-    <!-- Inner Core & Sacred Symbol -->
     <g class="dharm-core">
       <circle cx="150" cy="150" r="42" fill="url(#deepPurple)" stroke="url(#grandGold)" stroke-width="3"/>
       <circle cx="150" cy="150" r="35" fill="none" stroke="url(#grandGold)" stroke-width="1" stroke-dasharray="2,2"/>
@@ -130,7 +110,12 @@
       
       <div class="status-msg" id="status-msg">Decrypting question bank...</div>
 
-<!-- Timer Option -->
+      <!-- High Score Display Banner -->
+      <div class="highscore-banner" id="highscore-banner" style="font-size: 0.85rem; color: #ffd700; margin-bottom: 10px; background: rgba(212,175,55,0.1); padding: 6px; border-radius: 6px; border: 1px dashed #d4af37;">
+        Personal Best High Score: <span id="setup-highscore-val">0 Points</span>
+      </div>
+
+      <!-- Timer Option -->
       <div class="form-group">
         <label class="title">Game Mode / Timer:</label>
         <div class="radio-group" style="flex-direction: row; align-items: flex-start; gap: 8px;">
@@ -151,9 +136,16 @@
         </div>
       </div>
 
+      <!-- Resume Session Container (Hidden by default) -->
+      <div id="resume-container" style="display: none; margin-bottom: 10px;">
+        <button class="resume-btn" id="resume-btn" onclick="resumeGameSession()" style="background: linear-gradient(180deg, #38bdf8 0%, #0284c7 100%); color: #fff; border: none; padding: 10px; border-radius: 8px; font-weight: bold; font-size: 0.95kr; width: 100%; cursor: pointer; margin-bottom: 6px;">Resume Previous Game</button>
+        <button class="clear-session-btn" onclick="clearSavedSession()" style="background: transparent; color: #ef4444; border: 1px solid #ef4444; padding: 6px; border-radius: 6px; font-size: 0.8rem; width: 100%; cursor: pointer;">Discard Saved Game</button>
+      </div>
+
       <button class="start-btn" id="start-btn" onclick="startGame()" disabled>Loading...</button>
       <button class="instructions-btn" id="instructions-btn" onclick="openInstructionsModal()">Help & Support</button>
       <button class="thanks-btn" id="thanks-btn" onclick="openThanksModal()">Acknowledgement / Thanks</button>
+      <button class="scores-btn" id="scores-btn" onclick="openLeaderboardModal()" style="background: #4b5563; color: #fff; border: none; padding: 8px; border-radius: 6px; font-size: 0.85rem; width: 100%; margin-top: 8px; cursor: pointer;">View High Scores</button>
     </div>
   </div>
 
@@ -164,6 +156,7 @@
       <p style="font-size: 1.1rem; color: #fef08a; margin-bottom: 10px;">प्रणाम!</p>
       <p style="font-size: 1rem; color: #ccc;">Final Points Achieved:</p>
       <div style="font-size: 2rem; color: #00ff66; margin: 15px 0; text-shadow: 0 0 10px #00ff66;" id="final-prize-val">0 Points</div>
+      <div id="new-highscore-badge" style="display:none; color: #ffd700; font-weight: bold; margin-bottom: 10px; font-size: 0.9rem;">🎉 New Personal Best High Score! 🎉</div>
       <button class="start-btn" onclick="resetToSetup()" style="width: 100%; margin-bottom: 10px;">Play Again</button>
       <button class="instructions-btn" onclick="openInstructionsModal()" style="width: 100%; margin-bottom: 10px;">Help & Support</button>
       <button class="thanks-btn" onclick="openThanksModal()" style="width: 100%;">Acknowledgement / Thanks</button>
@@ -181,18 +174,25 @@
     </div>
   </div>
 
+  <!-- Leaderboard Modal -->
+  <div class="modal" id="leaderboard-modal">
+    <div class="modal-content">
+      <h3 style="color: #ffd700; margin-bottom: 12px;">🏆 Personal High Scores</h3>
+      <div id="leaderboard-body" style="color: #fef08a; font-size: 0.95rem; margin-bottom: 20px; text-align: left; line-height: 1.6;">
+        No high scores recorded yet.
+      </div>
+      <button class="close-btn" onclick="closeLeaderboardModal()">Close</button>
+    </div>
+  </div>
+
   <!-- Media Popup Modal -->
   <div class="modal" id="media-modal">
     <div class="modal-content">
-      <h3 style="color: #ffd700; margin-bottom: 6px;" id="media-title">
-        Media Question
-      </h3>
+      <h3 style="color: #ffd700; margin-bottom: 6px;" id="media-title">Media Question</h3>
       <div class="media-instruction" id="media-instruction">
         Please press the Play button to listen/watch / कृपया सुनने/देखने के लिए प्ले बटन दबाएं
       </div>
-      <div class="media-container" id="media-content">
-        <!-- Dynamic media content goes here -->
-      </div>
+      <div class="media-container" id="media-content"></div>
       <button class="close-btn" onclick="closeMediaModal()">Proceed to Question/ आगे बढ़ें</button>
     </div>
   </div>
@@ -260,14 +260,16 @@
             <span class="title-hi">कौन बनेगा धर्म शिरोमणि</span>
           </div>
         </div>  
-        <div class="meta-badges">
+        <div class="meta-badges" style="display: flex; align-items: center; gap: 6px;">
+          <!-- Audio Toggle Button -->
+          <button id="audio-toggle-btn" onclick="toggleAudioMute()" title="Toggle Sound" style="background: rgba(255,215,0,0.2); border: 1px solid #ffd700; border-radius: 50%; width: 30px; height: 30px; color: #ffd700; font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; justify-content: center;">🔊</button>
           <span class="badge badge-level" id="lbl-level">1</span>
         </div>
       </div>
 
       <div class="lifelines-container">
         <!-- 50:50 Lifeline Icon -->
-        <button class="lifeline-btn" id="life-5050" onclick="use5050()" title="50:50">
+        <button class="lifeline-btn" id="life-5050" onclick="use5050()" title="50:50 (Key: 5)">
           <svg viewBox="0 0 160 100" xmlns="http://www.w3.org/2000/svg">
             <ellipse cx="80" cy="50" rx="75" ry="45" fill="#7A3DB8" stroke="#4A1875" stroke-width="2"/>
             <ellipse cx="80" cy="50" rx="65" ry="36" fill="#3D1259"/>
@@ -277,7 +279,7 @@
         </button>
 
         <!-- Audience Poll Lifeline Icon -->
-        <button class="lifeline-btn" id="life-audience" onclick="useAudience()" title="Audience Poll">
+        <button class="lifeline-btn" id="life-audience" onclick="useAudience()" title="Audience Poll (Key: A)">
           <svg viewBox="0 0 160 100" xmlns="http://www.w3.org/2000/svg">
             <ellipse cx="80" cy="50" rx="75" ry="45" fill="#7A3DB8" stroke="#4A1875" stroke-width="2"/>
             <ellipse cx="80" cy="50" rx="65" ry="36" fill="#3D1259"/>
@@ -294,7 +296,7 @@
         </button>
 
         <!-- Flip Question Lifeline Icon -->
-        <button id="life-flip" class="lifeline-btn" onclick="useFlip()">
+        <button id="life-flip" class="lifeline-btn" onclick="useFlip()" title="Flip Question (Key: F)">
           <svg viewBox="0 0 160 100" xmlns="http://www.w3.org/2000/svg">
           <ellipse cx="80" cy="50" rx="75" ry="45" fill="#a855f7" stroke="#3b0764" stroke-width="2"/>
           <ellipse cx="80" cy="50" rx="65" ry="36" fill="#3b0764"/>
@@ -311,7 +313,7 @@
       </button>
          
         <!-- Standardized QUIT Button -->
-        <button class="lifeline-btn quit-btn" id="life-quit" onclick="useQuit()" title="Quit Game">
+        <button class="lifeline-btn quit-btn" id="life-quit" onclick="useQuit()" title="Quit Game (Key: Q)">
           <svg viewBox="0 0 160 100" xmlns="http://www.w3.org/2000/svg">
             <ellipse cx="80" cy="50" rx="75" ry="45" fill="#7f1d1d" stroke="#360707" stroke-width="2"/>
             <ellipse cx="80" cy="50" rx="65" ry="36" fill="#360707"/>
@@ -361,11 +363,16 @@
 
     render('.app-bg-watermark');
     render('.logo-slot');
+
+    // Register Service Worker for PWA
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').catch(err => console.warn('SW registration failed:', err));
+    }
   });
 </script>
   
 <script src="src/params.js"></script>
-<script src="src/game-secure.js"></script>
+<script src="src/gs.js"></script>
 
 </body>
 </html>
