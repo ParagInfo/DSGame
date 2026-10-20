@@ -4,7 +4,13 @@
 
 const SUPABASE_URL = "https://ndfdcobmnxsvtrdqpqti.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_-CMSV99N3ovQggn-eJhLLA_z5WFtag4";
-const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: {
+    persistSession: false,
+    autoRefreshToken: false,
+    detectSessionInUrl: false
+  }
+});
 
 let customThanksMessage = "Thank you for playing Kaun Banega Dharm Shiromani!";
 let customInstructionsTitle = "Instructions / नियम एवं निर्देश";
