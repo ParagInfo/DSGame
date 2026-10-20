@@ -444,9 +444,17 @@ function closeLeaderboardModal() {
 // KEYBOARD SHORTCUTS
 // ==========================================
 
+// ==========================================
+// KEYBOARD SHORTCUTS & FOCUS FIXES
+// ==========================================
+
 function initKeyboardListeners() {
   document.addEventListener('keydown', (e) => {
-    // If setup modal or another modal is open, handle space/enter accordingly
+    // Ignore shortcuts if user is typing inside an input field (like the timer seconds input)
+    if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) {
+      return;
+    }
+
     const setupModalOpen = document.getElementById('setup-modal').style.display !== 'none';
     const explanationModalOpen = document.getElementById('explanation-modal').style.display !== 'none';
     const quitModalOpen = document.getElementById('quit-modal').style.display !== 'none';
@@ -484,22 +492,36 @@ function initKeyboardListeners() {
     // During active gameplay
     if (canSelect) {
       if (['1', 'a', 'A'].includes(e.key)) {
+        e.preventDefault();
         triggerOptionKey(0);
       } else if (['2', 'b', 'B'].includes(e.key)) {
+        e.preventDefault();
         triggerOptionKey(1);
       } else if (['3', 'c', 'C'].includes(e.key)) {
+        e.preventDefault();
         triggerOptionKey(2);
       } else if (['4', 'd', 'D'].includes(e.key)) {
+        e.preventDefault();
         triggerOptionKey(3);
       } else if (['5'].includes(e.key)) {
+        e.preventDefault();
         use5050();
       } else if (['f', 'F'].includes(e.key)) {
+        e.preventDefault();
         useFlip();
       } else if (['q', 'Q'].includes(e.key)) {
+        e.preventDefault();
         useQuit();
       }
     }
   });
+}
+
+function triggerOptionKey(idx) {
+  const btn = document.getElementById(`opt-btn-${idx}`);
+  if (btn && btn.style.visibility !== 'hidden' && btn.style.display !== 'none') {
+    btn.click();
+  }
 }
 
 function triggerOptionKey(idx) {
@@ -867,7 +889,10 @@ function renderOptions() {
       <span class="opt-hi">${opt.hi}</span>
     `;
 
-    btn.onclick = () => handleSelection(btn, idx);
+    btn.onclick = () => {
+      btn.blur(); // Remove focus ring so keyboard shortcuts keep working globally
+      handleSelection(btn, idx);
+    };
     grid.appendChild(btn);
   });
 }
