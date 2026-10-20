@@ -251,6 +251,49 @@ async function resumeGameSession() {
       renderOptions();
       setupBulbState(false, null);
 
+      // Render the media replay icon if the restored question is Picture, Audio, or Video
+      const mediaBtn = document.getElementById('life-media-replay');
+      if (['P', 'A', 'V'].includes(currentQuestionData.qType)) {
+        let mediaIconSvg = '';
+        if (currentQuestionData.qType === 'P') {
+          mediaIconSvg = `<svg viewBox="0 0 160 100" xmlns="http://www.w3.org/2000/svg">
+            <ellipse cx="80" cy="50" rx="75" ry="45" fill="#0284c7" stroke="#032b43" stroke-width="2"/>
+            <ellipse cx="80" cy="50" rx="65" ry="36" fill="#032b43"/>
+            <ellipse cx="80" cy="50" rx="65" ry="36" fill="none" stroke="#38bdf8" stroke-width="3"/>
+            <g fill="#38bdf8">
+              <rect x="52" y="32" width="56" height="36" rx="4" fill="none" stroke="#38bdf8" stroke-width="3"/>
+              <circle cx="64" cy="42" r="4"/>
+              <polygon points="56,62 70,48 80,58 92,44 104,62"/>
+            </g>
+          </svg>`;
+        } else if (currentQuestionData.qType === 'A') {
+          mediaIconSvg = `<svg viewBox="0 0 160 100" xmlns="http://www.w3.org/2000/svg">
+            <ellipse cx="80" cy="50" rx="75" ry="45" fill="#0284c7" stroke="#032b43" stroke-width="2"/>
+            <ellipse cx="80" cy="50" rx="65" ry="36" fill="#032b43"/>
+            <ellipse cx="80" cy="50" rx="65" ry="36" fill="none" stroke="#38bdf8" stroke-width="3"/>
+            <g fill="#38bdf8">
+              <ellipse cx="56" cy="62" rx="7" ry="5" transform="rotate(-20 56 62)"/>
+              <ellipse cx="88" cy="56" rx="7" ry="5" transform="rotate(-20 88 56)"/>
+              <path d="M 61 60 V 34 L 93 28 V 54 L 89 54 V 32 L 65 37 V 60 Z"/>
+            </g>
+          </svg>`;
+        } else if (currentQuestionData.qType === 'V') {
+          mediaIconSvg = `<svg viewBox="0 0 160 100" xmlns="http://www.w3.org/2000/svg">
+            <ellipse cx="80" cy="50" rx="75" ry="45" fill="#0284c7" stroke="#032b43" stroke-width="2"/>
+            <ellipse cx="80" cy="50" rx="65" ry="36" fill="#032b43"/>
+            <ellipse cx="80" cy="50" rx="65" ry="36" fill="none" stroke="#38bdf8" stroke-width="3"/>
+            <g fill="#38bdf8">
+              <rect x="52" y="34" width="38" height="32" rx="4"/>
+              <polygon points="94,40 108,32 108,68 94,60"/>
+            </g>
+          </svg>`;
+        }
+        mediaBtn.innerHTML = mediaIconSvg;
+        mediaBtn.style.display = 'inline-flex';
+      } else {
+        mediaBtn.style.display = 'none';
+      }
+
       if (gameModeSetting === "timed" || (gameModeSetting === "kbds" && currentIndex < 10)) {
         isTimedMode = true;
         document.getElementById("timer-container").style.display = "block";
