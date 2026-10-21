@@ -912,6 +912,7 @@ function renderOptions() {
 async function handleSelection(selectedBtn, selectedIndex) {
   if (!canSelect) return;
   canSelect = false;
+  clearSavedSession(); 
   stopTimer();
   playSound('click');
 
@@ -1087,6 +1088,7 @@ function updateTimerUI() {
 
 async function handleTimeout() {
   canSelect = false;
+  clearSavedSession();
   playSound('incorrect');
   trackQuestionFailed('timeout');
 
