@@ -6,7 +6,7 @@ const SUPABASE_URL = "https://ndfdcobmnxsvtrdqpqti.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_-CMSV99N3ovQggn-eJhLLA_z5WFtag4";
 
 // Storage adapter that never throws (strict Incognito / restricted environments)
-const memoryStorageAdapter = {
+const safeStorageAdapter = {
   getItem: (key) => {
     try { return localStorage.getItem(key); } catch (e) { return null; }
   },
@@ -20,7 +20,7 @@ const memoryStorageAdapter = {
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {
-    storage: memoryStorageAdapter,
+    storage: safeStorageAdapter,
     persistSession: false,
     autoRefreshToken: false,
     detectSessionInUrl: false
@@ -46,6 +46,9 @@ const OPTION_KEYS = {
   '4': 3, 'd': 3, 'D': 3
 };
 
+const HIGHSCORE_MODES = ['untimed', 'timed', 'kbds'];
+const MEDIA_QTYPES = ['P', 'A', 'V']; // Picture, Audio, Video
+
 // Game state
 let gameSessionId = null;
 let distinctLevels = [];
@@ -63,6 +66,7 @@ let lifeline5050Used = false;
 let lifelineAudienceUsed = false;
 let lifelineFlipUsed = false;
 let currentOptions = [];
+let hiddenOptionIndices = []; // Options hidden by 50:50 on the current question
 
 // Timer state
 let isTimedMode = false;
@@ -208,7 +212,6 @@ let fallbackSessionStore = null; // Used when localStorage is blocked
 
 function saveGameSession() {
   if (!gameSessionId) return;
-  console.log("Saving session at index:", currentIndex);
   const sessionData = {
     gameSessionId,
     currentIndex,
@@ -218,11 +221,12 @@ function saveGameSession() {
     lifeline5050Used,
     lifelineAudienceUsed,
     lifelineFlipUsed,
+    hiddenOptionIndices,
     timeLimitPerQuestion,
     timeRemaining,
     distinctLevels,
-    currentQuestionData,
-    isGameOver: false // <-- Mark active sessions explicitly
+    currentQuestionData, // Active question, so it can be restored exactly
+    isGameOver: false    // Marker read by checkSavedSession()
   };
 
   try {
@@ -243,9 +247,10 @@ function readSavedSessionRaw() {
 
 function checkSavedSession() {
   try {
+    // Note: JSON.stringify(null) is the truthy string "null"; it parses back to null below and is cleared
     const raw = localStorage.getItem('kbds_active_session') || JSON.stringify(fallbackSessionStore);
     const resumeContainer = document.getElementById('resume-container');
-    
+
     if (raw && resumeContainer) {
       const data = JSON.parse(raw);
       // Block resume if the game was marked over or reached max questions
@@ -262,13 +267,7 @@ function checkSavedSession() {
 
 async function resumeGameSession() {
   try {
-    let saved = null;
-    try {
-      saved = localStorage.getItem('kbds_active_session');
-    } catch (err) {
-      saved = null;
-    }
-    
+    const saved = readSavedSessionRaw();
     const data = saved ? JSON.parse(saved) : fallbackSessionStore;
     if (!data) {
       alert("No saved session found.");
@@ -311,18 +310,15 @@ async function resumeGameSession() {
         timeRemaining = timeLimitPerQuestion;
       }
 
-      document.getElementById('lbl-level').innerText = `${currentQuestionData.qId}9${currentQuestionData.numericLevel * 10}`;
-      const currentPrize = prizeLadder[Math.min(currentIndex, prizeLadder.length - 1)];
-      document.getElementById('lbl-prize').innerText = `Question ${currentIndex + 1} • Points: ${currentPrize}`;
-
-      document.getElementById('lbl-question-en').innerText = currentQuestionData.en.qText;
-      document.getElementById('lbl-question-hi').innerText = currentQuestionData.hi.qText;
-
-      currentOptions = currentQuestionData.options;
-      renderOptions();
-      setupBulbState(false, null);
-
+      renderQuestionUI();
       updateMediaButton(currentQuestionData.qType);
+
+      // Re-hide the options removed by 50:50
+      hiddenOptionIndices = data.hiddenOptionIndices || [];
+      hiddenOptionIndices.forEach(idx => {
+        const btn = document.getElementById(`opt-btn-${idx}`);
+        if (btn) btn.style.visibility = 'hidden';
+      });
 
       if (gameModeSetting === "timed" || (gameModeSetting === "kbds" && currentIndex < 10)) {
         isTimedMode = true;
@@ -343,10 +339,9 @@ async function resumeGameSession() {
 }
 
 function clearSavedSession() {
-  console.log("Wiping saved session!"); // <-- Add this log
   try {
     localStorage.removeItem('kbds_active_session');
-    localStorage.removeItem('kbds_active_session_backup'); // Just in case
+    localStorage.removeItem('kbds_active_session_backup'); // Backup key (not written by this file)
   } catch (e) {
     // Ignore storage restriction errors
   }
@@ -356,6 +351,7 @@ function clearSavedSession() {
   const resumeContainer = document.getElementById('resume-container');
   if (resumeContainer) resumeContainer.style.display = 'none';
 }
+
 
 // ==========================================
 // HIGH SCORES & LEADERBOARD (localStorage)
@@ -384,9 +380,8 @@ function saveHighScore(pointsStr, mode) {
 }
 
 function openLeaderboardModal() {
-  const modes = ['untimed', 'timed', 'kbds'];
   let html = '<ul style="list-style: none; padding: 0;">';
-  modes.forEach(m => {
+  HIGHSCORE_MODES.forEach(m => {
     const val = parseInt(localStorage.getItem(`kbds_highscore_${m}`) || '0', 10);
     html += `<li style="margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px; display: flex; justify-content: space-between;">
       <span style="text-transform: uppercase; color: #38bdf8; font-weight: bold;">${m} Mode:</span>
@@ -406,11 +401,10 @@ function closeLeaderboardModal() {
 
 function updateHighScoreDisplay() {
   try {
-    const modes = ['untimed', 'timed', 'kbds'];
     let maxScore = 0;
 
     // Find the highest score across all modes
-    modes.forEach(m => {
+    HIGHSCORE_MODES.forEach(m => {
       const val = parseInt(localStorage.getItem(`kbds_highscore_${m}`) || '0', 10);
       if (val > maxScore) maxScore = val;
     });
@@ -832,7 +826,7 @@ function updateMediaButton(qType) {
   const mediaBtn = document.getElementById('life-media-replay');
   if (!mediaBtn) return false;
 
-  if (['P', 'A', 'V'].includes(qType)) {
+  if (MEDIA_QTYPES.includes(qType)) {
     mediaBtn.innerHTML = getMediaIconSvg(qType);
     mediaBtn.style.display = 'inline-flex';
     void mediaBtn.offsetWidth; // Force layout reflow so the icon appears instantly
@@ -849,6 +843,7 @@ async function loadQuestion() {
 
   // Reset to full time limit for new questions
   timeRemaining = timeLimitPerQuestion;
+  hiddenOptionIndices = [];
 
   if (nextStepTimeout) { clearTimeout(nextStepTimeout); nextStepTimeout = null; }
   pendingNextStepCallback = null;
@@ -912,7 +907,7 @@ function renderOptions() {
 async function handleSelection(selectedBtn, selectedIndex) {
   if (!canSelect) return;
   canSelect = false;
-  clearSavedSession(); 
+  clearSavedSession(); // Answer locked in: it must not be resumable mid-answer
   stopTimer();
   playSound('click');
 
@@ -947,7 +942,7 @@ async function handleSelection(selectedBtn, selectedIndex) {
       currentIndex++;
       currentQuestionData = null;
       saveGameSession();
-      
+
       scheduleNextStep(async () => {
         if (currentIndex < maxGameQuestions) {
           await loadQuestion();
@@ -975,7 +970,7 @@ async function handleSelection(selectedBtn, selectedIndex) {
 // ==========================================
 
 function replayMedia() {
-  if (!currentQuestionData || !['P', 'A', 'V'].includes(currentQuestionData.qType)) return;
+  if (!currentQuestionData || !MEDIA_QTYPES.includes(currentQuestionData.qType)) return;
   playSound('click');
   showMediaModal(currentQuestionData.qType, currentQuestionData.mediaUrl);
 }
@@ -1041,10 +1036,10 @@ function runCountdown() {
   timerInterval = setInterval(() => {
     timeRemaining--;
     updateTimerUI();
-    
+
     // Save active countdown so resuming picks up at the exact remaining second
     saveGameSession();
-    
+
     if (timeRemaining <= 5 && timeRemaining > 0) playSound('tick');
     if (timeRemaining <= 0) {
       stopTimer();
@@ -1134,6 +1129,7 @@ async function use5050() {
     });
     if (error || !data || !data.hideIndices) throw error || new Error("No response");
 
+    hiddenOptionIndices = data.hideIndices;
     data.hideIndices.forEach(idx => {
       const btn = document.getElementById(`opt-btn-${idx}`);
       if (btn) btn.style.visibility = 'hidden';
@@ -1240,7 +1236,7 @@ function confirmQuit() {
 function endGame(isVictory, isQuit = false) {
   stopTimer();
   canSelect = false;
-  
+
   // Save a terminal state to localStorage so checkSavedSession rejects it instantly
   try {
     const raw = localStorage.getItem('kbds_active_session');
@@ -1249,7 +1245,7 @@ function endGame(isVictory, isQuit = false) {
       data.isGameOver = true;
       localStorage.setItem('kbds_active_session', JSON.stringify(data));
     }
-  } catch (e) {}
+  } catch (e) { /* ignore storage restrictions */ }
 
   clearSavedSession();
 
