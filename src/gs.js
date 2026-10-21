@@ -242,11 +242,19 @@ function readSavedSessionRaw() {
 
 function checkSavedSession() {
   try {
-    const saved = localStorage.getItem('kbds_active_session') || fallbackSessionStore;
+    const raw = localStorage.getItem('kbds_active_session') || JSON.stringify(fallbackSessionStore);
     const resumeContainer = document.getElementById('resume-container');
-    if (saved && resumeContainer) {
-      resumeContainer.style.display = 'block';
+    
+    if (raw && resumeContainer) {
+      const data = JSON.parse(raw);
+      // Ensure the saved session is actually an ongoing, active game
+      if (data && typeof data.currentIndex === 'number' && data.currentIndex < (data.maxGameQuestions || 15)) {
+        resumeContainer.style.display = 'block';
+        return;
+      }
     }
+    // If it's invalid or finished, clear it out immediately
+    clearSavedSession();
   } catch (e) {
     console.warn('localStorage access restricted:', e);
   }
@@ -337,6 +345,7 @@ async function resumeGameSession() {
 function clearSavedSession() {
   try {
     localStorage.removeItem('kbds_active_session');
+    localStorage.removeItem('kbds_active_session_backup'); // Just in case
   } catch (e) {
     // Ignore storage restriction errors
   }
@@ -346,7 +355,6 @@ function clearSavedSession() {
   const resumeContainer = document.getElementById('resume-container');
   if (resumeContainer) resumeContainer.style.display = 'none';
 }
-
 
 // ==========================================
 // HIGH SCORES & LEADERBOARD (localStorage)
