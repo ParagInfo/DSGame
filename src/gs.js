@@ -1068,6 +1068,10 @@ function runCountdown() {
   timerInterval = setInterval(() => {
     timeRemaining--;
     updateTimerUI();
+    
+    // Save active countdown so resuming picks up at the exact remaining second
+    saveGameSession();
+    
     if (timeRemaining <= 5 && timeRemaining > 0) playSound('tick');
     if (timeRemaining <= 0) {
       stopTimer();
