@@ -208,7 +208,7 @@ let fallbackSessionStore = null; // Used when localStorage is blocked
 
 function saveGameSession() {
   if (!gameSessionId) return;
-
+  console.log("Saving session at index:", currentIndex);
   const sessionData = {
     gameSessionId,
     currentIndex,
@@ -343,6 +343,7 @@ async function resumeGameSession() {
 }
 
 function clearSavedSession() {
+  console.log("Wiping saved session!"); // <-- Add this log
   try {
     localStorage.removeItem('kbds_active_session');
     localStorage.removeItem('kbds_active_session_backup'); // Just in case
