@@ -1354,10 +1354,21 @@ function resetToSetup() {
 
 function updateHighScoreDisplay() {
   try {
-    const highScore = localStorage.getItem('kbds_high_score') || 0;
+    const modes = ['untimed', 'timed', 'kbds'];
+    let maxScore = 0;
+
+    // Loop through each mode to find the highest score recorded
+    modes.forEach(m => {
+      const val = parseInt(localStorage.getItem(`kbds_highscore_${m}`) || '0', 10);
+      if (val > maxScore) {
+        maxScore = val;
+      }
+    });
+
+    // Update the setup banner with the highest score found
     const setupHighScoreEl = document.getElementById('setup-highscore-val');
     if (setupHighScoreEl) {
-      setupHighScoreEl.innerText = `${Number(highScore).toLocaleString()} Points`;
+      setupHighScoreEl.innerText = `${maxScore.toLocaleString()} Points`;
     }
   } catch (e) {
     console.warn('localStorage getItem restricted:', e);
