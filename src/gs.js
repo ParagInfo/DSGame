@@ -8,13 +8,13 @@ const SUPABASE_ANON_KEY = "sb_publishable_-CMSV99N3ovQggn-eJhLLA_z5WFtag4";
 // Storage adapter that never throws (strict Incognito / restricted environments)
 const memoryStorageAdapter = {
   getItem: (key) => {
-    try { return sessionStorage.getItem(key); } catch (e) { return null; }
+    try { return localStorage.getItem(key); } catch (e) { return null; }
   },
   setItem: (key, value) => {
-    try { sessionStorage.setItem(key, value); } catch (e) { /* ignore */ }
+    try { localStorage.setItem(key, value); } catch (e) { /* ignore */ }
   },
   removeItem: (key) => {
-    try { sessionStorage.removeItem(key); } catch (e) { /* ignore */ }
+    try { localStorage.removeItem(key); } catch (e) { /* ignore */ }
   }
 };
 
@@ -201,10 +201,10 @@ function updateAudioToggleUI() {
 
 
 // ==========================================
-// SESSION PERSISTENCE (sessionStorage with in-memory fallback)
+// SESSION PERSISTENCE (localStorage with in-memory fallback)
 // ==========================================
 
-let fallbackSessionStore = null; // Used when sessionStorage is blocked
+let fallbackSessionStore = null; // Used when localStorage is blocked
 
 function saveGameSession() {
   if (!gameSessionId) return;
@@ -222,16 +222,16 @@ function saveGameSession() {
     currentQuestionData // Active question, so it can be restored exactly
   };
   try {
-    sessionStorage.setItem('kbds_active_session', JSON.stringify(sessionData));
+    localStorage.setItem('kbds_active_session', JSON.stringify(sessionData));
   } catch (e) {
     fallbackSessionStore = sessionData;
   }
 }
 
-// Returns the raw saved string from sessionStorage, or null if unavailable
+// Returns the raw saved string from localStorage, or null if unavailable
 function readSavedSessionRaw() {
   try {
-    return sessionStorage.getItem('kbds_active_session');
+    return localStorage.getItem('kbds_active_session');
   } catch (e) {
     return null;
   }
@@ -239,13 +239,13 @@ function readSavedSessionRaw() {
 
 function checkSavedSession() {
   try {
-    const saved = sessionStorage.getItem('kbds_active_session') || fallbackSessionStore;
+    const saved = localStorage.getItem('kbds_active_session') || fallbackSessionStore;
     const resumeContainer = document.getElementById('resume-container');
     if (saved && resumeContainer) {
       resumeContainer.style.display = 'block';
     }
   } catch (e) {
-    console.warn('sessionStorage access restricted:', e);
+    console.warn('localStorage access restricted:', e);
   }
 }
 
@@ -314,7 +314,7 @@ async function resumeGameSession() {
 
 function clearSavedSession() {
   try {
-    sessionStorage.removeItem('kbds_active_session');
+    localStorage.removeItem('kbds_active_session');
   } catch (e) {
     // Ignore storage restriction errors
   }
