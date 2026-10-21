@@ -944,9 +944,11 @@ async function handleSelection(selectedBtn, selectedIndex) {
       playSound('correct');
       selectedBtn.classList.add('correct');
 
+      currentIndex++;
+      currentQuestionData = null;
+      saveGameSession();
+      
       scheduleNextStep(async () => {
-        currentIndex++;
-        // saveGameSession();
         if (currentIndex < maxGameQuestions) {
           await loadQuestion();
         } else {
