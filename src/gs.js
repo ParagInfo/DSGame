@@ -219,9 +219,10 @@ function saveGameSession() {
     lifelineAudienceUsed,
     lifelineFlipUsed,
     timeLimitPerQuestion,
-    timeRemaining, // <-- Store active remaining seconds
+    timeRemaining,
     distinctLevels,
-    currentQuestionData
+    currentQuestionData,
+    isGameOver: false // <-- Mark active sessions explicitly
   };
 
   try {
@@ -247,13 +248,12 @@ function checkSavedSession() {
     
     if (raw && resumeContainer) {
       const data = JSON.parse(raw);
-      // Ensure the saved session is actually an ongoing, active game
-      if (data && typeof data.currentIndex === 'number' && data.currentIndex < (data.maxGameQuestions || 15)) {
+      // Block resume if the game was marked over or reached max questions
+      if (data && data.isGameOver !== true && typeof data.currentIndex === 'number' && data.currentIndex < (data.maxGameQuestions || 15)) {
         resumeContainer.style.display = 'block';
         return;
       }
     }
-    // If it's invalid or finished, clear it out immediately
     clearSavedSession();
   } catch (e) {
     console.warn('localStorage access restricted:', e);
@@ -1235,6 +1235,17 @@ function confirmQuit() {
 function endGame(isVictory, isQuit = false) {
   stopTimer();
   canSelect = false;
+  
+  // Save a terminal state to localStorage so checkSavedSession rejects it instantly
+  try {
+    const raw = localStorage.getItem('kbds_active_session');
+    if (raw) {
+      const data = JSON.parse(raw);
+      data.isGameOver = true;
+      localStorage.setItem('kbds_active_session', JSON.stringify(data));
+    }
+  } catch (e) {}
+
   clearSavedSession();
 
   const finalPoints = currentIndex > 0 ? prizeLadder[Math.min(currentIndex - 1, prizeLadder.length - 1)] : "0";
