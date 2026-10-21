@@ -2,23 +2,19 @@
 // CONFIGURATION & INITIALIZATION
 // ==========================================
 
-// ==========================================
-// CONFIGURATION & INITIALIZATION (Incognito-Safe)
-// ==========================================
-
 const SUPABASE_URL = "https://ndfdcobmnxsvtrdqpqti.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_-CMSV99N3ovQggn-eJhLLA_z5WFtag4";
 
-// Create a safe in-memory storage fallback for strict Incognito environments
+// Storage adapter that never throws (strict Incognito / restricted environments)
 const memoryStorageAdapter = {
   getItem: (key) => {
     try { return sessionStorage.getItem(key); } catch (e) { return null; }
   },
   setItem: (key, value) => {
-    try { sessionStorage.setItem(key, value); } catch (e) {}
+    try { sessionStorage.setItem(key, value); } catch (e) { /* ignore */ }
   },
   removeItem: (key) => {
-    try { sessionStorage.removeItem(key); } catch (e) {}
+    try { sessionStorage.removeItem(key); } catch (e) { /* ignore */ }
   }
 };
 
@@ -31,6 +27,7 @@ const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_
   }
 });
 
+// Customisable texts (overridden by window.gameParams in params.js)
 let customThanksMessage = "Thank you for playing Kaun Banega Dharm Shiromani!";
 let customInstructionsTitle = "Instructions / नियम एवं निर्देश";
 let customInstructionsBody = "No specific instructions provided.";
@@ -41,7 +38,15 @@ const prizeLadder = [
   "6,40,000", "12,50,000", "25,00,000", "50,00,000", "7,00,00,000"
 ];
 
-// Game State Variables
+// Keyboard key -> option index
+const OPTION_KEYS = {
+  '1': 0, 'a': 0, 'A': 0,
+  '2': 1, 'b': 1, 'B': 1,
+  '3': 2, 'c': 2, 'C': 2,
+  '4': 3, 'd': 3, 'D': 3
+};
+
+// Game state
 let gameSessionId = null;
 let distinctLevels = [];
 let availableCount = 0;
@@ -53,23 +58,23 @@ let maxGameQuestions = 15;
 let canSelect = true;
 let gameModeSetting = "untimed";
 
-// Lifelines State
+// Lifelines state
 let lifeline5050Used = false;
 let lifelineAudienceUsed = false;
 let lifelineFlipUsed = false;
 let currentOptions = [];
 
-// Timer State
+// Timer state
 let isTimedMode = false;
 let timeLimitPerQuestion = 30;
 let timeRemaining = 0;
 let timerInterval = null;
 
-// Flow Control State
+// Flow control state
 let nextStepTimeout = null;
 let pendingNextStepCallback = null;
 
-// Audio Settings
+// Audio settings
 let isAudioMuted = localStorage.getItem('kbds_audio_muted') === 'true';
 
 window.addEventListener('DOMContentLoaded', () => {
@@ -78,22 +83,27 @@ window.addEventListener('DOMContentLoaded', () => {
   updateAudioToggleUI();
 });
 
+// Enables the Start button and shows a status message (used by fallback paths)
+function unlockStartButton(message, color) {
+  const statusEl = document.getElementById("status-msg");
+  const startBtn = document.getElementById("start-btn");
+  if (statusEl) {
+    statusEl.innerText = message;
+    statusEl.style.color = color;
+  }
+  if (startBtn) {
+    startBtn.disabled = false;
+    startBtn.innerText = "Start Game";
+  }
+}
+
 async function initApp() {
   const loader = document.getElementById('loading-overlay') || document.querySelector('.loader-screen');
-  
-  // Create an absolute fail-safe timer so Incognito never gets stuck forever
+
+  // Fail-safe: never leave the UI locked if initialisation hangs (e.g. Incognito)
   const safetyTimeout = setTimeout(() => {
     console.warn("Initialization timed out, forcing UI unlock for Incognito.");
-    const statusEl = document.getElementById("status-msg");
-    const startBtn = document.getElementById("start-btn");
-    if (statusEl) {
-      statusEl.innerText = "Ready to play (Offline/Restricted Mode)";
-      statusEl.style.color = "#38bdf8";
-    }
-    if (startBtn) {
-      startBtn.disabled = false;
-      startBtn.innerText = "Start Game";
-    }
+    unlockStartButton("Ready to play (Offline/Restricted Mode)", "#38bdf8");
     if (loader) loader.style.display = 'none';
   }, 4000);
 
@@ -102,26 +112,16 @@ async function initApp() {
     checkSavedSession();
     updateHighScoreDisplay();
     await loadQuestionBankMeta();
-    clearTimeout(safetyTimeout); // Clear timeout if successful
+    clearTimeout(safetyTimeout);
   } catch (err) {
     console.warn("App initialization error (incognito restriction):", err);
     clearTimeout(safetyTimeout);
-    const statusEl = document.getElementById("status-msg");
-    const startBtn = document.getElementById("start-btn");
-    if (statusEl) {
-      statusEl.innerText = "Running in Restricted Mode";
-      statusEl.style.color = "#eab308";
-    }
-    if (startBtn) {
-      startBtn.disabled = false;
-      startBtn.innerText = "Start Game";
-    }
+    unlockStartButton("Running in Restricted Mode", "#eab308");
   } finally {
-    if (loader) {
-      loader.style.display = 'none';
-    }
+    if (loader) loader.style.display = 'none';
   }
 }
+
 
 // ==========================================
 // AUDIO MANAGER (Web Audio API)
@@ -160,7 +160,7 @@ function playSound(type) {
       osc.stop(now + 0.08);
     } else if (type === 'correct') {
       osc.type = 'triangle';
-      osc.frequency.setValueAtTime(523.25, now); // C5
+      osc.frequency.setValueAtTime(523.25, now);       // C5
       osc.frequency.setValueAtTime(659.25, now + 0.1); // E5
       osc.frequency.setValueAtTime(783.99, now + 0.2); // G5
       gain.gain.setValueAtTime(0.1, now);
@@ -201,14 +201,10 @@ function updateAudioToggleUI() {
 
 
 // ==========================================
-// SESSION PERSISTENCE (Session Storage)
+// SESSION PERSISTENCE (sessionStorage with in-memory fallback)
 // ==========================================
 
-// ==========================================
-// SESSION PERSISTENCE (Safe Storage)
-// ==========================================
-
-let fallbackSessionStore = null; // Memory fallback for strict incognito environments
+let fallbackSessionStore = null; // Used when sessionStorage is blocked
 
 function saveGameSession() {
   if (!gameSessionId) return;
@@ -223,12 +219,21 @@ function saveGameSession() {
     lifelineFlipUsed,
     timeLimitPerQuestion,
     distinctLevels,
-    currentQuestionData // Include the active question object
+    currentQuestionData // Active question, so it can be restored exactly
   };
   try {
     sessionStorage.setItem('kbds_active_session', JSON.stringify(sessionData));
   } catch (e) {
     fallbackSessionStore = sessionData;
+  }
+}
+
+// Returns the raw saved string from sessionStorage, or null if unavailable
+function readSavedSessionRaw() {
+  try {
+    return sessionStorage.getItem('kbds_active_session');
+  } catch (e) {
+    return null;
   }
 }
 
@@ -246,13 +251,7 @@ function checkSavedSession() {
 
 async function resumeGameSession() {
   try {
-    let saved = null;
-    try {
-      saved = sessionStorage.getItem('kbds_active_session');
-    } catch (err) {
-      saved = null;
-    }
-    
+    const saved = readSavedSessionRaw();
     const data = saved ? JSON.parse(saved) : fallbackSessionStore;
     if (!data) {
       alert("No saved session found.");
@@ -260,6 +259,7 @@ async function resumeGameSession() {
       return;
     }
 
+    // Restore state
     gameSessionId = data.gameSessionId;
     currentIndex = data.currentIndex;
     usedQuestionIDs = new Set(data.usedQuestionIDs || []);
@@ -272,6 +272,7 @@ async function resumeGameSession() {
     distinctLevels = data.distinctLevels || [];
     currentQuestionData = data.currentQuestionData || null;
 
+    // Restore lifeline button appearance
     if (lifeline5050Used) document.getElementById('life-5050').classList.add('used');
     if (lifelineAudienceUsed) document.getElementById('life-audience').classList.add('used');
     if (lifelineFlipUsed) document.getElementById('life-flip').classList.add('used');
@@ -283,78 +284,26 @@ async function resumeGameSession() {
     document.getElementById("setup-modal").style.display = "none";
     playSound('click');
 
-    // If we have the exact active question saved, restore it directly!
-    if (currentQuestionData) {
-      canSelect = true;
-      stopTimer();
-      timeRemaining = timeLimitPerQuestion;
-
-      document.getElementById('lbl-level').innerText = `${currentQuestionData.qId}9${currentQuestionData.numericLevel * 10}`;
-      const currentPrize = prizeLadder[Math.min(currentIndex, prizeLadder.length - 1)];
-      document.getElementById('lbl-prize').innerText = `Question ${currentIndex + 1} • Points: ${currentPrize}`;
-
-      document.getElementById('lbl-question-en').innerText = currentQuestionData.en.qText;
-      document.getElementById('lbl-question-hi').innerText = currentQuestionData.hi.qText;
-
-      currentOptions = currentQuestionData.options;
-      renderOptions();
-      setupBulbState(false, null);
-
-      // Render the media replay icon if the restored question is Picture, Audio, or Video
-      const mediaBtn = document.getElementById('life-media-replay');
-      if (mediaBtn && ['P', 'A', 'V'].includes(currentQuestionData.qType)) {
-        let mediaIconSvg = '';
-        if (currentQuestionData.qType === 'P') {
-          mediaIconSvg = `<svg viewBox="0 0 160 100" xmlns="http://www.w3.org/2000/svg">
-            <ellipse cx="80" cy="50" rx="75" ry="45" fill="#0284c7" stroke="#032b43" stroke-width="2"/>
-            <ellipse cx="80" cy="50" rx="65" ry="36" fill="#032b43"/>
-            <ellipse cx="80" cy="50" rx="65" ry="36" fill="none" stroke="#38bdf8" stroke-width="3"/>
-            <g fill="#38bdf8">
-              <rect x="52" y="32" width="56" height="36" rx="4" fill="none" stroke="#38bdf8" stroke-width="3"/>
-              <circle cx="64" cy="42" r="4"/>
-              <polygon points="56,62 70,48 80,58 92,44 104,62"/>
-            </g>
-          </svg>`;
-        } else if (currentQuestionData.qType === 'A') {
-          mediaIconSvg = `<svg viewBox="0 0 160 100" xmlns="http://www.w3.org/2000/svg">
-            <ellipse cx="80" cy="50" rx="75" ry="45" fill="#0284c7" stroke="#032b43" stroke-width="2"/>
-            <ellipse cx="80" cy="50" rx="65" ry="36" fill="#032b43"/>
-            <ellipse cx="80" cy="50" rx="65" ry="36" fill="none" stroke="#38bdf8" stroke-width="3"/>
-            <g fill="#38bdf8">
-              <ellipse cx="56" cy="62" rx="7" ry="5" transform="rotate(-20 56 62)"/>
-              <ellipse cx="88" cy="56" rx="7" ry="5" transform="rotate(-20 88 56)"/>
-              <path d="M 61 60 V 34 L 93 28 V 54 L 89 54 V 32 L 65 37 V 60 Z"/>
-            </g>
-          </svg>`;
-        } else if (currentQuestionData.qType === 'V') {
-          mediaIconSvg = `<svg viewBox="0 0 160 100" xmlns="http://www.w3.org/2000/svg">
-            <ellipse cx="80" cy="50" rx="75" ry="45" fill="#0284c7" stroke="#032b43" stroke-width="2"/>
-            <ellipse cx="80" cy="50" rx="65" ry="36" fill="#032b43"/>
-            <ellipse cx="80" cy="50" rx="65" ry="36" fill="none" stroke="#38bdf8" stroke-width="3"/>
-            <g fill="#38bdf8">
-              <rect x="52" y="34" width="38" height="32" rx="4"/>
-              <polygon points="94,40 108,32 108,68 94,60"/>
-            </g>
-          </svg>`;
-        }
-        mediaBtn.innerHTML = mediaIconSvg;
-        mediaBtn.style.display = 'inline-flex';
-        // Force browser layout reflow to make the icon appear instantly
-        void mediaBtn.offsetWidth;
-      } else if (mediaBtn) {
-        mediaBtn.style.display = 'none';
-      }
-
-      if (gameModeSetting === "timed" || (gameModeSetting === "kbds" && currentIndex < 10)) {
-        isTimedMode = true;
-        document.getElementById("timer-container").style.display = "block";
-        startTimer();
-      } else {
-        isTimedMode = false;
-        document.getElementById("timer-container").style.display = "none";
-      }
-    } else {
+    if (!currentQuestionData) {
       await loadQuestion();
+      return;
+    }
+
+    // Restore the exact active question
+    canSelect = true;
+    stopTimer();
+    timeRemaining = timeLimitPerQuestion;
+
+    renderQuestionUI();
+    updateMediaButton(currentQuestionData.qType);
+
+    if (gameModeSetting === "timed" || (gameModeSetting === "kbds" && currentIndex < 10)) {
+      isTimedMode = true;
+      document.getElementById("timer-container").style.display = "block";
+      startTimer();
+    } else {
+      isTimedMode = false;
+      document.getElementById("timer-container").style.display = "none";
     }
   } catch (e) {
     console.error("Failed to resume session:", e);
@@ -370,16 +319,15 @@ function clearSavedSession() {
     // Ignore storage restriction errors
   }
   fallbackSessionStore = null;
-  
-  // Hide the resume container immediately upon clearing
+
+  // Hide the resume container immediately
   const resumeContainer = document.getElementById('resume-container');
-  if (resumeContainer) {
-    resumeContainer.style.display = 'none';
-  }
+  if (resumeContainer) resumeContainer.style.display = 'none';
 }
 
+
 // ==========================================
-// HIGH SCORES & LEADERBOARD (Local Storage)
+// HIGH SCORES & LEADERBOARD (localStorage)
 // ==========================================
 
 function getNumericScoreVal(prizeStr) {
@@ -404,20 +352,6 @@ function saveHighScore(pointsStr, mode) {
   return false;
 }
 
-/*
-function saveHighScore(score) {
-  try {
-    const currentHigh = parseInt(localStorage.getItem('kbds_high_score') || '0', 10);
-    if (score > currentHigh) {
-      localStorage.setItem('kbds_high_score', score);
-      updateHighScoreDisplay();
-    }
-  } catch (e) {
-    console.warn('localStorage setItem restricted:', e);
-  }
-}
-*/
-
 function openLeaderboardModal() {
   const modes = ['untimed', 'timed', 'kbds'];
   let html = '<ul style="list-style: none; padding: 0;">';
@@ -439,51 +373,62 @@ function closeLeaderboardModal() {
   playSound('click');
 }
 
+function updateHighScoreDisplay() {
+  try {
+    const modes = ['untimed', 'timed', 'kbds'];
+    let maxScore = 0;
+
+    // Find the highest score across all modes
+    modes.forEach(m => {
+      const val = parseInt(localStorage.getItem(`kbds_highscore_${m}`) || '0', 10);
+      if (val > maxScore) maxScore = val;
+    });
+
+    const setupHighScoreEl = document.getElementById('setup-highscore-val');
+    if (setupHighScoreEl) {
+      setupHighScoreEl.innerText = `${maxScore.toLocaleString()} Points`;
+    }
+  } catch (e) {
+    console.warn('localStorage getItem restricted:', e);
+  }
+}
+
 
 // ==========================================
 // KEYBOARD SHORTCUTS
 // ==========================================
 
-// ==========================================
-// KEYBOARD SHORTCUTS & FOCUS FIXES
-// ==========================================
-
 function initKeyboardListeners() {
   document.addEventListener('keydown', (e) => {
-    // Ignore shortcuts if user is typing inside an input field
-    if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) {
-      return;
-    }
+    // Ignore shortcuts while typing in a form field
+    if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) return;
 
-    // Helper to accurately check computed CSS visibility
+    // Checks computed CSS visibility of a modal
     const isVisible = (id) => {
       const el = document.getElementById(id);
-      if (!el) return false;
-      return window.getComputedStyle(el).display !== 'none';
+      return !!el && window.getComputedStyle(el).display !== 'none';
     };
 
-    const setupModalOpen = isVisible('setup-modal');
-    const explanationModalOpen = isVisible('explanation-modal');
-    const quitModalOpen = isVisible('quit-modal');
-    const pollModalOpen = isVisible('poll-modal');
+    const isConfirmKey = e.key === 'Enter' || e.key === ' ';
 
-    if (explanationModalOpen) {
-      if (e.key === 'Enter' || e.key === ' ') {
+    // Open modals capture the keyboard first
+    if (isVisible('explanation-modal')) {
+      if (isConfirmKey) {
         e.preventDefault();
         closeExplanationModal();
       }
       return;
     }
 
-    if (pollModalOpen) {
-      if (e.key === 'Enter' || e.key === ' ') {
+    if (isVisible('poll-modal')) {
+      if (isConfirmKey) {
         e.preventDefault();
         closePoll();
       }
       return;
     }
 
-    if (quitModalOpen) {
+    if (isVisible('quit-modal')) {
       if (e.key === 'Enter' || e.key === 'y' || e.key === 'Y') {
         e.preventDefault();
         confirmQuit();
@@ -494,44 +439,28 @@ function initKeyboardListeners() {
       return;
     }
 
-    if (setupModalOpen) return;
+    if (isVisible('setup-modal')) return;
 
-    // During active gameplay
-    if (canSelect) {
-      if (['1', 'a', 'A'].includes(e.key)) {
-        e.preventDefault();
-        triggerOptionKey(0);
-      } else if (['2', 'b', 'B'].includes(e.key)) {
-        e.preventDefault();
-        triggerOptionKey(1);
-      } else if (['3', 'c', 'C'].includes(e.key)) {
-        e.preventDefault();
-        triggerOptionKey(2);
-      } else if (['4', 'd', 'D'].includes(e.key)) {
-        e.preventDefault();
-        triggerOptionKey(3);
-      } else if (['5'].includes(e.key)) {
-        e.preventDefault();
-        use5050();
-      } else if (['f', 'F'].includes(e.key)) {
-        e.preventDefault();
-        useFlip();
-      } else if (['p', 'P'].includes(e.key)) { 
-        e.preventDefault();
-        useAudience();
-      } else if (['q', 'Q'].includes(e.key)) {
-        e.preventDefault();
-        useQuit();
-      }
+    // Active gameplay
+    if (!canSelect) return;
+
+    if (e.key in OPTION_KEYS) {
+      e.preventDefault();
+      triggerOptionKey(OPTION_KEYS[e.key]);
+    } else if (e.key === '5') {
+      e.preventDefault();
+      use5050();
+    } else if (e.key === 'f' || e.key === 'F') {
+      e.preventDefault();
+      useFlip();
+    } else if (e.key === 'p' || e.key === 'P') {
+      e.preventDefault();
+      useAudience();
+    } else if (e.key === 'q' || e.key === 'Q') {
+      e.preventDefault();
+      useQuit();
     }
   });
-}
-
-function triggerOptionKey(idx) {
-  const btn = document.getElementById(`opt-btn-${idx}`);
-  if (btn && btn.style.visibility !== 'hidden' && btn.style.display !== 'none') {
-    btn.click();
-  }
 }
 
 function triggerOptionKey(idx) {
@@ -568,6 +497,7 @@ async function loadQuestionBankMeta() {
 
     if (!gameSessionId) gameSessionId = crypto.randomUUID();
 
+    // Debug mode (non-question) restricts to media questions only
     let qtypeFilter = null;
     if (isDebugMode() && !isDebugQuestionMode()) {
       qtypeFilter = ['A', 'V', 'P'];
@@ -612,18 +542,43 @@ async function loadQuestionBankMeta() {
 // ==========================================
 
 function getUrlParam(param) {
-  const urlParams = new URLSearchParams(window.location.search);
-  return urlParams.get(param);
+  return new URLSearchParams(window.location.search).get(param);
 }
 
 function isDebugMode() {
   const currentFilename = window.location.pathname.split('/').pop().toLowerCase();
-  const isDebug = getUrlParam('debug') === 'true';
-  return currentFilename !== 'index.html' && isDebug;
+  return currentFilename !== 'index.html' && getUrlParam('debug') === 'true';
 }
 
 function isDebugQuestionMode() {
   return isDebugMode() && getUrlParam('question') !== null;
+}
+
+
+// ==========================================
+// ANALYTICS HELPERS
+// ==========================================
+
+function currentLevelForAnalytics() {
+  return currentQuestionData ? currentQuestionData.numericLevel : 'unknown';
+}
+
+function trackLifeline(name) {
+  gtag('event', 'lifeline_used', {
+    'game_mode': gameModeSetting,
+    'lifeline_name': name,
+    'question_level': currentLevelForAnalytics(),
+    'question_index': currentIndex + 1
+  });
+}
+
+function trackQuestionFailed(reason) {
+  gtag('event', 'question_failed', {
+    'game_mode': gameModeSetting,
+    'question_level': currentLevelForAnalytics(),
+    'question_index': currentIndex + 1,
+    'fail_reason': reason
+  });
 }
 
 
@@ -667,7 +622,7 @@ function openExplanationModal() {
   gtag('event', 'explanation_viewed', {
     'game_mode': gameModeSetting,
     'question_index': currentIndex + 1,
-    'question_level': currentQuestionData ? currentQuestionData.numericLevel : 'unknown'
+    'question_level': currentLevelForAnalytics()
   });
 
   document.getElementById('modal-explanation-en').innerHTML = currentExplanation.en || "";
@@ -693,6 +648,7 @@ function toggleTimerInput(show) {
   document.getElementById("timer-input-group").style.display = show ? "flex" : "none";
 }
 
+// Shows/hides the explanation bulb. When active, the question box becomes clickable.
 function setupBulbState(makeActive = false, explanation = null) {
   const bulbBtn = document.getElementById('bulb-btn');
   const questionBox = document.querySelector('.question-box');
@@ -703,29 +659,27 @@ function setupBulbState(makeActive = false, explanation = null) {
 
   currentExplanation = hasExplanation ? { en: expEn, hi: expHi } : null;
 
-  if (hasExplanation) {
-    bulbBtn.style.display = 'flex';
-    if (makeActive) {
-      bulbBtn.classList.add('active-bulb');
-      if (questionBox) {
-        questionBox.classList.add('clickable-explanation');
-        questionBox.onclick = openExplanationModal;
-      }
-    } else {
-      bulbBtn.classList.remove('active-bulb');
-      if (questionBox) {
-        questionBox.classList.remove('clickable-explanation');
-        questionBox.onclick = null;
-      }
-    }
-  } else {
-    bulbBtn.style.display = 'none';
-    bulbBtn.classList.remove('active-bulb');
-    if (questionBox) {
-      questionBox.classList.remove('clickable-explanation');
-      questionBox.onclick = null;
-    }
+  const clickable = hasExplanation && makeActive;
+
+  bulbBtn.style.display = hasExplanation ? 'flex' : 'none';
+  bulbBtn.classList.toggle('active-bulb', clickable);
+
+  if (questionBox) {
+    questionBox.classList.toggle('clickable-explanation', clickable);
+    questionBox.onclick = clickable ? openExplanationModal : null;
   }
+}
+
+// Schedules the next game step; it can also be fired early (e.g. by closing the explanation)
+function scheduleNextStep(callback, delayMs) {
+  pendingNextStepCallback = callback;
+  nextStepTimeout = setTimeout(() => {
+    if (pendingNextStepCallback) {
+      const cb = pendingNextStepCallback;
+      pendingNextStepCallback = null;
+      cb();
+    }
+  }, delayMs);
 }
 
 
@@ -758,6 +712,7 @@ async function startGame() {
 async function fetchNextQuestion() {
   if (distinctLevels.length === 0) return null;
 
+  // Map the question position onto the available difficulty levels
   let levelIdx = Math.floor((currentIndex / prizeLadder.length) * distinctLevels.length);
   levelIdx = Math.min(levelIdx, distinctLevels.length - 1);
   const targetLevel = distinctLevels[levelIdx];
@@ -794,42 +749,12 @@ async function fetchNextQuestion() {
   }
 }
 
-async function loadQuestion() {
-  canSelect = true;
-  stopTimer();
-  timeRemaining = timeLimitPerQuestion; 
-  if (nextStepTimeout) { clearTimeout(nextStepTimeout); nextStepTimeout = null; }
-  pendingNextStepCallback = null;
-
-  if (currentIndex >= maxGameQuestions) {
-    endGame(true);
-    return;
-  }
-
-  if (gameModeSetting === "timed") {
-    isTimedMode = true;
-    document.getElementById("timer-container").style.display = "block";
-  } else if (gameModeSetting === "untimed") {
-    isTimedMode = false;
-    document.getElementById("timer-container").style.display = "none";
-  } else if (gameModeSetting === "kbds") {
-    isTimedMode = currentIndex < 10;
-    document.getElementById("timer-container").style.display = isTimedMode ? "block" : "none";
-  }
-  
-  currentQuestionData = await fetchNextQuestion();
-
-  if (!currentQuestionData) {
-    endGame(true);
-    return;
-  }
-
-  // SAVE HERE so the active question state is captured immediately
-  saveGameSession();
-  
+// Paints the current question (labels, text, options) and resets the explanation bulb
+function renderQuestionUI() {
   setupBulbState(false, null);
 
-  document.getElementById('lbl-level').innerText = `${currentQuestionData.qId}9${currentQuestionData.numericLevel * 10}`;
+  document.getElementById('lbl-level').innerText =
+    `${currentQuestionData.qId}9${currentQuestionData.numericLevel * 10}`;
 
   const currentPrize = prizeLadder[Math.min(currentIndex, prizeLadder.length - 1)];
   document.getElementById('lbl-prize').innerText = `Question ${currentIndex + 1} • Points: ${currentPrize}`;
@@ -839,48 +764,91 @@ async function loadQuestion() {
 
   currentOptions = currentQuestionData.options;
   renderOptions();
+}
 
-  const mediaBtn = document.getElementById('life-media-replay');
-  if (['P', 'A', 'V'].includes(currentQuestionData.qType)) {
-    let mediaIconSvg = '';
-    if (currentQuestionData.qType === 'P') {
-      mediaIconSvg = `<svg viewBox="0 0 160 100" xmlns="http://www.w3.org/2000/svg">
-        <ellipse cx="80" cy="50" rx="75" ry="45" fill="#0284c7" stroke="#032b43" stroke-width="2"/>
-        <ellipse cx="80" cy="50" rx="65" ry="36" fill="#032b43"/>
-        <ellipse cx="80" cy="50" rx="65" ry="36" fill="none" stroke="#38bdf8" stroke-width="3"/>
-        <g fill="#38bdf8">
+// Shared SVG for the media replay button (picture / audio / video symbol inside the oval)
+function getMediaIconSvg(qType) {
+  const frame = `
+    <ellipse cx="80" cy="50" rx="75" ry="45" fill="#0284c7" stroke="#032b43" stroke-width="2"/>
+    <ellipse cx="80" cy="50" rx="65" ry="36" fill="#032b43"/>
+    <ellipse cx="80" cy="50" rx="65" ry="36" fill="none" stroke="#38bdf8" stroke-width="3"/>`;
+
+  const symbols = {
+    // Picture
+    P: `<g fill="#38bdf8">
           <rect x="52" y="32" width="56" height="36" rx="4" fill="none" stroke="#38bdf8" stroke-width="3"/>
           <circle cx="64" cy="42" r="4"/>
           <polygon points="56,62 70,48 80,58 92,44 104,62"/>
-        </g>
-      </svg>`;
-    } else if (currentQuestionData.qType === 'A') {
-      mediaIconSvg = `<svg viewBox="0 0 160 100" xmlns="http://www.w3.org/2000/svg">
-        <ellipse cx="80" cy="50" rx="75" ry="45" fill="#0284c7" stroke="#032b43" stroke-width="2"/>
-        <ellipse cx="80" cy="50" rx="65" ry="36" fill="#032b43"/>
-        <ellipse cx="80" cy="50" rx="65" ry="36" fill="none" stroke="#38bdf8" stroke-width="3"/>
-        <g fill="#38bdf8">
+        </g>`,
+    // Audio
+    A: `<g fill="#38bdf8">
           <ellipse cx="56" cy="62" rx="7" ry="5" transform="rotate(-20 56 62)"/>
           <ellipse cx="88" cy="56" rx="7" ry="5" transform="rotate(-20 88 56)"/>
           <path d="M 61 60 V 34 L 93 28 V 54 L 89 54 V 32 L 65 37 V 60 Z"/>
-        </g>
-      </svg>`;
-    } else if (currentQuestionData.qType === 'V') {
-      mediaIconSvg = `<svg viewBox="0 0 160 100" xmlns="http://www.w3.org/2000/svg">
-        <ellipse cx="80" cy="50" rx="75" ry="45" fill="#0284c7" stroke="#032b43" stroke-width="2"/>
-        <ellipse cx="80" cy="50" rx="65" ry="36" fill="#032b43"/>
-        <ellipse cx="80" cy="50" rx="65" ry="36" fill="none" stroke="#38bdf8" stroke-width="3"/>
-        <g fill="#38bdf8">
+        </g>`,
+    // Video
+    V: `<g fill="#38bdf8">
           <rect x="52" y="34" width="38" height="32" rx="4"/>
           <polygon points="94,40 108,32 108,68 94,60"/>
-        </g>
-      </svg>`;
-    }
-    mediaBtn.innerHTML = mediaIconSvg;
+        </g>`
+  };
+
+  return `<svg viewBox="0 0 160 100" xmlns="http://www.w3.org/2000/svg">${frame}${symbols[qType]}</svg>`;
+}
+
+// Shows the replay button for media questions, hides it otherwise. Returns true if media.
+function updateMediaButton(qType) {
+  const mediaBtn = document.getElementById('life-media-replay');
+  if (!mediaBtn) return false;
+
+  if (['P', 'A', 'V'].includes(qType)) {
+    mediaBtn.innerHTML = getMediaIconSvg(qType);
     mediaBtn.style.display = 'inline-flex';
+    void mediaBtn.offsetWidth; // Force layout reflow so the icon appears instantly
+    return true;
+  }
+
+  mediaBtn.style.display = 'none';
+  return false;
+}
+
+async function loadQuestion() {
+  canSelect = true;
+  stopTimer();
+  timeRemaining = timeLimitPerQuestion;
+  if (nextStepTimeout) { clearTimeout(nextStepTimeout); nextStepTimeout = null; }
+  pendingNextStepCallback = null;
+
+  if (currentIndex >= maxGameQuestions) {
+    endGame(true);
+    return;
+  }
+
+  // Timer visibility per mode (KBDS mode is timed for the first 10 questions only)
+  if (gameModeSetting === "timed") {
+    isTimedMode = true;
+  } else if (gameModeSetting === "untimed") {
+    isTimedMode = false;
+  } else if (gameModeSetting === "kbds") {
+    isTimedMode = currentIndex < 10;
+  }
+  document.getElementById("timer-container").style.display = isTimedMode ? "block" : "none";
+
+  currentQuestionData = await fetchNextQuestion();
+
+  if (!currentQuestionData) {
+    endGame(true);
+    return;
+  }
+
+  // Save immediately so the active question can be restored on resume
+  saveGameSession();
+  renderQuestionUI();
+
+  if (updateMediaButton(currentQuestionData.qType)) {
+    // Timer starts when the media modal is closed
     showMediaModal(currentQuestionData.qType, currentQuestionData.mediaUrl);
   } else {
-    mediaBtn.style.display = 'none';
     startTimer();
   }
 }
@@ -915,6 +883,7 @@ async function handleSelection(selectedBtn, selectedIndex) {
 
   selectedBtn.classList.add('selected');
 
+  // Answer is verified server-side
   let result;
   try {
     const { data, error } = await supabaseClient.rpc('submit_answer', {
@@ -931,15 +900,16 @@ async function handleSelection(selectedBtn, selectedIndex) {
     return;
   }
 
+  // Short suspense delay before revealing the result
   setTimeout(() => {
     setupBulbState(true, { en: result.explanationEn, hi: result.explanationHi });
+    selectedBtn.classList.remove('selected');
 
     if (result.isCorrect) {
       playSound('correct');
-      selectedBtn.classList.remove('selected');
       selectedBtn.classList.add('correct');
 
-      pendingNextStepCallback = async () => {
+      scheduleNextStep(async () => {
         currentIndex++;
         saveGameSession();
         if (currentIndex < maxGameQuestions) {
@@ -947,42 +917,17 @@ async function handleSelection(selectedBtn, selectedIndex) {
         } else {
           endGame(true);
         }
-      };
-
-      nextStepTimeout = setTimeout(() => {
-        if (pendingNextStepCallback) {
-          const cb = pendingNextStepCallback;
-          pendingNextStepCallback = null;
-          cb();
-        }
       }, 5000);
 
     } else {
       playSound('incorrect');
-      selectedBtn.classList.remove('selected');
       selectedBtn.classList.add('incorrect');
-
-      gtag('event', 'question_failed', {
-        'game_mode': gameModeSetting,
-        'question_level': currentQuestionData.numericLevel,
-        'question_index': currentIndex + 1,
-        'fail_reason': 'incorrect_selection'
-      });
+      trackQuestionFailed('incorrect_selection');
 
       const correctBtn = document.getElementById(`opt-btn-${result.correctIndex}`);
       if (correctBtn) correctBtn.classList.add('correct');
 
-      pendingNextStepCallback = () => {
-        endGame(false);
-      };
-
-      nextStepTimeout = setTimeout(() => {
-        if (pendingNextStepCallback) {
-          const cb = pendingNextStepCallback;
-          pendingNextStepCallback = null;
-          cb();
-        }
-      }, 6000);
+      scheduleNextStep(() => endGame(false), 6000);
     }
   }, 1200);
 }
@@ -1035,13 +980,11 @@ function showMediaModal(type, url) {
 
 function closeMediaModal() {
   playSound('click');
-  const containerEl = document.getElementById('media-content');
-  const mediaElements = containerEl.querySelectorAll('audio, video');
-  mediaElements.forEach(el => el.pause());
-
+  document.querySelectorAll('#media-content audio, #media-content video').forEach(el => el.pause());
   document.getElementById('media-modal').style.display = 'none';
 
   if (canSelect && isTimedMode) {
+    // Resume if the clock is already running, otherwise start fresh
     if (timeRemaining > 0 && timeRemaining < timeLimitPerQuestion) {
       resumeTimer();
     } else {
@@ -1055,19 +998,13 @@ function closeMediaModal() {
 // TIMER SYSTEM
 // ==========================================
 
-function startTimer() {
-  stopTimer();
-  if (!isTimedMode) return;
-
-  timeRemaining = timeLimitPerQuestion;
+// Ticks once per second until time runs out
+function runCountdown() {
   updateTimerUI();
-
   timerInterval = setInterval(() => {
     timeRemaining--;
     updateTimerUI();
-    if (timeRemaining <= 5 && timeRemaining > 0) {
-      playSound('tick');
-    }
+    if (timeRemaining <= 5 && timeRemaining > 0) playSound('tick');
     if (timeRemaining <= 0) {
       stopTimer();
       handleTimeout();
@@ -1075,22 +1012,19 @@ function startTimer() {
   }, 1000);
 }
 
+// Starts the timer from the full time limit
+function startTimer() {
+  stopTimer();
+  if (!isTimedMode) return;
+  timeRemaining = timeLimitPerQuestion;
+  runCountdown();
+}
+
+// Continues the timer from the remaining time
 function resumeTimer() {
   stopTimer();
   if (!isTimedMode) return;
-
-  updateTimerUI();
-  timerInterval = setInterval(() => {
-    timeRemaining--;
-    updateTimerUI();
-    if (timeRemaining <= 5 && timeRemaining > 0) {
-      playSound('tick');
-    }
-    if (timeRemaining <= 0) {
-      stopTimer();
-      handleTimeout();
-    }
-  }, 1000);
+  runCountdown();
 }
 
 function stopTimer() {
@@ -1116,14 +1050,9 @@ function updateTimerUI() {
 async function handleTimeout() {
   canSelect = false;
   playSound('incorrect');
+  trackQuestionFailed('timeout');
 
-  gtag('event', 'question_failed', {
-    'game_mode': gameModeSetting,
-    'question_level': currentQuestionData ? currentQuestionData.numericLevel : 'unknown',
-    'question_index': currentIndex + 1,
-    'fail_reason': 'timeout'
-  });
-
+  // Submit "no answer" (-1) to reveal the correct option and explanation
   try {
     const { data, error } = await supabaseClient.rpc('submit_answer', {
       p_token: currentQuestionData.attemptToken,
@@ -1139,17 +1068,9 @@ async function handleTimeout() {
     console.error("Timeout scoring failed:", e);
   }
 
-  pendingNextStepCallback = () => {
+  scheduleNextStep(() => {
     alert("Time is up! / समय समाप्त!");
     endGame(false);
-  };
-
-  nextStepTimeout = setTimeout(() => {
-    if (pendingNextStepCallback) {
-      const cb = pendingNextStepCallback;
-      pendingNextStepCallback = null;
-      cb();
-    }
   }, 4000);
 }
 
@@ -1163,13 +1084,7 @@ async function use5050() {
   lifeline5050Used = true;
   document.getElementById('life-5050').classList.add('used');
   playSound('click');
-
-  gtag('event', 'lifeline_used', {
-    'game_mode': gameModeSetting,
-    'lifeline_name': '50_50',
-    'question_level': currentQuestionData ? currentQuestionData.numericLevel : 'unknown',
-    'question_index': currentIndex + 1
-  });
+  trackLifeline('50_50');
 
   try {
     const { data, error } = await supabaseClient.rpc('use_5050', {
@@ -1193,20 +1108,13 @@ async function useAudience() {
   lifelineAudienceUsed = true;
   document.getElementById('life-audience').classList.add('used');
   playSound('click');
+  trackLifeline('audience_poll');
 
-  gtag('event', 'lifeline_used', {
-    'game_mode': gameModeSetting,
-    'lifeline_name': 'audience_poll',
-    'question_level': currentQuestionData ? currentQuestionData.numericLevel : 'unknown',
-    'question_index': currentIndex + 1
-  });
-
+  // Only options still visible (after 50:50) take part in the poll
   const activeIndices = [];
   for (let i = 0; i < 4; i++) {
     const btn = document.getElementById(`opt-btn-${i}`);
-    if (btn && btn.style.visibility !== 'hidden') {
-      activeIndices.push(i);
-    }
+    if (btn && btn.style.visibility !== 'hidden') activeIndices.push(i);
   }
 
   try {
@@ -1223,9 +1131,9 @@ async function useAudience() {
       document.getElementById(`pbar-${i}`).style.height = "0%";
     }
 
-    const pollModal = document.getElementById("poll-modal");
-    pollModal.style.display = "flex";
+    document.getElementById("poll-modal").style.display = "flex";
 
+    // Double rAF so the bars animate from 0% after the modal is painted
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         for (let i = 0; i < 4; i++) {
@@ -1252,13 +1160,7 @@ async function useFlip() {
   lifelineFlipUsed = true;
   document.getElementById('life-flip').classList.add('used');
   playSound('click');
-
-  gtag('event', 'lifeline_used', {
-    'game_mode': gameModeSetting,
-    'lifeline_name': 'flip_question',
-    'question_level': currentQuestionData ? currentQuestionData.numericLevel : 'unknown',
-    'question_index': currentIndex + 1
-  });
+  trackLifeline('flip_question');
 
   await loadQuestion();
 }
@@ -1274,7 +1176,8 @@ function useQuit() {
   playSound('click');
 
   const safeVal = currentIndex > 0 ? prizeLadder[currentIndex - 1] : "0";
-  document.getElementById('quit-modal-msg').innerText = `Are you sure you want to quit? You will leave with ${safeVal} Points. / क्या आप खेल छोड़ना चाहते हैं? आप ${safeVal} पॉइंट्स लेकर जाएंगे।`;
+  document.getElementById('quit-modal-msg').innerText =
+    `Are you sure you want to quit? You will leave with ${safeVal} Points. / क्या आप खेल छोड़ना चाहते हैं? आप ${safeVal} पॉइंट्स लेकर जाएंगे।`;
   document.getElementById('quit-modal').style.display = 'flex';
 }
 
@@ -1302,31 +1205,30 @@ function endGame(isVictory, isQuit = false) {
 
   saveHighScore(pointsWon, gameModeSetting);
 
+  let outcome = 'lost_wrong_answer';
+  let title = "Game Over";
   if (isVictory) {
+    outcome = 'victory';
+    title = "Shubhkamnayein! Master of Dharm";
     playSound('correct');
-    gtag('event', 'game_end', { 'game_mode': gameModeSetting, 'outcome': 'victory', 'questions_answered': currentIndex });
   } else if (isQuit) {
-    gtag('event', 'game_end', { 'game_mode': gameModeSetting, 'outcome': 'quit', 'questions_answered': currentIndex });
-  } else {
-    gtag('event', 'game_end', { 'game_mode': gameModeSetting, 'outcome': 'lost_wrong_answer', 'questions_answered': currentIndex });
+    outcome = 'quit';
+    title = "You Chose to Quit / आपने खेल छोड़ दिया";
   }
 
-  document.querySelectorAll('.option-btn').forEach(btn => btn.style.pointerEvents = 'none');
-  document.querySelectorAll('.lifeline-btn').forEach(btn => btn.style.pointerEvents = 'none');
+  gtag('event', 'game_end', {
+    'game_mode': gameModeSetting,
+    'outcome': outcome,
+    'questions_answered': currentIndex
+  });
+
+  // Lock the board
+  document.querySelectorAll('.option-btn, .lifeline-btn').forEach(btn => btn.style.pointerEvents = 'none');
 
   document.getElementById('game-ui').style.display = 'block';
   document.getElementById('end-ui').style.display = 'flex';
-
-  if (isVictory) {
-    document.getElementById('end-status-title').innerText = "Shubhkamnayein! Master of Dharm";
-    document.getElementById('final-prize-val').innerText = `${pointsWon} Points`;
-  } else if (isQuit) {
-    document.getElementById('end-status-title').innerText = "You Chose to Quit / आपने खेल छोड़ दिया";
-    document.getElementById('final-prize-val').innerText = `${pointsWon} Points`;
-  } else {
-    document.getElementById('end-status-title').innerText = "Game Over";
-    document.getElementById('final-prize-val').innerText = `${pointsWon} Points`;
-  }
+  document.getElementById('end-status-title').innerText = title;
+  document.getElementById('final-prize-val').innerText = `${pointsWon} Points`;
 }
 
 function resetToSetup() {
@@ -1339,38 +1241,15 @@ function resetToSetup() {
   lifelineAudienceUsed = false;
   lifelineFlipUsed = false;
 
-  document.getElementById('life-5050').classList.remove('used');
-  document.getElementById('life-audience').classList.remove('used');
-  document.getElementById('life-flip').classList.remove('used');
+  ['life-5050', 'life-audience', 'life-flip'].forEach(id => {
+    document.getElementById(id).classList.remove('used');
+  });
 
-  document.querySelectorAll('.option-btn').forEach(btn => btn.style.pointerEvents = 'auto');
-  document.querySelectorAll('.lifeline-btn').forEach(btn => btn.style.pointerEvents = 'auto');
+  // Unlock the board
+  document.querySelectorAll('.option-btn, .lifeline-btn').forEach(btn => btn.style.pointerEvents = 'auto');
 
   updateHighScoreDisplay();
   document.getElementById('game-ui').style.display = 'block';
   document.getElementById('end-ui').style.display = 'none';
   document.getElementById('setup-modal').style.display = 'flex';
-}
-
-function updateHighScoreDisplay() {
-  try {
-    const modes = ['untimed', 'timed', 'kbds'];
-    let maxScore = 0;
-
-    // Loop through each mode to find the highest score recorded
-    modes.forEach(m => {
-      const val = parseInt(localStorage.getItem(`kbds_highscore_${m}`) || '0', 10);
-      if (val > maxScore) {
-        maxScore = val;
-      }
-    });
-
-    // Update the setup banner with the highest score found
-    const setupHighScoreEl = document.getElementById('setup-highscore-val');
-    if (setupHighScoreEl) {
-      setupHighScoreEl.innerText = `${maxScore.toLocaleString()} Points`;
-    }
-  } catch (e) {
-    console.warn('localStorage getItem restricted:', e);
-  }
 }
