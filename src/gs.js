@@ -946,7 +946,7 @@ async function handleSelection(selectedBtn, selectedIndex) {
 
       scheduleNextStep(async () => {
         currentIndex++;
-        saveGameSession();
+        // saveGameSession();
         if (currentIndex < maxGameQuestions) {
           await loadQuestion();
         } else {
