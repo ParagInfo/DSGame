@@ -1355,9 +1355,9 @@ function resetToSetup() {
 function updateHighScoreDisplay() {
   try {
     const highScore = localStorage.getItem('kbds_high_score') || 0;
-    const highScoreEl = document.getElementById('lbl-high-score');
-    if (highScoreEl) {
-      highScoreEl.innerText = Number(highScore).toLocaleString();
+    const setupHighScoreEl = document.getElementById('setup-highscore-val');
+    if (setupHighScoreEl) {
+      setupHighScoreEl.innerText = `${Number(highScore).toLocaleString()} Points`;
     }
   } catch (e) {
     console.warn('localStorage getItem restricted:', e);
