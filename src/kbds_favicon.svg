@@ -1,0 +1,32 @@
+<svg viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="grandGold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="25%" stop-color="#FCEE8B" />
+      <stop offset="50%" stop-color="#D4AF37" />
+      <stop offset="75%" stop-color="#AA771C" />
+      <stop offset="100%" stop-color="#8B5A00" />
+    </linearGradient>
+
+    <linearGradient id="deepPurple" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2e1065" />
+      <stop offset="100%" stop-color="#0f051d" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background Base -->
+  <circle cx="150" cy="150" r="142" fill="url(#deepPurple)" stroke="url(#grandGold)" stroke-width="6" />
+  <circle cx="150" cy="150" r="130" fill="none" stroke="url(#grandGold)" stroke-width="3" />
+  
+  <!-- Simplified Petals for Small Scales -->
+  <g fill="none" stroke="url(#grandGold)" stroke-width="3" opacity="0.9" transform="rotate(22.5 150 150)">
+    <path d="M 150 150 C 180 85, 230 85, 260 150 C 230 215, 180 215, 150 150 Z" transform="rotate(0, 150, 150)" />
+    <path d="M 150 150 C 180 85, 230 85, 260 150 C 230 215, 180 215, 150 150 Z" transform="rotate(90, 150, 150)" />
+    <path d="M 150 150 C 180 85, 230 85, 260 150 C 230 215, 180 215, 150 150 Z" transform="rotate(180, 150, 150)" />
+    <path d="M 150 150 C 180 85, 230 85, 260 150 C 230 215, 180 215, 150 150 Z" transform="rotate(270, 150, 150)" />
+  </g>
+
+  <!-- Central Core & Om Symbol -->
+  <circle cx="150" cy="150" r="50" fill="url(#deepPurple)" stroke="url(#grandGold)" stroke-width="4" />
+  <text x="150" y="167" font-family="&#39;Georgia&#39;, &#39;Times New Roman&#39;, serif" font-weight="bold" font-size="62" fill="url(#grandGold)" text-anchor="middle">ॐ</text>
+</svg>
