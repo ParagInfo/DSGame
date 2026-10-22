@@ -7,9 +7,19 @@
   "theme_color": "#1b023a",
   "icons": [
     {
-      "src": "src/kbds.css",
+      "src": "src/kbds_logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "src/icon-192.png",
       "sizes": "192x192",
-      "type": "text/css"
+      "type": "image/png"
+    },
+    {
+      "src": "src/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
     }
   ]
 }
