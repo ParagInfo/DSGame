@@ -42,7 +42,7 @@ window.faqData = {
         a: "Yes! The game automatically saves your active session. A 'Resume' option will appear on the setup screen if an unfinished game is detected."
       },
       {
-        q: "What happens if I leave the game open on my device and come back later or the next day?"
+        q: "What happens if I leave the game open on my device and come back later or the next day?",
         a: "Mobile browsers and operating systems manage background tabs strictly and may occasionally pause or unload the page to save memory. However, because our game features automatic session persistence, your progress is saved locally. If the page unloads or you return later, you can use the Resume option on the setup screen to pick up right where you left off. (Note: Active sessions may expire following a midnight reset or if browser storage is manually cleared)."
       },
       {
@@ -52,10 +52,6 @@ window.faqData = {
       {
         q: "Can I play using my keyboard?",
         a: "Yes! Use keys 1–4 or A–D to select options, 5 for 50:50, F for Flip, P for Audience Poll, and Q to Quit."
-      },
-      {
-        q: "What happens if I leave the game open on my device and come back later or the next day?",
-        a: "Mobile browsers and operating systems manage background tabs strictly. If you switch away from the game, your device may pause or unload the page to save memory. Furthermore, because all open games automatically reset at midnight, leaving a game open overnight will cause your active session to expire. If you return to an old, stale screen, it is best to refresh or start a new game to avoid any errors."
       },
       {
         q: "I found an error in a question. How do I report it?",
@@ -102,7 +98,7 @@ window.faqData = {
         a: "हाँ! गेम स्वचालित रूप से आपके सक्रिय सत्र को सहेजता है। यदि कोई अधूरा गेम पाया जाता है, तो सेटअप स्क्रीन पर 'फिर से शुरू करें' (Resume) विकल्प दिखाई देगा।"
       },
       {
-        q: "यदि मैं अपने डिवाइस पर गेम खुला छोड़कर बाद में या अगले दिन वापस आता हूँ तो क्या होता है?"
+        q: "यदि मैं अपने डिवाइस पर गेम खुला छोड़कर बाद में या अगले दिन वापस आता हूँ तो क्या होता है?",
         a: "मोबाइल ब्राउज़र और ऑपरेटिंग सिस्टम बैकग्राउंड टैब को सख्ती से प्रबंधित करते हैं और मेमोरी बचाने के लिए कभी-कभी पेज को रोक या बंद कर सकते हैं। हालाँकि, चूँकि हमारे गेम में ऑटोमैटिक सेशन सेविंग की सुविधा है, आपकी प्रगति स्थानीय रूप से सहेजी जाती है। यदि पेज रीलोड हो जाता है या आप बाद में वापस आते हैं, तो आप सेटअप स्क्रीन पर 'फिर से शुरू करें' (Resume) विकल्प का उपयोग करके वहीं से खेल सकते हैं जहाँ आपने छोड़ा था। (नोट: मध्यरात्रि रीसेट के बाद या ब्राउज़र डेटा साफ़ किए जाने पर सक्रिय सत्र समाप्त हो सकते हैं)।"
       },
       {
@@ -112,10 +108,6 @@ window.faqData = {
       {
         q: "क्या मैं अपने कीबोर्ड का उपयोग करके खेल सकता हूँ?",
         a: "हाँ! विकल्पों का चयन करने के लिए कुंजियाँ 1–4 या A–D का उपयोग करें, 50:50 के लिए 5, फ्लिप के लिए F, ऑडियंस पोल के लिए P, और छोड़ने (Quit) के लिए Q दबाएं।"
-      },
-      {
-        q: "यदि मैं अपने डिवाइस पर गेम खुला छोड़कर बाद में या अगले दिन वापस आता हूँ तो क्या होता है?",
-        a: "मोबाइल ब्राउज़र और ऑपरेटिंग सिस्टम बैकग्राउंड टैब को बहुत सख्ती से प्रबंधित करते हैं। यदि आप गेम से दूर जाते हैं, तो मेमोरी बचाने के लिए आपका डिवाइस पेज को रोक या बंद कर सकता है। इसके अलावा, चूंकि हर रात मध्यरात्रि (midnight) को सभी खुले गेम स्वचालित रूप से रीसेट हो जाते हैं, इसलिए गेम को रात भर खुला छोड़ने से आपका सक्रिय सत्र समाप्त हो जाएगा। यदि आप किसी पुराने स्क्रीन पर वापस आते हैं, तो किसी भी त्रुटि से बचने के लिए पेज को रीफ्रेश करना या नया गेम शुरू करना सबसे अच्छा है।"
       },
       {
         q: "मुझे एक प्रश्न में त्रुटि मिली। मैं इसकी रिपोर्ट कैसे करूं?",
