@@ -42,6 +42,10 @@ window.faqData = {
         a: "Yes! The game automatically saves your active session. A 'Resume' option will appear on the setup screen if an unfinished game is detected."
       },
       {
+        q: "What happens if I leave the game open on my device and come back later or the next day?"
+        a: "Mobile browsers and operating systems manage background tabs strictly and may occasionally pause or unload the page to save memory. However, because our game features automatic session persistence, your progress is saved locally. If the page unloads or you return later, you can use the Resume option on the setup screen to pick up right where you left off. (Note: Active sessions may expire following a midnight reset or if browser storage is manually cleared)."
+      },
+      {
         q: "How do I use Picture, Audio, or Video questions?",
         a: "A media modal will automatically pop up when a media question appears. In timed modes, the timer pauses while you view or listen and resumes when you close the media modal. You can also replay media anytime using the replay button."
       },
@@ -96,6 +100,10 @@ window.faqData = {
       {
         q: "क्या मैं गलती से ब्राउज़र बंद होने पर अपना गेम फिर से शुरू कर सकता हूँ?",
         a: "हाँ! गेम स्वचालित रूप से आपके सक्रिय सत्र को सहेजता है। यदि कोई अधूरा गेम पाया जाता है, तो सेटअप स्क्रीन पर 'फिर से शुरू करें' (Resume) विकल्प दिखाई देगा।"
+      },
+      {
+        q: "यदि मैं अपने डिवाइस पर गेम खुला छोड़कर बाद में या अगले दिन वापस आता हूँ तो क्या होता है?"
+        a: "मोबाइल ब्राउज़र और ऑपरेटिंग सिस्टम बैकग्राउंड टैब को सख्ती से प्रबंधित करते हैं और मेमोरी बचाने के लिए कभी-कभी पेज को रोक या बंद कर सकते हैं। हालाँकि, चूँकि हमारे गेम में ऑटोमैटिक सेशन सेविंग की सुविधा है, आपकी प्रगति स्थानीय रूप से सहेजी जाती है। यदि पेज रीलोड हो जाता है या आप बाद में वापस आते हैं, तो आप सेटअप स्क्रीन पर 'फिर से शुरू करें' (Resume) विकल्प का उपयोग करके वहीं से खेल सकते हैं जहाँ आपने छोड़ा था। (नोट: मध्यरात्रि रीसेट के बाद या ब्राउज़र डेटा साफ़ किए जाने पर सक्रिय सत्र समाप्त हो सकते हैं)।"
       },
       {
         q: "चित्र, ऑडियो या वीडियो प्रश्नों का उपयोग कैसे करें?",
