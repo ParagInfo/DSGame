@@ -19,7 +19,7 @@ window.faqData = {
     items: [
       {
         q: "What game modes are available?",
-        a: "You can choose from three different modes: (1) No Timer: Play at your own pace with no time limits on any question. (2) Timed Mode: A countdown timer applies to every single question. (3) KBDS Mode: Questions 1 through 10 are timed (up to 3,20,000 points), while questions 11 through 15 have no time limit (6,40,000 points and above)."
+        a: "You can choose from three different modes: (1) Untimed Mode: Play at your own pace with no time limits on any question. (2) Timed Mode: A countdown timer applies to every single question. (3) KBDS Mode: Questions 1 through 10 are timed (up to 3,20,000 points), while questions 11 through 15 have no time limit (6,40,000 points and above)."
       },
       {
         q: "What is the light bulb icon that appears on some questions?",
@@ -34,12 +34,28 @@ window.faqData = {
         a: "If the timer hits zero before you select an answer, it counts as an incorrect response and ends the active game session."
       },
       {
-        q: "I found an error in a question. How do I report it?",
-        a: "Please reference the unique question number shown in the top-right blue box of that screen when submitting feedback through our contact form."
+        q: "How many questions are in a single game?",
+        a: "A standard game consists of 15 questions scaling across progressive difficulty levels and points."
+      },
+      {
+        q: "Can I resume my game if I accidentally close the browser?",
+        a: "Yes! The game automatically saves your active session. A 'Resume' option will appear on the setup screen if an unfinished game is detected."
+      },
+      {
+        q: "How do I use Picture, Audio, or Video questions?",
+        a: "A media modal will automatically pop up when a media question appears. In timed modes, the timer pauses while you view or listen and resumes when you close the media modal. You can also replay media anytime using the replay button."
+      },
+      {
+        q: "Can I play using my keyboard?",
+        a: "Yes! Use keys 1–4 or A–D to select options, 5 for 50:50, F for Flip, P for Audience Poll, and Q to Quit."
       },
       {
         q: "What happens if I leave the game open on my device and come back later or the next day?",
         a: "Mobile browsers and operating systems manage background tabs strictly. If you switch away from the game, your device may pause or unload the page to save memory. Furthermore, because all open games automatically reset at midnight, leaving a game open overnight will cause your active session to expire. If you return to an old, stale screen, it is best to refresh or start a new game to avoid any errors."
+      },
+      {
+        q: "I found an error in a question. How do I report it?",
+        a: "Please reference the unique question number shown in the top-right blue box of that screen when submitting feedback through our contact form."
       }
     ]
   },
@@ -58,28 +74,44 @@ window.faqData = {
     faqsTitle: "❓ अक्सर पूछे जाने वाले प्रश्न",
     items: [
       {
-        q: "प्रश्न: कौन से गेम मोड उपलब्ध हैं?",
-        a: "उत्तर: आप तीन गेम मोड में से चुन सकते हैं: (1) कोई टाइमर नहीं (No Timer): किसी भी प्रश्न पर कोई समय सीमा नहीं है। (2) टाइम्ड मोड (Timed): हर एक प्रश्न पर एक काउंटडाउन टाइमर लागू होता है। (3) केबीडीएस मोड (KBDS Mode): प्रश्न 1 से 10 के लिए टाइमर है (3,20,000 अंक), उसके बाद प्रश्न 11 से 15 के लिए कोई समय सीमा नहीं है (6,40,000 अंक और उससे अधिक)।"
+        q: "कौन से गेम मोड उपलब्ध हैं?",
+        a: "आप तीन गेम मोड में से चुन सकते हैं: (1) अनटाइम्ड मोड (Untimed): किसी भी प्रश्न पर कोई समय सीमा नहीं है। (2) टाइम्ड मोड (Timed): हर एक प्रश्न पर एक काउंटडाउन टाइमर लागू होता है। (3) केबीडीएस मोड (KBDS Mode): प्रश्न 1 से 10 के लिए टाइमर है (3,20,000 अंक), उसके बाद प्रश्न 11 से 15 के लिए कोई समय सीमा नहीं है (6,40,000 अंक और उससे अधिक)।"
       },
       {
-        q: "प्रश्न: कुछ प्रश्नों पर दिखाई देने वाला लाइट बल्ब (Light Bulb) आइकन क्या है?",
-        a: "उत्तर: उत्तर सबमिट होने के बाद जब स्पष्टीकरण (explanation) उपलब्ध होता है, तब लाइट बल्ब आइकन दिखाई देता है। इस पर या स्वयं प्रश्न पर क्लिक करने से एक पॉपअप विंडो खुलती है जो अंग्रेजी और हिंदी दोनों में उस प्रश्न से जुड़ी विस्तृत पृष्ठभूमि और विवरण प्रदान करती है।"
+        q: "कुछ प्रश्नों पर दिखाई देने वाला लाइट बल्ब (Light Bulb) आइकन क्या है?",
+        a: "उत्तर सबमिट होने के बाद जब स्पष्टीकरण (explanation) उपलब्ध होता है, तब लाइट बल्ब आइकन दिखाई देता है। इस पर या स्वयं प्रश्न पर क्लिक करने से एक पॉपअप विंडो खुलती है जो अंग्रेजी और हिंदी दोनों में उस प्रश्न से जुड़ी विस्तृत पृष्ठभूमि और विवरण प्रदान करती है।"
       },
       {
-        q: "प्रश्न: क्या मैं उत्तर पर क्लिक करने के बाद उसे बदल सकता हूँ?",
-        a: "उत्तर: नहीं। एक बार विकल्प चुन लेने के बाद, वह उस प्रश्न के लिए आपका अंतिम उत्तर माना जाता है।"
+        q: "क्या मैं उत्तर पर क्लिक करने के बाद उसे बदल सकता हूँ?",
+        a: "नहीं। एक बार विकल्प चुन लेने के बाद, वह उस प्रश्न के लिए आपका अंतिम उत्तर माना जाता है।"
       },
       {
-        q: "प्रश्न: यदि टाइमड मोड में समय समाप्त हो जाए तो क्या होगा?",
-        a: "उत्तर: यदि आपके उत्तर चुनने से पहले टाइमर शून्य पर पहुँच जाता है, तो इसे गलत उत्तर माना जाएगा और खेल समाप्त हो जाएगा।"
+        q: "यदि टाइमड मोड में समय समाप्त हो जाए तो क्या होगा?",
+        a: "यदि आपके उत्तर चुनने से पहले टाइमर शून्य पर पहुँच जाता है, तो इसे गलत उत्तर माना जाएगा और खेल समाप्त हो जाएगा।"
       },
       {
-        q: "प्रश्न: मुझे एक प्रश्न में त्रुटि मिली। मैं इसकी रिपोर्ट कैसे करूं?",
-        a: "उत्तर: हमारे संपर्क फॉर्म के माध्यम से प्रतिक्रिया भेजते समय कृपया उस स्क्रीन के शीर्ष-दाहिनी ओर (top-right) नीले बॉक्स में दिखाए गए विशिष्ट प्रश्न संख्या का उल्लेख करें।"
+        q: "एक खेल में कुल कितने प्रश्न होते हैं?",
+        a: "एक मानक खेल में बढ़ती कठिनाई और अंकों के स्तर पर 15 प्रश्न होते हैं।"
       },
       {
-        q: "प्रश्न: यदि मैं अपने डिवाइस पर गेम खुला छोड़कर बाद में या अगले दिन वापस आता हूँ तो क्या होता है?",
-        a: "उत्तर: मोबाइल ब्राउज़र और ऑपरेटिंग सिस्टम बैकग्राउंड टैब को बहुत सख्ती से प्रबंधित करते हैं। यदि आप गेम से दूर जाते हैं, तो मेमोरी बचाने के लिए आपका डिवाइस पेज को रोक या बंद कर सकता है। इसके अलावा, चूंकि हर रात मध्यरात्रि (midnight) को सभी खुले गेम स्वचालित रूप से रीसेट हो जाते हैं, इसलिए गेम को रात भर खुला छोड़ने से आपका सक्रिय सत्र (active session) समाप्त हो जाएगा। यदि आप किसी पुराने स्क्रीन पर वापस आते हैं, तो किसी भी त्रुटि से बचने के लिए पेज को रीफ्रेश करना या नया गेम शुरू करना सबसे अच्छा है।"
+        q: "क्या मैं गलती से ब्राउज़र बंद होने पर अपना गेम फिर से शुरू कर सकता हूँ?",
+        a: "हाँ! गेम स्वचालित रूप से आपके सक्रिय सत्र को सहेजता है। यदि कोई अधूरा गेम पाया जाता है, तो सेटअप स्क्रीन पर 'फिर से शुरू करें' (Resume) विकल्प दिखाई देगा।"
+      },
+      {
+        q: "चित्र, ऑडियो या वीडियो प्रश्नों का उपयोग कैसे करें?",
+        a: "मीडिया प्रश्न आने पर एक मीडिया विंडो अपने आप खुल जाएगी। टाइम्ड मोड में, जब आप देखते या सुनते हैं तो टाइमर रुक जाता है और मीडिया विंडो बंद करने पर फिर से शुरू हो जाता है। आप रीप्ले बटन का उपयोग करके किसी भी समय मीडिया को दोबारा चला सकते हैं।"
+      },
+      {
+        q: "क्या मैं अपने कीबोर्ड का उपयोग करके खेल सकता हूँ?",
+        a: "हाँ! विकल्पों का चयन करने के लिए कुंजियाँ 1–4 या A–D का उपयोग करें, 50:50 के लिए 5, फ्लिप के लिए F, ऑडियंस पोल के लिए P, और छोड़ने (Quit) के लिए Q दबाएं।"
+      },
+      {
+        q: "यदि मैं अपने डिवाइस पर गेम खुला छोड़कर बाद में या अगले दिन वापस आता हूँ तो क्या होता है?",
+        a: "मोबाइल ब्राउज़र और ऑपरेटिंग सिस्टम बैकग्राउंड टैब को बहुत सख्ती से प्रबंधित करते हैं। यदि आप गेम से दूर जाते हैं, तो मेमोरी बचाने के लिए आपका डिवाइस पेज को रोक या बंद कर सकता है। इसके अलावा, चूंकि हर रात मध्यरात्रि (midnight) को सभी खुले गेम स्वचालित रूप से रीसेट हो जाते हैं, इसलिए गेम को रात भर खुला छोड़ने से आपका सक्रिय सत्र समाप्त हो जाएगा। यदि आप किसी पुराने स्क्रीन पर वापस आते हैं, तो किसी भी त्रुटि से बचने के लिए पेज को रीफ्रेश करना या नया गेम शुरू करना सबसे अच्छा है।"
+      },
+      {
+        q: "मुझे एक प्रश्न में त्रुटि मिली। मैं इसकी रिपोर्ट कैसे करूं?",
+        a: "हमारे संपर्क फॉर्म के माध्यम से प्रतिक्रिया भेजते समय कृपया उस स्क्रीन के शीर्ष-दाहिनी ओर नीले बॉक्स में दिखाए गए विशिष्ट प्रश्न संख्या का उल्लेख करें।"
       }
     ]
   }
