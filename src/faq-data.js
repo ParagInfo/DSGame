@@ -30,6 +30,10 @@ window.faqData = {
         a: "No. Once an option is selected, it locks in immediately as your final answer for that question."
       },
       {
+        q: "Can I play the game with the sound turned on or off?",
+        a: "Yes! You can easily toggle sound effects on or off by clicking the sound icon button located in the game interface. Your mute preference is automatically remembered on your device."
+      },
+      {
         q: "What happens if time runs out in Timed Mode?",
         a: "If the timer hits zero before you select an answer, it counts as an incorrect response and ends the active game session."
       },
@@ -84,6 +88,10 @@ window.faqData = {
       {
         q: "क्या मैं उत्तर पर क्लिक करने के बाद उसे बदल सकता हूँ?",
         a: "नहीं। एक बार विकल्प चुन लेने के बाद, वह उस प्रश्न के लिए आपका अंतिम उत्तर माना जाता है।"
+      },
+      {
+        q: "क्या मैं आवाज़ (Sound) चालू या बंद करके खेल सकता हूँ?",
+        a: "हाँ! गेम की स्क्रीन पर दिए गए साउंड आइकन पर क्लिक करके आप जब चाहे आवाज़ (Sound Effects) को चालू या बंद कर सकते हैं। आपकी यह सेटिंग आपके डिवाइस पर सेव रहती है।"
       },
       {
         q: "यदि टाइमड मोड में समय समाप्त हो जाए तो क्या होगा?",
